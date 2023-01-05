@@ -7,7 +7,7 @@ namespace FOVFix
     {
         private void Awake()
         {
-            // Plugin startup logic
+            new SetFovPatch().Enable();
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
     }
