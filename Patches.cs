@@ -2,6 +2,7 @@
 using Comfort.Common;
 using EFT;
 using EFT.Animations;
+using EFT.CameraControl;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using System.Collections;
@@ -11,8 +12,9 @@ using UnityEngine;
 namespace FOVFix
 {
 
-    //this gets called when a new scene is created, so can't change fieldofview multi by current zoom level. 
-    public class OpticSightAwakePatch : ModulePatch
+
+        //this gets called when a new scene is created, so can't change fieldofview multi by current zoom level. 
+        public class OpticSightAwakePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -22,9 +24,19 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.CameraControl.OpticSight __instance)
         {
+
             __instance.TemplateCamera.gameObject.SetActive(false);
-            __instance.TemplateCamera.fieldOfView *= Plugin.globalOpticFOVMulti.Value;
+
+
+            if (__instance.name != "DONE") 
+            {
+                __instance.TemplateCamera.fieldOfView *= Plugin.globalOpticFOVMulti.Value;
+                __instance.name = "DONE";
+            }
+   
             return false;
+
+
         }
     }
 
@@ -38,13 +50,9 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(ScopePrefabCache __instance, ref float __result)
         {
-            Logger.LogWarning("///////////////////////////////////////////////");
-            Logger.LogWarning("GetAnyOpticsDistanceToCamera");
             ScopePrefabCache.ScopeModeInfo[] _scopeModeInfos = (ScopePrefabCache.ScopeModeInfo[])AccessTools.Field(typeof(ScopePrefabCache), "_scopeModeInfos").GetValue(__instance);
-            float distanceMulti = Helper.getCameraPosMulti(Plugin.currentZoomLevel) * Plugin.globalCameraPOSMulti.Value;
-            Logger.LogWarning("Zoom = " + Plugin.currentZoomLevel);
-            Logger.LogWarning("Zoom Multied = " + distanceMulti);
-            Logger.LogWarning("///////////////////////////////////////////////");
+            float distanceMulti = Plugin.globalCameraPOSMulti.Value;
+
             if (_scopeModeInfos[__instance.CurrentModeId].OpticSight != null)
             {
                 __result = _scopeModeInfos[__instance.CurrentModeId].OpticSight.DistanceToCamera * distanceMulti;
@@ -65,9 +73,9 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.CameraControl.OpticSight __instance)
         {
-            Logger.LogWarning("================================================CalcDistancePatch==================================================");
+            Logger.LogWarning("CalcDistancePatch");
 
-            float distanceMulti = Helper.getCameraPosMulti(Plugin.currentZoomLevel) * Plugin.globalCameraPOSMulti.Value;
+            float distanceMulti = Plugin.globalCameraPOSMulti.Value;
 
             if (__instance.ScopeTransform != null)
             {
@@ -85,35 +93,6 @@ namespace FOVFix
         }
     }
 
-    //better to do it in method_17Patch, as this method also sets FOV in general.
-/*    public class SetFovPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPrefix]
-        private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
-        {
-
-            var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
-            float fov = x * Plugin.globalADSMulti.Value;
-
-            if (___coroutine_0 != null)
-            {
-                StaticManager.KillCoroutine(___coroutine_0);
-            }
-            if (__instance.Camera == null)
-            {
-                return false;
-            }
-            IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
-            AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
-            ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
-            return false;
-        }
-    }*/
 
     public class method_17Patch : ModulePatch
     {
@@ -125,8 +104,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
-            Logger.LogWarning("=======================================");
-            Logger.LogWarning("method_17Patch");
+;
             Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
 
             if (firearmController != null)
@@ -149,8 +127,7 @@ namespace FOVFix
                                 zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
 
                             }
-                            Plugin.currentZoomLevel = zoom;
-                            Logger.LogWarning("method 17 zoom = " + zoom);
+
                             float baseFOV = Single_2;
                             float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.globalADSMulti.Value;
 
@@ -163,7 +140,7 @@ namespace FOVFix
                     }
                 }
             }
-            Logger.LogWarning("=======================================");
+
         }
     }
 }
