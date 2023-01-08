@@ -13,6 +13,7 @@ namespace FOVFix
 {
 
 
+
         //this gets called when a new scene is created, so can't change fieldofview multi by current zoom level. 
         public class OpticSightAwakePatch : ModulePatch
     {
@@ -24,16 +25,20 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.CameraControl.OpticSight __instance)
         {
-
             __instance.TemplateCamera.gameObject.SetActive(false);
 
-
-            if (__instance.name != "DONE") 
+            if (__instance.name != "DONE")
             {
+                if (Plugin.trueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24) 
+                {
+                    return false;
+                }
                 __instance.TemplateCamera.fieldOfView *= Plugin.globalOpticFOVMulti.Value;
                 __instance.name = "DONE";
             }
    
+       
+
             return false;
 
 
@@ -93,6 +98,35 @@ namespace FOVFix
         }
     }
 
+    //better to do it in method_17Patch, as this method also sets FOV in general.
+/*    public class SetFovPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPrefix]
+        private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
+        {
+
+            var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
+            float fov = x * Plugin.globalADSMulti.Value;
+
+            if (___coroutine_0 != null)
+            {
+                StaticManager.KillCoroutine(___coroutine_0);
+            }
+            if (__instance.Camera == null)
+            {
+                return false;
+            }
+            IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
+            AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
+            ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
+            return false;
+        }
+    }*/
 
     public class method_17Patch : ModulePatch
     {
