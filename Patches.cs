@@ -55,6 +55,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(ScopePrefabCache __instance, ref float __result)
         {
+
             ScopePrefabCache.ScopeModeInfo[] _scopeModeInfos = (ScopePrefabCache.ScopeModeInfo[])AccessTools.Field(typeof(ScopePrefabCache), "_scopeModeInfos").GetValue(__instance);
             float distanceMulti = Plugin.globalCameraPOSMulti.Value;
 
@@ -68,6 +69,7 @@ namespace FOVFix
         }
     }
 
+    //haven't seen this get called yet, so far redundant.
     public class CalcDistancePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -78,7 +80,6 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.CameraControl.OpticSight __instance)
         {
-            Logger.LogWarning("CalcDistancePatch");
 
             float distanceMulti = Plugin.globalCameraPOSMulti.Value;
 

@@ -82,7 +82,7 @@ namespace FOVFix
             highADSMulti = Config.Bind<float>(adsFOV, "High Magnification ADS FOV Multi", 1f, new ConfigDescription("Multiplier for the FOV Change when ADSing. Lower Multi = lower FOV so more Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 1 }));
 
             new GetAnyOpticsDistanceToCameraPatch().Enable();
-            new CalcDistancePatch().Enable();
+           /* new CalcDistancePatch().Enable();*/
             new OpticSightAwakePatch().Enable();
             new method_17Patch().Enable();
 
