@@ -47,64 +47,17 @@ namespace FOVFix
                     return Plugin.fourADSMulti.Value;
                 case <= 6:
                     return Plugin.sixADSMulti.Value;
+                case <= 8:
+                    return Plugin.eightADSMulti.Value;
                 case <=12:
                     return Plugin.twelveADSMulti.Value;
-                case > 12:
+                case <= 14:
+                    return Plugin.fourteenADSMulti.Value;
+                case > 14:
                     return Plugin.highADSMulti.Value;
                 default:
                     return 1;
             }
         }
-
- /*       public static float getCameraPosMulti(float zoom)
-        {
-            switch (zoom)
-            {
-                case <= 1:
-                    return Plugin.oneCameraPOSMulti.Value;
-                case <= 2:
-                    return Plugin.twoCameraPOSMulti.Value;
-                case <= 3:
-                    return Plugin.threeCameraPOSMulti.Value;
-                case <= 4:
-                    return Plugin.fourCameraPOSMulti.Value;
-                case <= 6:
-                    return Plugin.sixCameraPOSMulti.Value;
-                case <= 12:
-                    return Plugin.twelveCameraPOSMulti.Value;
-                case > 12:
-                    return Plugin.highCameraPOSMulti.Value;
-                default:
-                    return 1;
-            }
-        }*/
-/*
-        public static float getOpticFOVMulti(float zoom)
-        {
-            switch (zoom)
-            {
-                case <= 1:
-                    return Plugin.oneOpticFOVMulti.Value;
-                case <= 2:
-                    return Plugin.twoOpticFOVMulti.Value;
-                case <= 3:
-                    return Plugin.threeOpticFOVMulti.Value;
-                case <= 4:
-                    return Plugin.fourOpticFOVMulti.Value;
-                case <= 6:
-                    return Plugin.sixOpticFOVMulti.Value;
-                case <= 12:
-                    return Plugin.twelveOpticFOVMulti.Value;
-                case > 12:
-                    return Plugin.highOpticFOVMulti.Value;
-                default:
-                    return 1;
-            }
-        }*/
-
-
-
-
-
     }
 }

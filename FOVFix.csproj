@@ -16,6 +16,7 @@
     <Reference Include="Assembly-CSharp" />
 	<Reference Include="UnityEngine" />
     <Reference Include="UnityEngine.CoreModule" />
+	    <Reference Include="UnityEngine.UIModule" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />

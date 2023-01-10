@@ -1,21 +1,36 @@
 ﻿using Aki.Reflection.Patching;
-using Comfort.Common;
+using Aki.Reflection.Utils;
 using EFT;
-using EFT.Animations;
-using EFT.CameraControl;
-using EFT.InventoryLogic;
 using HarmonyLib;
-using System.Collections;
+using System;
 using System.Reflection;
 using UnityEngine;
+using System.Linq;
+
+
 
 namespace FOVFix
 {
 
 
+    public class TacticalRangeFinderControllerPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
 
-        //this gets called when a new scene is created, so can't change fieldofview multi by current zoom level. 
-        public class OpticSightAwakePatch : ModulePatch
+        [PatchPostfix]
+        private static void PatchPostfix()
+        {
+
+            CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
+
+        }
+    }
+
+
+    public class OpticSightAwakePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -29,25 +44,21 @@ namespace FOVFix
 
             if (__instance.name != "DONE")
             {
-                if (Plugin.trueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24) 
+                if (Plugin.trueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24)
                 {
                     return false;
                 }
                 __instance.TemplateCamera.fieldOfView *= Plugin.globalOpticFOVMulti.Value;
                 __instance.name = "DONE";
             }
-   
-       
-
             return false;
-
-
         }
     }
 
     public class GetAnyOpticsDistanceToCameraPatch : ModulePatch
     {
-        protected override MethodBase GetTargetMethod()
+        protected override MethodBase GetTargetMethod(
+            )
         {
             return typeof(ScopePrefabCache).GetMethod("GetAnyOpticsDistanceToCamera", BindingFlags.Instance | BindingFlags.Public);
         }
@@ -131,6 +142,7 @@ namespace FOVFix
 
     public class method_17Patch : ModulePatch
     {
+
         protected override MethodBase GetTargetMethod()
         {
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_17", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -141,41 +153,57 @@ namespace FOVFix
         {
 ;
             Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
+            float baseFOV = (float)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "Single_2").GetValue(__instance);
 
             if (firearmController != null)
             {
                 Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(firearmController);
+
                 if (!player.IsAI)
                 {
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
                         int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);
-                       
+
                         if (!__instance.Sprint && AimIndex < __instance.ScopeAimTransforms.Count)
                         {
                             bool bool_1 = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
-                            float Single_2 = (float)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "Single_2").GetValue(__instance);
 
                             float zoom = 1;
-                            if (player.ProceduralWeaponAnimation.CurrentAimingMod != null) 
+                            if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                             {
                                 zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
 
                             }
-
-                            float baseFOV = Single_2;
+                             
                             float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.globalADSMulti.Value;
-
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
+
                             CameraClass.Instance.SetFov(fov, 1f, !bool_1);
                         }
-                        var method_0 = AccessTools.Method(typeof(EFT.Animations.ProceduralWeaponAnimation), "method_0");
+                        /*                       var method_0 = AccessTools.Method(typeof(EFT.Animations.ProceduralWeaponAnimation), "method_0");
 
-                        method_0.Invoke(__instance, new object[] { });
+                                               method_0.Invoke(__instance, new object[] { });*/
                     }
                 }
             }
+            else 
+            {
+                if (__instance.PointOfView == EPointOfView.FirstPerson)
+                {
+                    int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);
+                    if (!__instance.Sprint && AimIndex < __instance.ScopeAimTransforms.Count)
+                    {
 
+                        bool bool_1 = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
+                       
+                        float sightFOV = baseFOV * Plugin.rangeFinderADSMulti.Value * Plugin.globalADSMulti.Value;
+                        float fov = __instance.IsAiming ? sightFOV : baseFOV;
+
+                        CameraClass.Instance.SetFov(fov, 1f, !bool_1);
+                    }
+                }
+            }
         }
     }
 }
