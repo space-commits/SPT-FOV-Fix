@@ -15,9 +15,7 @@ namespace FOVFix
         public static ConfigEntry<bool> trueOneX { get; set; }
         public static ConfigEntry<float> rangeFinderFOV { get; set; }
         public static ConfigEntry<float> globalOpticFOVMulti { get; set; }
-
         public static ConfigEntry<float> globalCameraPOSMulti { get; set; }
-
         public static ConfigEntry<float> globalADSMulti { get; set; }
         public static ConfigEntry<float> oneADSMulti { get; set; }
         public static ConfigEntry<float> twoADSMulti { get; set; }
@@ -57,7 +55,7 @@ namespace FOVFix
 
             new GetAnyOpticsDistanceToCameraPatch().Enable();
             new OpticSightAwakePatch().Enable();
-            new method_17Patch().Enable();
+            new method_20Patch().Enable();
             new TacticalRangeFinderControllerPatch().Enable();
 
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");

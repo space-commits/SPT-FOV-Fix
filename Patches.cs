@@ -140,12 +140,12 @@ namespace FOVFix
         }
     }*/
 
-    public class method_17Patch : ModulePatch
+    public class method_20Patch : ModulePatch
     {
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_17", BindingFlags.Instance | BindingFlags.NonPublic);
+            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_20", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
         [PatchPostfix]
