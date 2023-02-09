@@ -27,6 +27,8 @@ namespace FOVFix
         public static ConfigEntry<float> fourteenADSMulti { get; set; }
         public static ConfigEntry<float> highADSMulti { get; set; }
         public static ConfigEntry<float> rangeFinderADSMulti { get; set; }
+        public static ConfigEntry<float> cameraSmoothTime { get; set; }
+        public static ConfigEntry<bool> disableRangeF { get; set; }
 
 
         private void Awake()
@@ -34,6 +36,7 @@ namespace FOVFix
             string scopeFOV = "1. Scope Zoom";
             string adsFOV = "2. ADS FOV";
             string cameraPostiion = "3. ADS Camera Position";
+            string misc = "4. Misc.";
 
             globalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -52,6 +55,10 @@ namespace FOVFix
             fourteenADSMulti = Config.Bind<float>(adsFOV, "14x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 3 }));
             highADSMulti = Config.Bind<float>(adsFOV, "High Magnification ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 2 }));
             rangeFinderADSMulti = Config.Bind<float>(adsFOV, "Range Finder ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 1 }));
+
+            cameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 3f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 1 }));
+            disableRangeF = Config.Bind<bool>(misc, "Disable Range Finder Patch", true, new ConfigDescription("Disables Patching For Range Finders. This Prevents The RAPTAR Range Finder Breaking Scope FOV. Use This Option If Using That Device Instead Of The Hendheld RF.", null, new ConfigurationManagerAttributes { Order = 1 }));
+
 
             new GetAnyOpticsDistanceToCameraPatch().Enable();
             new OpticSightAwakePatch().Enable();

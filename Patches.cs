@@ -6,9 +6,6 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using System.Linq;
-
-
-
 namespace FOVFix
 {
 
@@ -23,12 +20,13 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix()
         {
-
-            CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
-
+            if (Plugin.disableRangeF.Value == true) 
+            {
+                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
+            }
+     
         }
     }
-
 
     public class OpticSightAwakePatch : ModulePatch
     {
@@ -40,6 +38,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.CameraControl.OpticSight __instance)
         {
+
             __instance.TemplateCamera.gameObject.SetActive(false);
 
             if (__instance.name != "DONE")
@@ -161,6 +160,8 @@ namespace FOVFix
 
                 if (!player.IsAI)
                 {
+                    __instance.CameraSmoothTime = Plugin.cameraSmoothTime.Value;
+
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
                         int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);
