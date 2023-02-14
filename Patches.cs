@@ -26,15 +26,19 @@ namespace FOVFix
             {
                 Plugin.HasRAPTAR = false;
 
-                Weapon weap = _weapon.Item as Weapon;
-                Mod[] weapMods = weap.Mods;
-                foreach (Mod mod in weapMods) 
+                if (!_weapon.IsUnderbarrelWeapon) 
                 {
-                    if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb") 
+                    Weapon weap = _weapon.Item as Weapon;
+                    Mod[] weapMods = weap.Mods;
+                    foreach (Mod mod in weapMods)
                     {
-                        Plugin.HasRAPTAR = true;
+                        if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
+                        {
+                            Plugin.HasRAPTAR = true;
+                        }
                     }
                 }
+
             }
         }
     }
