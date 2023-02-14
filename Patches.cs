@@ -6,8 +6,38 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using System.Linq;
+using EFT.InventoryLogic;
+
 namespace FOVFix
 {
+
+    public class OnWeaponParametersChangedPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(ShotEffector __instance)
+        {
+            IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
+            if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
+            {
+                Plugin.HasRAPTAR = false;
+
+                Weapon weap = _weapon.Item as Weapon;
+                Mod[] weapMods = weap.Mods;
+                foreach (Mod mod in weapMods) 
+                {
+                    if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb") 
+                    {
+                        Plugin.HasRAPTAR = true;
+                    }
+                }
+            }
+        }
+    }
 
 
     public class TacticalRangeFinderControllerPatch : ModulePatch
@@ -20,7 +50,8 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix()
         {
-            if (Plugin.disableRangeF.Value == true) 
+
+            if (Plugin.HasRAPTAR == false && Plugin.disableRangeF.Value == false) 
             {
                 CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
             }

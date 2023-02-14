@@ -9,8 +9,8 @@ namespace FOVFix
     public class Plugin : BaseUnityPlugin
     {
 
-        public static HashSet<int> opticIdHash = new HashSet<int>();
         public static bool isAiming;
+        public static bool HasRAPTAR = false;
 
         public static ConfigEntry<bool> trueOneX { get; set; }
         public static ConfigEntry<float> rangeFinderFOV { get; set; }
@@ -57,13 +57,14 @@ namespace FOVFix
             rangeFinderADSMulti = Config.Bind<float>(adsFOV, "Range Finder ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 1 }));
 
             cameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 3f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 1 }));
-            disableRangeF = Config.Bind<bool>(misc, "Disable Range Finder Patch", true, new ConfigDescription("Disables Patching For Range Finders. This Prevents The RAPTAR Range Finder Breaking Scope FOV. Use This Option If Using That Device Instead Of The Hendheld RF.", null, new ConfigurationManagerAttributes { Order = 1 }));
+            disableRangeF = Config.Bind<bool>(misc, "Disable Range Finder Patch", false, new ConfigDescription("Disables Patching For Range Finders. Use This Option If There Are Any Unforseen Issues With Range Finders.", null, new ConfigurationManagerAttributes { Order = 1 }));
 
 
             new GetAnyOpticsDistanceToCameraPatch().Enable();
             new OpticSightAwakePatch().Enable();
             new method_20Patch().Enable();
             new TacticalRangeFinderControllerPatch().Enable();
+            new OnWeaponParametersChangedPatch().Enable();
 
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }
