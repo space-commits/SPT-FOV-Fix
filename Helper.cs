@@ -1,4 +1,6 @@
-﻿using EFT.InventoryLogic;
+﻿using Comfort.Common;
+using EFT;
+using EFT.InventoryLogic;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -19,7 +21,30 @@ namespace FOVFix
 
         public static string[] scopeTypes = new string[] { "55818acf4bdc2dde698b456b", "55818ad54bdc2ddc698b4569", "55818add4bdc2d5b648b456f", "55818ae44bdc2dde698b456c", "55818ac54bdc2d5b648b456e", "55818aeb4bdc2ddc698b456a" };
 
+        public static void CheckIsReady()
+        {
+            GameWorld gameWorld = Singleton<GameWorld>.Instance;
+            SessionResultPanel sessionResultPanel = Singleton<SessionResultPanel>.Instance;
 
+            if (gameWorld?.AllPlayers.Count > 0)
+            {
+                Player player = gameWorld.AllPlayers[0];
+                if (player != null && player?.HandsController != null)
+                {
+                    Plugin.player = player; 
+                    if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
+                    {
+                        Plugin.WeaponReady = true;
+                    }
+                }
+            }
+
+            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count <= 0 || sessionResultPanel != null)
+            {
+                Plugin.IsReady = false;
+            }
+            Plugin.IsReady = true;
+        }
 
         public static bool IsSight(Mod mod)
         {

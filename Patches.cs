@@ -7,9 +7,100 @@ using System.Reflection;
 using UnityEngine;
 using System.Linq;
 using EFT.InventoryLogic;
+using Comfort.Common;
 
 namespace FOVFix
 {
+    public class FreeLookPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player).GetMethod("Look", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPrefix]
+        private static bool Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
+        {
+
+            bool bool_1 = (bool)AccessTools.Field(typeof(Player), "bool_1").GetValue(__instance);
+            bool bool_2 = (bool)AccessTools.Field(typeof(Player), "bool_2").GetValue(__instance);
+            bool bool_3 = (bool)AccessTools.Field(typeof(Player), "bool_3").GetValue(__instance);
+            bool bool_4 = (bool)AccessTools.Field(typeof(Player), "bool_4").GetValue(__instance);
+            bool bool_5 = (bool)AccessTools.Field(typeof(Player), "bool_5").GetValue(__instance);
+            bool bool_6 = (bool)AccessTools.Field(typeof(Player), "bool_6").GetValue(__instance);
+
+            float float_0 = (float)AccessTools.Field(typeof(Player), "float_0").GetValue(__instance);
+            float float_1 = (float)AccessTools.Field(typeof(Player), "float_1").GetValue(__instance);
+
+            bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
+            EFTHardSettings instance = EFTHardSettings.Instance;
+            Vector2 vector = instance.MOUSE_LOOK_HORIZONTAL_LIMIT;
+            Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
+            if (isAiming)
+            {
+                vector *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
+            }
+            Vector3 eulerAngles = __instance.ProceduralWeaponAnimation.HandsContainer.CameraTransform.eulerAngles;
+            if (eulerAngles.x >= 50f && eulerAngles.x <= 90f && __instance.MovementContext.IsSprintEnabled)
+            {
+                mouse_LOOK_VERTICAL_LIMIT.y = 0f;
+            }
+            AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Clamp(float_0 - deltaLookY, vector.x, vector.y));
+            AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Clamp(float_1 + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
+            float x2 = (float_1 > 0f) ? (float_1 * (1f - float_0 / vector.y * (float_0 / vector.y))) : float_1;
+            if (bool_4)
+            {
+                AccessTools.Field(typeof(Player), "bool_3").SetValue(__instance, false);
+                AccessTools.Field(typeof(Player), "bool_4").SetValue(__instance, false);
+            }
+            if (bool_1)
+            {
+                AccessTools.Field(typeof(Player), "bool_2").SetValue(__instance, false);
+                AccessTools.Field(typeof(Player), "bool_1").SetValue(__instance, false);
+                AccessTools.Field(typeof(Player), "bool_3").SetValue(__instance, true);
+                deltaLookY = 0f;
+                deltaLookX = 0f;
+            }
+            if (Math.Abs(deltaLookY) >= 1E-45f && Math.Abs(deltaLookX) >= 1E-45f)
+            {
+                AccessTools.Field(typeof(Player), "bool_2").SetValue(__instance, true);
+            }
+            if (!bool_2 && withReturn)
+            {
+                if (Mathf.Abs(float_0) > 0.01f)
+                {
+                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Lerp(float_0, 0f, Time.deltaTime * 15f));
+                }
+                else
+                {
+                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, 0f);
+                }
+                if (Mathf.Abs(float_1) > 0.01f)
+                {
+                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Lerp(float_1, 0f, Time.deltaTime * 15f));
+                }
+                else
+                {
+                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, 0f);
+                }
+            }
+            if (!bool_3 && float_0 != 0f && float_1 != 0f)
+            {
+                AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, true);
+            }
+            else
+            {
+                AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, false);
+            }
+            if (float_0 == 0f && float_1 == 0f)
+            {
+                AccessTools.Field(typeof(Player), "bool_4").SetValue(__instance, true);
+            }
+            __instance.HeadRotation = new Vector3(x2, float_0, 0f);
+            __instance.ProceduralWeaponAnimation.SetHeadRotation(__instance.HeadRotation);
+            return false;
+        }
+    }
 
     public class OnWeaponParametersChangedPatch : ModulePatch
     {
@@ -55,13 +146,14 @@ namespace FOVFix
         private static void PatchPostfix()
         {
 
-            if (Plugin.HasRAPTAR == false && Plugin.disableRangeF.Value == false) 
+            if (Plugin.HasRAPTAR == false && Plugin.disableRangeF.Value == false)
             {
                 CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
             }
-     
+
         }
     }
+
 
     public class OpticSightAwakePatch : ModulePatch
     {
@@ -75,7 +167,6 @@ namespace FOVFix
         {
 
             __instance.TemplateCamera.gameObject.SetActive(false);
-
             if (__instance.name != "DONE")
             {
                 if (Plugin.trueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24)
@@ -195,7 +286,7 @@ namespace FOVFix
 
                 if (!player.IsAI)
                 {
-                    __instance.CameraSmoothTime = Plugin.cameraSmoothTime.Value;
+                    __instance.CameraSmoothTime = Plugin.CameraSmoothTime.Value;
 
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
@@ -203,7 +294,7 @@ namespace FOVFix
 
                         if (!__instance.Sprint && AimIndex < __instance.ScopeAimTransforms.Count)
                         {
-                            bool bool_1 = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
+                            bool isAiming = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
 
                             float zoom = 1;
                             if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
@@ -214,8 +305,22 @@ namespace FOVFix
                              
                             float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.globalADSMulti.Value;
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
+                            bool isOptic = __instance.CurrentScope.IsOptic;
 
-                            CameraClass.Instance.SetFov(fov, 1f, !bool_1);
+                            if (Plugin.EnableExtraZoomOptic.Value == true && isOptic == true && Plugin.DoZoom == true)
+                            {
+                                float zoomedFOV = sightFOV * Plugin.OpticExtraZoom.Value;
+                                CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
+                                return;
+                            }
+                            if (Plugin.EnableExtraZoomNonOptic.Value == true && isOptic == false && Plugin.DoZoom == true)
+                            {
+                                float zoomedFOV = sightFOV * Plugin.NonOpticExtraZoom.Value;
+                                CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
+                                return;
+                            }
+
+                            CameraClass.Instance.SetFov(fov, 1f, !isAiming);
                         }
                         /*                       var method_0 = AccessTools.Method(typeof(EFT.Animations.ProceduralWeaponAnimation), "method_0");
 
