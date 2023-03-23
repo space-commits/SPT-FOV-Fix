@@ -146,7 +146,7 @@ namespace FOVFix
         private static void PatchPostfix()
         {
 
-            if (Plugin.HasRAPTAR == false && Plugin.disableRangeF.Value == false)
+            if (Plugin.HasRAPTAR == false && Plugin.DisableRangeF.Value == false)
             {
                 CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
             }
@@ -180,90 +180,75 @@ namespace FOVFix
         }
     }
 
-    public class GetAnyOpticsDistanceToCameraPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod(
-            )
-        {
-            return typeof(ScopePrefabCache).GetMethod("GetAnyOpticsDistanceToCamera", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPrefix]
-        private static bool Prefix(ScopePrefabCache __instance, ref float __result)
-        {
-
-            ScopePrefabCache.ScopeModeInfo[] _scopeModeInfos = (ScopePrefabCache.ScopeModeInfo[])AccessTools.Field(typeof(ScopePrefabCache), "_scopeModeInfos").GetValue(__instance);
-            float distanceMulti = Plugin.globalCameraPOSMulti.Value;
-
-            if (_scopeModeInfos[__instance.CurrentModeId].OpticSight != null)
-            {
-                __result = _scopeModeInfos[__instance.CurrentModeId].OpticSight.DistanceToCamera * distanceMulti;
-                return false;
-            }
-            __result = __instance.FirstOptic.DistanceToCamera * distanceMulti;
-            return false;
-        }
-    }
-
-    //haven't seen this get called yet, so far redundant.
-    public class CalcDistancePatch : ModulePatch
+    public class LerpCameraPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(EFT.CameraControl.OpticSight).GetMethod("CalcDistance", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool Prefix(EFT.CameraControl.OpticSight __instance)
+        private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ___float_10, float ___float_9, float ___float_16, Player.ValueBlender ___valueBlender_0, Vector3 ___vector3_2, Vector3 ___vector3_7, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ___valueBlenderDelay_0, Quaternion ___quaternion_3, Quaternion ___quaternion_4)
         {
+            Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
+            float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
 
-            float distanceMulti = Plugin.globalCameraPOSMulti.Value;
+            float camZ = __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
 
-            if (__instance.ScopeTransform != null)
+            Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
+            Vector2 a = new Vector2(localPosition.x, localPosition.y);
+            Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
+            float num = __instance.IsAiming ? (___float_9 * __instance.CameraSmoothBlender.Value * ___float_10) : Plugin.CameraSmoothOut.Value;
+            Vector2 vector = Vector2.Lerp(a, b, dt * num);
+            float num2 = localPosition.z;
+            float num3 = Plugin.CameraSmoothTime.Value * dt;
+            float num4 = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
+            num2 = Mathf.Lerp(num2, camZ, num3 * num4);
+            Vector3 localPosition2 = new Vector3(vector.x, vector.y, num2) + __instance.HandsContainer.CameraPosition.GetRelative();
+            if (___float_16 > 0f)
             {
-                __instance.DistanceToCamera = Vector3.Distance(__instance.ScopeTransform.position * distanceMulti, __instance.LensRenderer.transform.position * distanceMulti);
-                return false;
+                float value = ___valueBlender_0.Value;
+                if (__instance.IsAiming && value > 0f)
+                {
+                    __instance.HandsContainer.SwaySpring.ApplyVelocity(___vector3_2 * value);
+                }
             }
-            Transform transform = __instance.transform.Find("mod_aim_camera");
-            if (transform == null)
-            {
-                Debug.Log("Cant set distance for " + __instance.name);
-                return false;
-            }
-            __instance.DistanceToCamera = Vector3.Distance(transform.position * distanceMulti, __instance.LensRenderer.transform.position * distanceMulti);
+            __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
+            Quaternion b2 = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
+            __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, b2, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
             return false;
         }
     }
 
     //better to do it in method_17Patch, as this method also sets FOV in general.
-/*    public class SetFovPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
+    /*    public class SetFovPatch : ModulePatch
         {
-            return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPrefix]
-        private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
-        {
-
-            var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
-            float fov = x * Plugin.globalADSMulti.Value;
-
-            if (___coroutine_0 != null)
+            protected override MethodBase GetTargetMethod()
             {
-                StaticManager.KillCoroutine(___coroutine_0);
+                return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
             }
-            if (__instance.Camera == null)
+
+            [PatchPrefix]
+            private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
             {
+
+                var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
+                float fov = x * Plugin.globalADSMulti.Value;
+
+                if (___coroutine_0 != null)
+                {
+                    StaticManager.KillCoroutine(___coroutine_0);
+                }
+                if (__instance.Camera == null)
+                {
+                    return false;
+                }
+                IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
+                AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
+                ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
                 return false;
             }
-            IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
-            AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
-            ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
-            return false;
-        }
-    }*/
+        }*/
 
     public class method_20Patch : ModulePatch
     {
@@ -286,7 +271,6 @@ namespace FOVFix
 
                 if (!player.IsAI)
                 {
-                    __instance.CameraSmoothTime = Plugin.CameraSmoothTime.Value;
 
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
@@ -306,6 +290,7 @@ namespace FOVFix
                             float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.globalADSMulti.Value;
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             bool isOptic = __instance.CurrentScope.IsOptic;
+                            Plugin.IsOptic = isOptic;
 
                             if (Plugin.EnableExtraZoomOptic.Value == true && isOptic == true && Plugin.DoZoom == true)
                             {

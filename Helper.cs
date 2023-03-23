@@ -79,7 +79,7 @@ namespace FOVFix
                 case <= 14:
                     return Plugin.fourteenADSMulti.Value;
                 case > 14:
-                    return Plugin.highADSMulti.Value;
+                    return Plugin.HighADSMulti.Value;
                 default:
                     return 1;
             }
