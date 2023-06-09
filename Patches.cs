@@ -148,7 +148,7 @@ namespace FOVFix
 
             if (Plugin.HasRAPTAR == false && Plugin.DisableRangeF.Value == false)
             {
-                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.rangeFinderFOV.Value;
+                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
             }
 
         }
@@ -169,11 +169,11 @@ namespace FOVFix
             __instance.TemplateCamera.gameObject.SetActive(false);
             if (__instance.name != "DONE")
             {
-                if (Plugin.trueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24)
+                if (Plugin.TrueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24)
                 {
                     return false;
                 }
-                __instance.TemplateCamera.fieldOfView *= Plugin.globalOpticFOVMulti.Value;
+                __instance.TemplateCamera.fieldOfView *= Plugin.GlobalOpticFOVMulti.Value;
                 __instance.name = "DONE";
             }
             return false;
@@ -193,7 +193,7 @@ namespace FOVFix
             Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
             float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
 
-            float camZ = __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+            float camZ = firearmController != null && __instance.IsAiming == true && !Plugin.IsOptic && firearmController.Item.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
 
             Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
             Vector2 a = new Vector2(localPosition.x, localPosition.y);
@@ -201,7 +201,7 @@ namespace FOVFix
             float num = __instance.IsAiming ? (___float_9 * __instance.CameraSmoothBlender.Value * ___float_10) : Plugin.CameraSmoothOut.Value;
             Vector2 vector = Vector2.Lerp(a, b, dt * num);
             float num2 = localPosition.z;
-            float num3 = Plugin.CameraSmoothTime.Value * dt;
+            float num3 = Plugin.IsOptic ? Plugin.OpticSmoothTime.Value * dt : firearmController != null && firearmController.Item.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
             float num4 = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
             num2 = Mathf.Lerp(num2, camZ, num3 * num4);
             Vector3 localPosition2 = new Vector3(vector.x, vector.y, num2) + __instance.HandsContainer.CameraPosition.GetRelative();
@@ -287,20 +287,20 @@ namespace FOVFix
 
                             }
                              
-                            float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.globalADSMulti.Value;
+                            float sightFOV = baseFOV * Helper.getADSFoVMulti(zoom) * Plugin.GlobalADSMulti.Value;
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
 
-                            if (Plugin.EnableExtraZoomOptic.Value == true && isOptic == true && Plugin.DoZoom == true)
+                            if (Plugin.EnableExtraZoomOptic.Value && isOptic && Plugin.DoZoom)
                             {
-                                float zoomedFOV = sightFOV * Plugin.OpticExtraZoom.Value;
+                                float zoomedFOV = fov * Plugin.OpticExtraZoom.Value;
                                 CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
                                 return;
                             }
-                            if (Plugin.EnableExtraZoomNonOptic.Value == true && isOptic == false && Plugin.DoZoom == true)
+                            if (Plugin.EnableExtraZoomNonOptic.Value && !isOptic && Plugin.DoZoom)
                             {
-                                float zoomedFOV = sightFOV * Plugin.NonOpticExtraZoom.Value;
+                                float zoomedFOV = fov * Plugin.NonOpticExtraZoom.Value;
                                 CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
                                 return;
                             }
@@ -323,7 +323,7 @@ namespace FOVFix
 
                         bool bool_1 = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
                        
-                        float sightFOV = baseFOV * Plugin.rangeFinderADSMulti.Value * Plugin.globalADSMulti.Value;
+                        float sightFOV = baseFOV * Plugin.RangeFinderADSMulti.Value * Plugin.GlobalADSMulti.Value;
                         float fov = __instance.IsAiming ? sightFOV : baseFOV;
 
                         CameraClass.Instance.SetFov(fov, 1f, !bool_1);

@@ -31,7 +31,7 @@ namespace FOVFix
                 Player player = gameWorld.AllPlayers[0];
                 if (player != null && player?.HandsController != null)
                 {
-                    Plugin.player = player; 
+                    Plugin.Player = player; 
                     if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
                     {
                         Plugin.WeaponReady = true;
@@ -63,21 +63,21 @@ namespace FOVFix
             switch (zoom)
             {
                 case <= 1:
-                    return Plugin.oneADSMulti.Value;
+                    return Plugin.OneADSMulti.Value;
                 case <= 2:
-                    return Plugin.twoADSMulti.Value;
+                    return Plugin.TwoADSMulti.Value;
                 case <= 3:
-                    return Plugin.threeADSMulti.Value;
+                    return Plugin.ThreeADSMulti.Value;
                 case <= 4:
-                    return Plugin.fourADSMulti.Value;
+                    return Plugin.FourADSMulti.Value;
                 case <= 6:
-                    return Plugin.sixADSMulti.Value;
+                    return Plugin.SixADSMulti.Value;
                 case <= 8:
-                    return Plugin.eightADSMulti.Value;
+                    return Plugin.EightADSMulti.Value;
                 case <=12:
-                    return Plugin.twelveADSMulti.Value;
+                    return Plugin.TwelveADSMulti.Value;
                 case <= 14:
-                    return Plugin.fourteenADSMulti.Value;
+                    return Plugin.FourteenADSMulti.Value;
                 case > 14:
                     return Plugin.HighADSMulti.Value;
                 default:
