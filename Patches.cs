@@ -11,6 +11,26 @@ using Comfort.Common;
 
 namespace FOVFix
 {
+
+    public class IsAimingPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player.FirearmController).GetMethod("get_IsAiming", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(Player.FirearmController __instance, bool __result)
+        {
+            Player player = (Player)AccessTools.Field(typeof(EFT.Player.ItemHandsController), "_player").GetValue(__instance);
+            if (player.IsYourPlayer) 
+            {
+                Plugin.IsAiming = __result;
+            }
+        }
+    }
+
+
     public class FreeLookPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

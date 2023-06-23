@@ -22,6 +22,7 @@ namespace FOVFix
         public static bool CalledZoom = false;
         public static bool ZoomReset = false;
         public static bool DoZoom = false;
+        public static bool IsAiming = false;
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
@@ -47,6 +48,7 @@ namespace FOVFix
         public static ConfigEntry<bool> HoldZoom { get; set; }
         public static ConfigEntry<bool> EnableExtraZoomOptic { get; set; }
         public static ConfigEntry<bool> EnableExtraZoomNonOptic { get; set; }
+        public static ConfigEntry<bool> EnableZoomOutsideADS { get; set; }
         public static ConfigEntry<float> OpticExtraZoom { get; set; }
         public static ConfigEntry<float> NonOpticExtraZoom { get; set; }
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
@@ -88,12 +90,13 @@ namespace FOVFix
 
             /*            disableRangeF = Config.Bind<bool>(misc, "Disable Range Finder Patch", false, new ConfigDescription("Disables Patching For Range Finders. Use This Option If There Are Any Unforseen Issues With Range Finders.", null, new ConfigurationManagerAttributes { Order = 3 }));
             */
-            ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 6 }));
-            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", false, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 5 }));
-            EnableExtraZoomOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming.", null, new ConfigurationManagerAttributes { Order = 4 }));
-            EnableExtraZoomNonOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Non-Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming..", null, new ConfigurationManagerAttributes { Order = 3 }));
-            OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
-            NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
+            ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
+            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", false, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            EnableExtraZoomOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming.", null, new ConfigurationManagerAttributes { Order = 40 }));
+            EnableExtraZoomNonOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Non-Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming.", null, new ConfigurationManagerAttributes { Order = 35 }));
+            EnableZoomOutsideADS = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom While Not Aiming", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 30 }));
+            OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
+            NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
 
             new OpticSightAwakePatch().Enable();
@@ -102,20 +105,19 @@ namespace FOVFix
             new OnWeaponParametersChangedPatch().Enable();*/
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
-
-
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+            new IsAimingPatch().Enable();
         }
 
         void Update()
         {
             Helper.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value)) 
+            Logger.LogWarning(Plugin.IsAiming);
+
+            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && (Plugin.IsAiming || Plugin.EnableZoomOutsideADS.Value)) 
             {
 
                 var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-
 
                 if (HoldZoom.Value)
                 {
