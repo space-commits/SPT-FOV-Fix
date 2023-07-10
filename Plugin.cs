@@ -112,8 +112,6 @@ namespace FOVFix
         {
             Helper.CheckIsReady();
 
-            Logger.LogWarning(Plugin.IsAiming);
-
             if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && (Plugin.IsAiming || Plugin.EnableZoomOutsideADS.Value)) 
             {
 
