@@ -329,17 +329,11 @@ namespace FOVFix
                 if (!player.IsAI)
                 {
 
-                    Logger.LogWarning("method 20");
-
                     Mod currentAimingMod = (__instance.CurrentAimingMod != null) ? __instance.CurrentAimingMod.Item as Mod : null;
-                    Logger.LogWarning("got sight mod");
                     SightModClass scope = currentAimingMod as SightModClass;
-                    Logger.LogWarning("got scope class");
                     GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(scope.Sight);
-                    Logger.LogWarning("got interface");
                     bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
                     bool canToggle = currentAimingMod.Template.ToolModdable;
-                    Logger.LogWarning("got bools");
                     float minZoom = 1f;
                     float maxZoom = 1f;
 
@@ -354,18 +348,32 @@ namespace FOVFix
                         maxZoom = inter.Zooms[0][1];
                     }
 
-                    Logger.LogWarning("zooms");
 
                     Plugin.MinZoom = minZoom;
                     Plugin.MaxZoom = maxZoom;
                     Plugin.IsFixed = isFixedMag;
                     Plugin.CanToggle = canToggle;
 
-                    if (isFixedMag) 
+                    string weapID = firearmController.Item.Id.ToString();
+                    string scopeID = __instance.CurrentAimingMod.Item.Id.ToString();
+
+                    if ((weapID != Plugin.WeapID) || (scopeID != Plugin.ScopeID)) 
                     {
-                        Plugin.ZoomScope(minZoom);
+                        Logger.LogWarning("Ids don't match");
+                        Plugin.SetDefaultZoom = false;
                     }
 
+                    Plugin.WeapID = weapID;
+                    Plugin.ScopeID = scopeID;
+
+                    if (isFixedMag || !Plugin.SetDefaultZoom)
+                    {
+                        Plugin.ZoomScope(minZoom);
+                        Plugin.SetDefaultZoom = true;
+                    }
+
+     
+ 
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
                         int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);

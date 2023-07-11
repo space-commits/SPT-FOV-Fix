@@ -61,9 +61,13 @@ namespace FOVFix
         public static float MinZoom = 1f;
         public static float MaxZoom = 1f;
         public static float CurrentZoom = 1f;
+        public static bool SetDefaultZoom = false;
+        public static string ScopeID = "";
+        public static string WeapID = "";
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
-        public static ConfigEntry<float> MagStepSize { get; set; }
+        public static ConfigEntry<float> MagPowerFactor { get; set; }
+        public static ConfigEntry<bool> EnableVariableZoom { get; set; }
 
         private void Awake()
         {
@@ -110,11 +114,15 @@ namespace FOVFix
             OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
-            BaseScopeFOV = Config.Bind<float>(test, "Base Scope FOV", 70f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 1000f), new ConfigurationManagerAttributes { Order = 10 }));
-            MagStepSize = Config.Bind<float>(test, "Magnificaiton Step Size", 2f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 1000f), new ConfigurationManagerAttributes { Order = 1 }));
+            BaseScopeFOV = Config.Bind<float>(test, "Base Scope FOV", 27.5f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 10 }));
+            MagPowerFactor = Config.Bind<float>(test, "Magnificaiton Power Factor", 1.0f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 1 }));
+            EnableVariableZoom = Config.Bind<bool>(test, "Enable Variable Zoom", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 50 }));
 
+            if (!EnableVariableZoom.Value) 
+            {
+                new OpticSightAwakePatch().Enable();
+            }
 
-            /*            new OpticSightAwakePatch().Enable();*/
             new method_20Patch().Enable();
             /*            new TacticalRangeFinderControllerPatch().Enable();
                         new OnWeaponParametersChangedPatch().Enable();*/
@@ -131,7 +139,7 @@ namespace FOVFix
             {
                 if (cam.name == "BaseOpticCamera(Clone)") 
                 {
-                    cam.fieldOfView = Plugin.BaseScopeFOV.Value - (currentZoom - 1f) * Plugin.MagStepSize.Value;
+                    cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
                 }
             }
         }
@@ -150,6 +158,17 @@ namespace FOVFix
                         ZoomScope(CurrentZoom);
                     }
                     if (Input.GetKeyDown(KeyCode.U))
+                    {
+                        CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        ZoomScope(CurrentZoom);
+                    }
+
+                    if (Input.GetKey(KeyCode.O))
+                    {
+                        CurrentZoom = Mathf.Clamp(CurrentZoom - 0.1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        ZoomScope(CurrentZoom);
+                    }
+                    if (Input.GetKey(KeyCode.P))
                     {
                         CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
                         ZoomScope(CurrentZoom);
