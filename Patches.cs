@@ -8,6 +8,9 @@ using UnityEngine;
 using System.Linq;
 using EFT.InventoryLogic;
 using Comfort.Common;
+using static EFT.Player;
+using EFT.Animations;
+using System.Runtime.CompilerServices;
 
 namespace FOVFix
 {
@@ -19,10 +22,28 @@ namespace FOVFix
             return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
-        [PatchPostfix]
-        private static void PatchPostfix(Player.FirearmController __instance)
+        [PatchPrefix]
+        private static bool PatchPrefix(Player.FirearmController __instance)
         {
-            Logger.LogWarning("toggle mag");
+            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            bool isOptic = pwa.CurrentScope.IsOptic;
+
+            if (isOptic)
+            {
+                Logger.LogWarning("is optic");
+                Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+                bool canToggle = currentAimingMod.Template.ToolModdable;
+
+                if (!canToggle) 
+                {
+                    Logger.LogWarning("can't toggle");
+                    return false;
+                }
+                Logger.LogWarning("can toggle");
+            }
+
+            return true;
         }
     }
 
@@ -307,6 +328,43 @@ namespace FOVFix
 
                 if (!player.IsAI)
                 {
+
+                    Logger.LogWarning("method 20");
+
+                    Mod currentAimingMod = (__instance.CurrentAimingMod != null) ? __instance.CurrentAimingMod.Item as Mod : null;
+                    Logger.LogWarning("got sight mod");
+                    SightModClass scope = currentAimingMod as SightModClass;
+                    Logger.LogWarning("got scope class");
+                    GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(scope.Sight);
+                    Logger.LogWarning("got interface");
+                    bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
+                    bool canToggle = currentAimingMod.Template.ToolModdable;
+                    Logger.LogWarning("got bools");
+                    float minZoom = 1f;
+                    float maxZoom = 1f;
+
+                    if (isFixedMag)
+                    {
+                        minZoom = inter.Zooms[0][0];
+                        maxZoom = minZoom;
+                    }
+                    else 
+                    {
+                        minZoom = inter.Zooms[0][0];
+                        maxZoom = inter.Zooms[0][1];
+                    }
+
+                    Logger.LogWarning("zooms");
+
+                    Plugin.MinZoom = minZoom;
+                    Plugin.MaxZoom = maxZoom;
+                    Plugin.IsFixed = isFixedMag;
+                    Plugin.CanToggle = canToggle;
+
+                    if (isFixedMag) 
+                    {
+                        Plugin.ZoomScope(minZoom);
+                    }
 
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {

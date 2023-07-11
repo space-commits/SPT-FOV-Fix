@@ -24,6 +24,7 @@ namespace FOVFix
         public static bool ZoomReset = false;
         public static bool DoZoom = false;
         public static bool IsAiming = false;
+
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
@@ -54,6 +55,16 @@ namespace FOVFix
         public static ConfigEntry<float> NonOpticExtraZoom { get; set; }
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
 
+
+        public static bool IsFixed = false;
+        public static bool CanToggle = false;
+        public static float MinZoom = 1f;
+        public static float MaxZoom = 1f;
+        public static float CurrentZoom = 1f;
+
+        public static ConfigEntry<float> BaseScopeFOV { get; set; }
+        public static ConfigEntry<float> MagStepSize { get; set; }
+
         private void Awake()
         {
             string scopeFOV = "1. Scope Zoom";
@@ -61,6 +72,7 @@ namespace FOVFix
             string cameraPostiion = "3. ADS Camera Position";
             string toggleZoom = "4. Toggleable Zoom";
             string misc = "5. Misc.";
+            string test = "6. test.";
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -98,8 +110,11 @@ namespace FOVFix
             OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
+            BaseScopeFOV = Config.Bind<float>(test, "Base Scope FOV", 70f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 1000f), new ConfigurationManagerAttributes { Order = 10 }));
+            MagStepSize = Config.Bind<float>(test, "Magnificaiton Step Size", 2f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 1000f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            new OpticSightAwakePatch().Enable();
+
+            /*            new OpticSightAwakePatch().Enable();*/
             new method_20Patch().Enable();
             /*            new TacticalRangeFinderControllerPatch().Enable();
                         new OnWeaponParametersChangedPatch().Enable();*/
@@ -109,48 +124,41 @@ namespace FOVFix
             new SetScopeModePatch().Enable();
         }
 
-        public void zoomScope ()
+        public static void ZoomScope(float currentZoom)
         {
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams) 
             {
                 if (cam.name == "BaseOpticCamera(Clone)") 
                 {
-                    cam.fieldOfView *= 1.5f;
+                    cam.fieldOfView = Plugin.BaseScopeFOV.Value - (currentZoom - 1f) * Plugin.MagStepSize.Value;
                 }
             }
         }
-
-        public void unZoomScope()
-        {
-            Camera[] cams = Camera.allCameras;
-            foreach (Camera cam in cams)
-            {
-                if (cam.name == "BaseOpticCamera(Clone)")
-                {
-                    cam.fieldOfView *= 0.5f;
-                }
-            }
-        }
-
 
         void Update()
         {
             Helper.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) ||  Plugin.EnableZoomOutsideADS.Value)) 
+            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null)
             {
-
-                if (Input.GetKeyDown(KeyCode.I))
+                if (!Plugin.IsFixed && !Plugin.CanToggle)
                 {
-                    zoomScope();
+                    if (Input.GetKeyDown(KeyCode.I))
+                    {
+                        CurrentZoom = Mathf.Clamp(CurrentZoom - 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        ZoomScope(CurrentZoom);
+                    }
+                    if (Input.GetKeyDown(KeyCode.U))
+                    {
+                        CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        ZoomScope(CurrentZoom);
+                    }
                 }
-                if (Input.GetKeyDown(KeyCode.U))
-                {
-                    unZoomScope();
-                }
+            }
 
-
+            if (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
+            {
                 var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
 
                 if (HoldZoom.Value)
@@ -172,7 +180,6 @@ namespace FOVFix
                 }
                 else
                 {
-
                     if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                     {
                         Plugin.DoZoom = !Plugin.DoZoom;
