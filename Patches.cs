@@ -18,6 +18,10 @@ namespace FOVFix
 
     public class SetScopeModePatch : ModulePatch
     {
+        private static bool canToggle = false;
+        private static bool isFixedMag = false;
+        private static bool isOptic = false;
+
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
@@ -28,12 +32,13 @@ namespace FOVFix
         {
             Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
             ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-            bool isOptic = pwa.CurrentScope.IsOptic;
+            isOptic = pwa.CurrentScope.IsOptic;
 
             if (isOptic)
             {
                 Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
-                bool canToggle = currentAimingMod.Template.ToolModdable;
+                canToggle = currentAimingMod.Template.ToolModdable;
+                isFixedMag = currentAimingMod.Template.HasShoulderContact;
 
                 if (!canToggle) 
                 {
@@ -42,6 +47,28 @@ namespace FOVFix
             }
 
             return true;
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(Player.FirearmController __instance)
+        {
+            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+            if (isOptic)
+            {
+                if (!canToggle)
+                {
+                    return;
+                }
+
+                if (isFixedMag)
+                {
+                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                    Plugin.ZoomScope(currentToggle);
+                    Logger.LogWarning("currentToggle " + currentToggle);
+                }
+
+            }
+
         }
     }
 
@@ -132,24 +159,33 @@ namespace FOVFix
                                 if (!scopeExists)
                                 {
                                     Dictionary<string, float> newScope = new Dictionary<string, float>
-                                    {
-                                      { Plugin.CurrentScopeID, minZoom }
-                                    };
+                                        {
+                                           { Plugin.CurrentScopeID, minZoom }
+                                        };
                                     Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
                                 }
 
-                                if (isFixedMag || !weapExists || !scopeExists)
+                                bool isElcan = isFixedMag && canToggle;
+
+                                if (!isElcan && (isFixedMag || !weapExists || !scopeExists))
                                 {
                                     Logger.LogWarning("doing default zoom");
                                     Plugin.CurrentZoom = minZoom;
                                     Plugin.ZoomScope(minZoom);
                                 }
+
                                 if (weapExists && scopeExists)
                                 {
                                     Plugin.CurrentZoom = rememberedZoom;
                                     Plugin.ZoomScope(rememberedZoom);
                                     Logger.LogWarning("doing remembered zoom");
                                     Logger.LogWarning("remembered mag = " + rememberedZoom);
+                                }
+
+                                if (isElcan) 
+                                {
+                                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                                    Plugin.ZoomScope(currentToggle);
                                 }
 
                                 Logger.LogWarning("existingWeap " + weapExists);
