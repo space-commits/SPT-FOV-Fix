@@ -32,16 +32,13 @@ namespace FOVFix
 
             if (isOptic)
             {
-                Logger.LogWarning("is optic");
                 Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
                 bool canToggle = currentAimingMod.Template.ToolModdable;
 
                 if (!canToggle) 
                 {
-                    Logger.LogWarning("can't toggle");
                     return false;
                 }
-                Logger.LogWarning("can toggle");
             }
 
             return true;
@@ -68,100 +65,103 @@ namespace FOVFix
             {
                 Plugin.IsAiming = __result;
 
-                if (Plugin.IsAiming && !hasSetFov)
+                if (Plugin.EnableVariableZoom.Value)
                 {
-                    ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-                    if (pwa.CurrentScope.IsOptic) 
+                    if (Plugin.IsAiming && !hasSetFov)
                     {
-                        adsTimer += Time.deltaTime;
-
-                        if (adsTimer >= 2f)
+                        ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+                        if (pwa.CurrentScope.IsOptic)
                         {
-                            Logger.LogWarning("doing fov");
-                            hasSetFov = true;
-                            Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
-                            SightModClass sightModClass = currentAimingMod as SightModClass;
-                            GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
-                            bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
-                            bool canToggle = currentAimingMod.Template.ToolModdable;
-                            float minZoom = 1f;
-                            float maxZoom = 1f;
+                            adsTimer += Time.deltaTime;
 
-                            if (isFixedMag)
+                            if (adsTimer >= 0.5f)
                             {
-                                minZoom = inter.Zooms[0][0];
-                                maxZoom = minZoom;
-                            }
-                            else
-                            {
-                                minZoom = inter.Zooms[0][0];
-                                maxZoom = inter.Zooms[0][1];
-                            }
+                                Logger.LogWarning("doing fov");
+                                hasSetFov = true;
+                                Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
+                                SightModClass sightModClass = currentAimingMod as SightModClass;
+                                GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+                                bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
+                                bool canToggle = currentAimingMod.Template.ToolModdable;
+                                float minZoom = 1f;
+                                float maxZoom = 1f;
 
-                            Plugin.MinZoom = minZoom;
-                            Plugin.MaxZoom = maxZoom;
-                            Plugin.IsFixedMag = isFixedMag;
-                            Plugin.CanToggle = canToggle;
-
-                            Plugin.CurrentWeapID = __instance.Item.Id.ToString();
-                            Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
-
-                            Logger.LogWarning("CurrentWeapID " + Plugin.CurrentWeapID);
-                            Logger.LogWarning("CurrentScopeID " + Plugin.CurrentScopeID);
-
-                            bool weapExists = true;
-                            bool scopeExists = false;
-                            float rememberedZoom = minZoom;
-
-                            if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
-                            {
-                                weapExists = false;
-                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
-                            }
-
-                            List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
-                            foreach (Dictionary<string, float> scopeDict in scopes)
-                            {
-                                if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                                if (isFixedMag)
                                 {
-                                    rememberedZoom = scopeDict[Plugin.CurrentScopeID];
-                                    scopeExists = true;
-                                    break;
+                                    minZoom = inter.Zooms[0][0];
+                                    maxZoom = minZoom;
                                 }
-                            }
+                                else
+                                {
+                                    minZoom = inter.Zooms[0][0];
+                                    maxZoom = inter.Zooms[0][1];
+                                }
 
-                            if (!scopeExists)
-                            {
-                                Dictionary<string, float> newScope = new Dictionary<string, float>
-                            {
-                                 { Plugin.CurrentScopeID, minZoom }
-                            };
-                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
-                            }
+                                Plugin.MinZoom = minZoom;
+                                Plugin.MaxZoom = maxZoom;
+                                Plugin.IsFixedMag = isFixedMag;
+                                Plugin.CanToggle = canToggle;
 
-                            if (isFixedMag || !weapExists || !scopeExists)
-                            {
-                                Logger.LogWarning("doing default zoom");
-                                Plugin.CurrentZoom = minZoom;
-                                Plugin.ZoomScope(minZoom);
-                            }
-                            if (weapExists && scopeExists)
-                            {
-                                Plugin.CurrentZoom = rememberedZoom;
-                                Plugin.ZoomScope(rememberedZoom);
-                                Logger.LogWarning("doing remembered zoom");
-                                Logger.LogWarning("remembered mag = " + rememberedZoom);
-                            }
+                                Plugin.CurrentWeapID = __instance.Item.Id.ToString();
+                                Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
 
-                            Logger.LogWarning("existingWeap " + weapExists);
-                            Logger.LogWarning("existingScope " + scopeExists);
+                                Logger.LogWarning("CurrentWeapID " + Plugin.CurrentWeapID);
+                                Logger.LogWarning("CurrentScopeID " + Plugin.CurrentScopeID);
+
+                                bool weapExists = true;
+                                bool scopeExists = false;
+                                float rememberedZoom = minZoom;
+
+                                if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+                                {
+                                    weapExists = false;
+                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
+                                }
+
+                                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                                foreach (Dictionary<string, float> scopeDict in scopes)
+                                {
+                                    if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                                    {
+                                        rememberedZoom = scopeDict[Plugin.CurrentScopeID];
+                                        scopeExists = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!scopeExists)
+                                {
+                                    Dictionary<string, float> newScope = new Dictionary<string, float>
+                                    {
+                                      { Plugin.CurrentScopeID, minZoom }
+                                    };
+                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
+                                }
+
+                                if (isFixedMag || !weapExists || !scopeExists)
+                                {
+                                    Logger.LogWarning("doing default zoom");
+                                    Plugin.CurrentZoom = minZoom;
+                                    Plugin.ZoomScope(minZoom);
+                                }
+                                if (weapExists && scopeExists)
+                                {
+                                    Plugin.CurrentZoom = rememberedZoom;
+                                    Plugin.ZoomScope(rememberedZoom);
+                                    Logger.LogWarning("doing remembered zoom");
+                                    Logger.LogWarning("remembered mag = " + rememberedZoom);
+                                }
+
+                                Logger.LogWarning("existingWeap " + weapExists);
+                                Logger.LogWarning("existingScope " + scopeExists);
+                            }
                         }
                     }
-                }
-                else if (!Plugin.IsAiming)
-                {
-                    adsTimer = 0f;
-                    hasSetFov = false;
+                    else if (!Plugin.IsAiming)
+                    {
+                        adsTimer = 0f;
+                        hasSetFov = false;
+                    }
                 }
             }
         }

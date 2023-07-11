@@ -70,6 +70,12 @@ namespace FOVFix
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
         public static ConfigEntry<bool> EnableVariableZoom { get; set; }
+        public static ConfigEntry<bool> UseSmoothZoom { get; set; }
+        public static ConfigEntry<float> ZoomSteps { get; set; }
+        public static ConfigEntry<float> SmoothZoomSpeed { get; set; }
+
+        public static ConfigEntry<KeyboardShortcut> VariableZoomIn { get; set; }
+        public static ConfigEntry<KeyboardShortcut> VariableZoomOut { get; set; }
 
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
@@ -80,7 +86,7 @@ namespace FOVFix
             string cameraPostiion = "3. ADS Camera Position";
             string toggleZoom = "4. Toggleable Zoom";
             string misc = "5. Misc.";
-            string test = "6. test.";
+            string variable = "6. Variable Zoom.";
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -118,9 +124,14 @@ namespace FOVFix
             OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
-            BaseScopeFOV = Config.Bind<float>(test, "Base Scope FOV", 27.5f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 10 }));
-            MagPowerFactor = Config.Bind<float>(test, "Magnificaiton Power Factor", 1.0f, new ConfigDescription("", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 1 }));
-            EnableVariableZoom = Config.Bind<bool>(test, "Enable Variable Zoom", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 50 }));
+            EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 27f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
+            MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.0f, new ConfigDescription("Higher Value Means Lower FOV To Magnification Ration (More Zoom At Higher Magnification).", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 70 }));
+            UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
+            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Chance Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
+            SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
+            VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.Plus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
+            VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.Minus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
 
             if (!EnableVariableZoom.Value) 
             {
@@ -138,7 +149,7 @@ namespace FOVFix
         }
 
 
-        public static void UpdateZoom(string weapID, string scopeID, float currentZoom)
+        public static void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
         {
             if (Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
             {
@@ -152,6 +163,13 @@ namespace FOVFix
                     }
                 }
             }
+        }
+
+        public static void HandleZoomInput(float zoomIncrement) 
+        {
+            CurrentZoom = Mathf.Clamp(CurrentZoom + zoomIncrement, Plugin.MinZoom, Plugin.MaxZoom);
+            UpdateStoredMagnificaiton(CurrentWeapID, CurrentScopeID, CurrentZoom);
+            ZoomScope(CurrentZoom);
         }
 
         public static void ZoomScope(float currentZoom)
@@ -174,32 +192,29 @@ namespace FOVFix
             {
                 Plugin.haveResetDict = false;
 
-                if (!Plugin.IsFixedMag && !Plugin.CanToggle && Plugin.IsAiming)
+                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && !Plugin.CanToggle && Plugin.IsAiming)
                 {
-                    if (Input.GetKeyDown(KeyCode.I))
+                    if (Plugin.UseSmoothZoom.Value)
                     {
-                        CurrentZoom = Mathf.Clamp(CurrentZoom - 1f, Plugin.MinZoom, Plugin.MaxZoom);
-                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
-                        ZoomScope(CurrentZoom);
+                        if (Input.GetKey(VariableZoomOut.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
+                        }
+                        if (Input.GetKey(VariableZoomIn.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
+                        }
                     }
-                    if (Input.GetKeyDown(KeyCode.U))
+                    else 
                     {
-                        CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
-                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
-                        ZoomScope(CurrentZoom);
-                    }
-
-                    if (Input.GetKey(KeyCode.O))
-                    {
-                        CurrentZoom = Mathf.Clamp(CurrentZoom - 0.1f, Plugin.MinZoom, Plugin.MaxZoom);
-                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
-                        ZoomScope(CurrentZoom);
-                    }
-                    if (Input.GetKey(KeyCode.P))
-                    {
-                        CurrentZoom = Mathf.Clamp(CurrentZoom + 0.1f, Plugin.MinZoom, Plugin.MaxZoom);
-                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
-                        ZoomScope(CurrentZoom);
+                        if (Input.GetKeyDown(VariableZoomOut.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(-Plugin.ZoomSteps.Value);
+                        }
+                        if (Input.GetKeyDown(VariableZoomIn.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(Plugin.ZoomSteps.Value);
+                        }
                     }
                 }
 
