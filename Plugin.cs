@@ -7,6 +7,7 @@ using EFT;
 using HarmonyLib;
 using EFT.Animations;
 using EFT.InventoryLogic;
+using EFT.CameraControl;
 
 namespace FOVFix
 {
@@ -53,8 +54,6 @@ namespace FOVFix
         public static ConfigEntry<float> NonOpticExtraZoom { get; set; }
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
 
-
-
         private void Awake()
         {
             string scopeFOV = "1. Scope Zoom";
@@ -64,8 +63,9 @@ namespace FOVFix
             string misc = "5. Misc.";
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
-/*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
-*/            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
+            /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
+            */
+            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
 
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -101,19 +101,55 @@ namespace FOVFix
 
             new OpticSightAwakePatch().Enable();
             new method_20Patch().Enable();
-/*            new TacticalRangeFinderControllerPatch().Enable();
-            new OnWeaponParametersChangedPatch().Enable();*/
+            /*            new TacticalRangeFinderControllerPatch().Enable();
+                        new OnWeaponParametersChangedPatch().Enable();*/
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
+            new SetScopeModePatch().Enable();
         }
+
+        public void zoomScope ()
+        {
+            Camera[] cams = Camera.allCameras;
+            foreach (Camera cam in cams) 
+            {
+                if (cam.name == "BaseOpticCamera(Clone)") 
+                {
+                    cam.fieldOfView *= 1.5f;
+                }
+            }
+        }
+
+        public void unZoomScope()
+        {
+            Camera[] cams = Camera.allCameras;
+            foreach (Camera cam in cams)
+            {
+                if (cam.name == "BaseOpticCamera(Clone)")
+                {
+                    cam.fieldOfView *= 0.5f;
+                }
+            }
+        }
+
 
         void Update()
         {
             Helper.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && (Plugin.IsAiming || Plugin.EnableZoomOutsideADS.Value)) 
+            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) ||  Plugin.EnableZoomOutsideADS.Value)) 
             {
+
+                if (Input.GetKeyDown(KeyCode.I))
+                {
+                    zoomScope();
+                }
+                if (Input.GetKeyDown(KeyCode.U))
+                {
+                    unZoomScope();
+                }
+
 
                 var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
 

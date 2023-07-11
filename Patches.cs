@@ -12,6 +12,22 @@ using Comfort.Common;
 namespace FOVFix
 {
 
+    public class SetScopeModePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(Player.FirearmController __instance)
+        {
+            Logger.LogWarning("toggle mag");
+        }
+    }
+
+
+
     public class IsAimingPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
