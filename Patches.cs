@@ -64,7 +64,6 @@ namespace FOVFix
                 {
                     float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
                     Plugin.ZoomScope(currentToggle);
-                    Logger.LogWarning("currentToggle " + currentToggle);
                 }
 
             }
@@ -103,7 +102,6 @@ namespace FOVFix
 
                             if (adsTimer >= 0.5f)
                             {
-                                Logger.LogWarning("doing fov");
                                 hasSetFov = true;
                                 Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
                                 SightModClass sightModClass = currentAimingMod as SightModClass;
@@ -131,9 +129,6 @@ namespace FOVFix
 
                                 Plugin.CurrentWeapID = __instance.Item.Id.ToString();
                                 Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
-
-                                Logger.LogWarning("CurrentWeapID " + Plugin.CurrentWeapID);
-                                Logger.LogWarning("CurrentScopeID " + Plugin.CurrentScopeID);
 
                                 bool weapExists = true;
                                 bool scopeExists = false;
@@ -169,7 +164,6 @@ namespace FOVFix
 
                                 if (!isElcan && (isFixedMag || !weapExists || !scopeExists))
                                 {
-                                    Logger.LogWarning("doing default zoom");
                                     Plugin.CurrentZoom = minZoom;
                                     Plugin.ZoomScope(minZoom);
                                 }
@@ -178,8 +172,6 @@ namespace FOVFix
                                 {
                                     Plugin.CurrentZoom = rememberedZoom;
                                     Plugin.ZoomScope(rememberedZoom);
-                                    Logger.LogWarning("doing remembered zoom");
-                                    Logger.LogWarning("remembered mag = " + rememberedZoom);
                                 }
 
                                 if (isElcan) 
@@ -187,9 +179,6 @@ namespace FOVFix
                                     float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
                                     Plugin.ZoomScope(currentToggle);
                                 }
-
-                                Logger.LogWarning("existingWeap " + weapExists);
-                                Logger.LogWarning("existingScope " + scopeExists);
                             }
                         }
                     }
@@ -484,19 +473,14 @@ namespace FOVFix
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
 
-                            if (Plugin.EnableExtraZoomOptic.Value && isOptic && Plugin.DoZoom)
+                            if (Plugin.DoZoom && ((Plugin.EnableExtraZoomOptic.Value && isOptic) || (Plugin.EnableExtraZoomNonOptic.Value && !isOptic) || (Plugin.EnableZoomOutsideADS.Value && !Plugin.IsAiming)))
                             {
-                                float zoomedFOV = fov * Plugin.OpticExtraZoom.Value;
+                                float zoomFactor = isOptic ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
+                                float zoomedFOV = fov * zoomFactor;
                                 CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
                                 return;
                             }
-                            if (Plugin.EnableExtraZoomNonOptic.Value && !isOptic && Plugin.DoZoom)
-                            {
-                                float zoomedFOV = fov * Plugin.NonOpticExtraZoom.Value;
-                                CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
-                                return;
-                            }
-
+                   
                             CameraClass.Instance.SetFov(fov, 1f, !isAiming);
                         }
                         /*                       var method_0 = AccessTools.Method(typeof(EFT.Animations.ProceduralWeaponAnimation), "method_0");
