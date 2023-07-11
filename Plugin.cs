@@ -56,18 +56,22 @@ namespace FOVFix
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
 
 
-        public static bool IsFixed = false;
+        private static bool haveResetDict = false;  
+
+        public static bool IsFixedMag = false;
         public static bool CanToggle = false;
         public static float MinZoom = 1f;
         public static float MaxZoom = 1f;
         public static float CurrentZoom = 1f;
-        public static bool SetDefaultZoom = false;
-        public static string ScopeID = "";
-        public static string WeapID = "";
+
+        public static string CurrentWeapID = "";
+        public static string CurrentScopeID = "";
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
         public static ConfigEntry<bool> EnableVariableZoom { get; set; }
+
+        public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
         private void Awake()
         {
@@ -123,13 +127,31 @@ namespace FOVFix
                 new OpticSightAwakePatch().Enable();
             }
 
+/*            new TacticalRangeFinderControllerPatch().Enable();*/
+/*            new OnWeaponParametersChangedPatch().Enable();*/
+
             new method_20Patch().Enable();
-            /*            new TacticalRangeFinderControllerPatch().Enable();
-                        new OnWeaponParametersChangedPatch().Enable();*/
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
             new SetScopeModePatch().Enable();
+        }
+
+
+        public static void UpdateZoom(string weapID, string scopeID, float currentZoom)
+        {
+            if (Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+            {
+                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                foreach (Dictionary<string, float> scopeDict in scopes)
+                {
+                    if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                    {
+                      scopeDict[Plugin.CurrentScopeID] = currentZoom;
+                        break;
+                    }
+                }
+            }
         }
 
         public static void ZoomScope(float currentZoom)
@@ -150,61 +172,74 @@ namespace FOVFix
 
             if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null)
             {
-                if (!Plugin.IsFixed && !Plugin.CanToggle)
+                Plugin.haveResetDict = false;
+
+                if (!Plugin.IsFixedMag && !Plugin.CanToggle && Plugin.IsAiming)
                 {
                     if (Input.GetKeyDown(KeyCode.I))
                     {
                         CurrentZoom = Mathf.Clamp(CurrentZoom - 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
                         ZoomScope(CurrentZoom);
                     }
                     if (Input.GetKeyDown(KeyCode.U))
                     {
                         CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
                         ZoomScope(CurrentZoom);
                     }
 
                     if (Input.GetKey(KeyCode.O))
                     {
                         CurrentZoom = Mathf.Clamp(CurrentZoom - 0.1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
                         ZoomScope(CurrentZoom);
                     }
                     if (Input.GetKey(KeyCode.P))
                     {
-                        CurrentZoom = Mathf.Clamp(CurrentZoom + 1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        CurrentZoom = Mathf.Clamp(CurrentZoom + 0.1f, Plugin.MinZoom, Plugin.MaxZoom);
+                        UpdateZoom(CurrentWeapID, CurrentScopeID, CurrentZoom);
                         ZoomScope(CurrentZoom);
+                    }
+                }
+
+                if (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
+                {
+                    var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+
+                    if (HoldZoom.Value)
+                    {
+
+                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
+                        {
+                            Plugin.DoZoom = true;
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.CalledZoom = true;
+                            Plugin.DoZoom = false;
+
+                        }
+                        if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
+                        {
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.CalledZoom = false;
+                        }
+                    }
+                    else
+                    {
+                        if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
+                        {
+                            Plugin.DoZoom = !Plugin.DoZoom;
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                        }
                     }
                 }
             }
 
-            if (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
+            if (!Plugin.IsReady && !Plugin.haveResetDict) 
             {
-                var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-
-                if (HoldZoom.Value)
-                {
-
-                    if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
-                    {
-                        Plugin.DoZoom = true;
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
-                        Plugin.CalledZoom = true;
-                        Plugin.DoZoom = false;
-
-                    }
-                    if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
-                    {
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
-                        Plugin.CalledZoom = false;
-                    }
-                }
-                else
-                {
-                    if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
-                    {
-                        Plugin.DoZoom = !Plugin.DoZoom;
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
-                    }
-                }
+                Logger.LogWarning("reset dict");
+                Plugin.WeaponScopeValues.Clear();
+                Plugin.haveResetDict = true;
             }
         }
     }
