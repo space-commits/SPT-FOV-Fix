@@ -8,12 +8,77 @@ using UnityEngine;
 using System.Linq;
 using EFT.InventoryLogic;
 using Comfort.Common;
+using static EFT.Player;
+using EFT.Animations;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 
 namespace FOVFix
 {
 
+    public class SetScopeModePatch : ModulePatch
+    {
+        private static bool canToggle = false;
+        private static bool isFixedMag = false;
+        private static bool isOptic = false;
+
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPrefix]
+        private static bool PatchPrefix(Player.FirearmController __instance)
+        {
+            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            isOptic = pwa.CurrentScope.IsOptic;
+
+            if (isOptic)
+            {
+                Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+                canToggle = currentAimingMod.Template.ToolModdable;
+                isFixedMag = currentAimingMod.Template.HasShoulderContact;
+
+                if (!canToggle) 
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(Player.FirearmController __instance)
+        {
+            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+            if (isOptic)
+            {
+                if (!canToggle)
+                {
+                    return;
+                }
+
+                if (isFixedMag)
+                {
+                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                    Plugin.ZoomScope(currentToggle);
+                    Logger.LogWarning("currentToggle " + currentToggle);
+                }
+
+            }
+
+        }
+    }
+
+
+
     public class IsAimingPatch : ModulePatch
     {
+        private static bool hasSetFov = false;
+        private static float adsTimer = 0f;
+
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player.FirearmController).GetMethod("get_IsAiming", BindingFlags.Instance | BindingFlags.Public);
@@ -26,6 +91,114 @@ namespace FOVFix
             if (player.IsYourPlayer) 
             {
                 Plugin.IsAiming = __result;
+
+                if (Plugin.EnableVariableZoom.Value)
+                {
+                    if (Plugin.IsAiming && !hasSetFov)
+                    {
+                        ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+                        if (pwa.CurrentScope.IsOptic)
+                        {
+                            adsTimer += Time.deltaTime;
+
+                            if (adsTimer >= 0.5f)
+                            {
+                                Logger.LogWarning("doing fov");
+                                hasSetFov = true;
+                                Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
+                                SightModClass sightModClass = currentAimingMod as SightModClass;
+                                GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+                                bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
+                                bool canToggle = currentAimingMod.Template.ToolModdable;
+                                float minZoom = 1f;
+                                float maxZoom = 1f;
+
+                                if (isFixedMag)
+                                {
+                                    minZoom = inter.Zooms[0][0];
+                                    maxZoom = minZoom;
+                                }
+                                else
+                                {
+                                    minZoom = inter.Zooms[0][0];
+                                    maxZoom = inter.Zooms[0][1];
+                                }
+
+                                Plugin.MinZoom = minZoom;
+                                Plugin.MaxZoom = maxZoom;
+                                Plugin.IsFixedMag = isFixedMag;
+                                Plugin.CanToggle = canToggle;
+
+                                Plugin.CurrentWeapID = __instance.Item.Id.ToString();
+                                Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
+
+                                Logger.LogWarning("CurrentWeapID " + Plugin.CurrentWeapID);
+                                Logger.LogWarning("CurrentScopeID " + Plugin.CurrentScopeID);
+
+                                bool weapExists = true;
+                                bool scopeExists = false;
+                                float rememberedZoom = minZoom;
+
+                                if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+                                {
+                                    weapExists = false;
+                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
+                                }
+
+                                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                                foreach (Dictionary<string, float> scopeDict in scopes)
+                                {
+                                    if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                                    {
+                                        rememberedZoom = scopeDict[Plugin.CurrentScopeID];
+                                        scopeExists = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!scopeExists)
+                                {
+                                    Dictionary<string, float> newScope = new Dictionary<string, float>
+                                        {
+                                           { Plugin.CurrentScopeID, minZoom }
+                                        };
+                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
+                                }
+
+                                bool isElcan = isFixedMag && canToggle;
+
+                                if (!isElcan && (isFixedMag || !weapExists || !scopeExists))
+                                {
+                                    Logger.LogWarning("doing default zoom");
+                                    Plugin.CurrentZoom = minZoom;
+                                    Plugin.ZoomScope(minZoom);
+                                }
+
+                                if (weapExists && scopeExists)
+                                {
+                                    Plugin.CurrentZoom = rememberedZoom;
+                                    Plugin.ZoomScope(rememberedZoom);
+                                    Logger.LogWarning("doing remembered zoom");
+                                    Logger.LogWarning("remembered mag = " + rememberedZoom);
+                                }
+
+                                if (isElcan) 
+                                {
+                                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                                    Plugin.ZoomScope(currentToggle);
+                                }
+
+                                Logger.LogWarning("existingWeap " + weapExists);
+                                Logger.LogWarning("existingScope " + scopeExists);
+                            }
+                        }
+                    }
+                    else if (!Plugin.IsAiming)
+                    {
+                        adsTimer = 0f;
+                        hasSetFov = false;
+                    }
+                }
             }
         }
     }
@@ -291,7 +464,6 @@ namespace FOVFix
 
                 if (!player.IsAI)
                 {
-
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
                         int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);

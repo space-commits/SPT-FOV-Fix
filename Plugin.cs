@@ -7,6 +7,7 @@ using EFT;
 using HarmonyLib;
 using EFT.Animations;
 using EFT.InventoryLogic;
+using EFT.CameraControl;
 
 namespace FOVFix
 {
@@ -23,6 +24,7 @@ namespace FOVFix
         public static bool ZoomReset = false;
         public static bool DoZoom = false;
         public static bool IsAiming = false;
+
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
@@ -54,6 +56,28 @@ namespace FOVFix
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
 
 
+        private static bool haveResetDict = false;  
+
+        public static bool IsFixedMag = false;
+        public static bool CanToggle = false;
+        public static float MinZoom = 1f;
+        public static float MaxZoom = 1f;
+        public static float CurrentZoom = 1f;
+
+        public static string CurrentWeapID = "";
+        public static string CurrentScopeID = "";
+
+        public static ConfigEntry<float> BaseScopeFOV { get; set; }
+        public static ConfigEntry<float> MagPowerFactor { get; set; }
+        public static ConfigEntry<bool> EnableVariableZoom { get; set; }
+        public static ConfigEntry<bool> UseSmoothZoom { get; set; }
+        public static ConfigEntry<float> ZoomSteps { get; set; }
+        public static ConfigEntry<float> SmoothZoomSpeed { get; set; }
+
+        public static ConfigEntry<KeyboardShortcut> VariableZoomIn { get; set; }
+        public static ConfigEntry<KeyboardShortcut> VariableZoomOut { get; set; }
+
+        public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
         private void Awake()
         {
@@ -62,10 +86,12 @@ namespace FOVFix
             string cameraPostiion = "3. ADS Camera Position";
             string toggleZoom = "4. Toggleable Zoom";
             string misc = "5. Misc.";
+            string variable = "6. Variable Zoom.";
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
-/*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
-*/            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
+            /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
+            */
+            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
 
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -98,51 +124,137 @@ namespace FOVFix
             OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
+            EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
+            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 27f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
+            MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.0f, new ConfigDescription("Higher Value Means Lower FOV To Magnification Ration (More Zoom At Higher Magnification).", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 70 }));
+            UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
+            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Chance Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
+            SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
+            VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.Plus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
+            VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.Minus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
 
-            new OpticSightAwakePatch().Enable();
+            if (!EnableVariableZoom.Value) 
+            {
+                new OpticSightAwakePatch().Enable();
+            }
+
+/*            new TacticalRangeFinderControllerPatch().Enable();*/
+/*            new OnWeaponParametersChangedPatch().Enable();*/
+
             new method_20Patch().Enable();
-/*            new TacticalRangeFinderControllerPatch().Enable();
-            new OnWeaponParametersChangedPatch().Enable();*/
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
+            new SetScopeModePatch().Enable();
+        }
+
+
+        public static void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
+        {
+            if (Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+            {
+                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                foreach (Dictionary<string, float> scopeDict in scopes)
+                {
+                    if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                    {
+                      scopeDict[Plugin.CurrentScopeID] = currentZoom;
+                        break;
+                    }
+                }
+            }
+        }
+
+        public static void HandleZoomInput(float zoomIncrement) 
+        {
+            CurrentZoom = Mathf.Clamp(CurrentZoom + zoomIncrement, Plugin.MinZoom, Plugin.MaxZoom);
+            UpdateStoredMagnificaiton(CurrentWeapID, CurrentScopeID, CurrentZoom);
+            ZoomScope(CurrentZoom);
+        }
+
+        public static void ZoomScope(float currentZoom)
+        {
+            Camera[] cams = Camera.allCameras;
+            foreach (Camera cam in cams) 
+            {
+                if (cam.name == "BaseOpticCamera(Clone)") 
+                {
+                    cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
+                }
+            }
         }
 
         void Update()
         {
             Helper.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null && (EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && (Plugin.IsAiming || Plugin.EnableZoomOutsideADS.Value)) 
+            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null)
             {
+                Plugin.haveResetDict = false;
 
-                var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-
-                if (HoldZoom.Value)
+                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && !Plugin.CanToggle && Plugin.IsAiming)
                 {
-
-                    if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
+                    if (Plugin.UseSmoothZoom.Value)
                     {
-                        Plugin.DoZoom = true;
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
-                        Plugin.CalledZoom = true;
-                        Plugin.DoZoom = false;
-
+                        if (Input.GetKey(VariableZoomOut.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
+                        }
+                        if (Input.GetKey(VariableZoomIn.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
+                        }
                     }
-                    if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
+                    else 
                     {
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
-                        Plugin.CalledZoom = false;
+                        if (Input.GetKeyDown(VariableZoomOut.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(-Plugin.ZoomSteps.Value);
+                        }
+                        if (Input.GetKeyDown(VariableZoomIn.Value.MainKey))
+                        {
+                            Plugin.HandleZoomInput(Plugin.ZoomSteps.Value);
+                        }
                     }
                 }
-                else
-                {
 
-                    if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
+                if (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
+                {
+                    var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+
+                    if (HoldZoom.Value)
                     {
-                        Plugin.DoZoom = !Plugin.DoZoom;
-                        method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+
+                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
+                        {
+                            Plugin.DoZoom = true;
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.CalledZoom = true;
+                            Plugin.DoZoom = false;
+
+                        }
+                        if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
+                        {
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.CalledZoom = false;
+                        }
+                    }
+                    else
+                    {
+                        if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
+                        {
+                            Plugin.DoZoom = !Plugin.DoZoom;
+                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                        }
                     }
                 }
+            }
+
+            if (!Plugin.IsReady && !Plugin.haveResetDict) 
+            {
+                Logger.LogWarning("reset dict");
+                Plugin.WeaponScopeValues.Clear();
+                Plugin.haveResetDict = true;
             }
         }
     }
