@@ -1,4 +1,4 @@
-﻿
+﻿/*
 using BepInEx;
 using BepInEx.Configuration;
 using Comfort.Common;
@@ -35,3 +35,4 @@ namespace Bridge
     }
 }
 
+*/

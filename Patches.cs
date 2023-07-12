@@ -16,6 +16,20 @@ using System.Collections.Generic;
 namespace FOVFix
 {
 
+    public class ChangeAimingModePatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player.FirearmController).GetMethod("ChangeAimingMode", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPrefix]
+        private static void PatchPrefix(Player.FirearmController __instance)
+        {
+            Plugin.ChangeSight = true;
+        }
+    }
+
     public class SetScopeModePatch : ModulePatch
     {
         private static bool canToggle = false;
@@ -30,6 +44,8 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(Player.FirearmController __instance)
         {
+            Plugin.ChangeSight = true;
+
             Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
             ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
             isOptic = pwa.CurrentScope.IsOptic;
@@ -66,9 +82,7 @@ namespace FOVFix
                     Plugin.CurrentZoom = currentToggle;
                     Plugin.ZoomScope(currentToggle);
                 }
-
             }
-
         }
     }
 
@@ -94,8 +108,9 @@ namespace FOVFix
 
                 if (Plugin.EnableVariableZoom.Value)
                 {
-                    if (Plugin.IsAiming && !hasSetFov)
+                    if (Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight))
                     {
+                        Plugin.ChangeSight = false;
                         ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
                         if (pwa.CurrentScope.IsOptic)
                         {
@@ -290,59 +305,6 @@ namespace FOVFix
         }
     }
 
-    public class OnWeaponParametersChangedPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPostfix]
-        private static void PatchPostfix(ShotEffector __instance)
-        {
-            IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
-            if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
-            {
-                Plugin.HasRAPTAR = false;
-
-                if (!_weapon.IsUnderbarrelWeapon) 
-                {
-                    Weapon weap = _weapon.Item as Weapon;
-                    Mod[] weapMods = weap.Mods;
-                    foreach (Mod mod in weapMods)
-                    {
-                        if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
-                        {
-                            Plugin.HasRAPTAR = true;
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-
-    public class TacticalRangeFinderControllerPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
-        }
-
-        [PatchPostfix]
-        private static void PatchPostfix()
-        {
-
-            if (Plugin.HasRAPTAR == false && Plugin.DisableRangeF.Value == false)
-            {
-                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
-            }
-
-        }
-    }
-
-
     public class OpticSightAwakePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -407,36 +369,6 @@ namespace FOVFix
             return false;
         }
     }
-
-    //better to do it in method_17Patch, as this method also sets FOV in general.
-    /*    public class SetFovPatch : ModulePatch
-        {
-            protected override MethodBase GetTargetMethod()
-            {
-                return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
-            }
-
-            [PatchPrefix]
-            private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
-            {
-
-                var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
-                float fov = x * Plugin.globalADSMulti.Value;
-
-                if (___coroutine_0 != null)
-                {
-                    StaticManager.KillCoroutine(___coroutine_0);
-                }
-                if (__instance.Camera == null)
-                {
-                    return false;
-                }
-                IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
-                AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
-                ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
-                return false;
-            }
-        }*/
 
     public class method_20Patch : ModulePatch
     {
@@ -514,5 +446,88 @@ namespace FOVFix
             }
         }
     }
+/*
+    public class OnWeaponParametersChangedPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(ShotEffector __instance)
+        {
+            IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
+            if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
+            {
+                Plugin.HasRAPTAR = false;
+
+                if (!_weapon.IsUnderbarrelWeapon)
+                {
+                    Weapon weap = _weapon.Item as Weapon;
+                    Mod[] weapMods = weap.Mods;
+                    foreach (Mod mod in weapMods)
+                    {
+                        if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
+                        {
+                            Plugin.HasRAPTAR = true;
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+
+
+    public class TacticalRangeFinderControllerPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix()
+        {
+
+            if (Plugin.HasRAPTAR == false && Plugin.DisableRangeF.Value == false)
+            {
+                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
+            }
+
+        }
+    }
+*/
+
+    //better to do it in method_17Patch, as this method also sets FOV in general.
+    /*    public class SetFovPatch : ModulePatch
+        {
+            protected override MethodBase GetTargetMethod()
+            {
+                return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
+            }
+
+            [PatchPrefix]
+            private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
+            {
+
+                var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
+                float fov = x * Plugin.globalADSMulti.Value;
+
+                if (___coroutine_0 != null)
+                {
+                    StaticManager.KillCoroutine(___coroutine_0);
+                }
+                if (__instance.Camera == null)
+                {
+                    return false;
+                }
+                IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
+                AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
+                ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
+                return false;
+            }
+        }*/
+
 }
- 
