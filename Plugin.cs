@@ -73,9 +73,13 @@ namespace FOVFix
         public static ConfigEntry<bool> UseSmoothZoom { get; set; }
         public static ConfigEntry<float> ZoomSteps { get; set; }
         public static ConfigEntry<float> SmoothZoomSpeed { get; set; }
+        public static ConfigEntry<bool> UseMouseWheel { get; set; }
+        public static ConfigEntry<bool> UseMouseWheelPlusKey { get; set; }
 
         public static ConfigEntry<KeyboardShortcut> VariableZoomIn { get; set; }
         public static ConfigEntry<KeyboardShortcut> VariableZoomOut { get; set; }
+        public static ConfigEntry<KeyboardShortcut> MouseWheelBind { get; set; }
+
 
         public static ConfigEntry<float> MouseSensFactor { get; set; }
         public static ConfigEntry<float> MouseSensLowerLimit { get; set; }
@@ -135,8 +139,11 @@ namespace FOVFix
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
             ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
             SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
+            UseMouseWheel = Config.Bind<bool>(variable, "Use Mouse Wheel", false, new ConfigDescription("Mouse Scroll Changes Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
+            UseMouseWheelPlusKey = Config.Bind<bool>(variable, "Need To Hold Key With Mouse Wheel", false, new ConfigDescription("Required To Hold The Mousewheel Keybind + Scroll To Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
             VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.KeypadPlus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
             VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.KeypadMinus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
+            MouseWheelBind = Config.Bind(variable, "Mouswheel + Keybind", new KeyboardShortcut(KeyCode.RightControl), new ConfigDescription("Hold While Using Mouse Wheel.", null, new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
             MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 6f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
@@ -233,6 +240,17 @@ namespace FOVFix
                         if (Input.GetKeyDown(VariableZoomIn.Value.MainKey))
                         {
                             Plugin.HandleZoomInput(Plugin.ZoomSteps.Value);
+                        }
+                    }
+                    if (Plugin.UseMouseWheel.Value) 
+                    {
+                        if (Input.GetKey(MouseWheelBind.Value.MainKey) || !Plugin.UseMouseWheelPlusKey.Value)
+                        {
+                            float scrollDelta = Input.mouseScrollDelta.y;
+                            if (scrollDelta != 0f) 
+                            {
+                                Plugin.HandleZoomInput(scrollDelta);
+                            }
                         }
                     }
                 }
