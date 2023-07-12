@@ -63,6 +63,7 @@ namespace FOVFix
                 if (isFixedMag)
                 {
                     float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                    Plugin.CurrentZoom = currentToggle;
                     Plugin.ZoomScope(currentToggle);
                 }
 
@@ -174,12 +175,17 @@ namespace FOVFix
                                     Plugin.ZoomScope(rememberedZoom);
                                 }
 
-                                if (isElcan) 
+                                if (isElcan)
                                 {
                                     float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                                    Plugin.CurrentZoom = currentToggle;
                                     Plugin.ZoomScope(currentToggle);
                                 }
                             }
+                        }
+                        else 
+                        {
+                            Plugin.CurrentZoom = 1f;
                         }
                     }
                     else if (!Plugin.IsAiming)
