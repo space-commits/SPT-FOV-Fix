@@ -8,6 +8,7 @@ using HarmonyLib;
 using EFT.Animations;
 using EFT.InventoryLogic;
 using EFT.CameraControl;
+using BepInEx.Bootstrap;
 
 namespace FOVFix
 {
@@ -77,7 +78,15 @@ namespace FOVFix
         public static ConfigEntry<KeyboardShortcut> VariableZoomIn { get; set; }
         public static ConfigEntry<KeyboardShortcut> VariableZoomOut { get; set; }
 
+        public static ConfigEntry<float> MouseSensFactor { get; set; }
+        public static ConfigEntry<float> MouseSensLowerLimit { get; set; }
+        public static ConfigEntry<bool> ChangeMouseSens { get; set; }
+
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
+
+        public static float AimingSens = 1f;
+
+        public static bool isRealismModPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
 
         private void Awake()
         {
@@ -87,6 +96,7 @@ namespace FOVFix
             string toggleZoom = "4. Toggleable Zoom";
             string misc = "5. Misc.";
             string variable = "6. Variable Zoom.";
+            string sens = "7. Mouse Sensitivity.";
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
@@ -126,26 +136,33 @@ namespace FOVFix
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 27f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
-            MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.0f, new ConfigDescription("Higher Value Means Lower FOV To Magnification Ration (More Zoom At Higher Magnification).", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 70 }));
+            MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.1f, new ConfigDescription("FOV Is Determined By Base FOV / Magnification Raised To This Power Factor. Higher Factor Means More Zoom At Higher Magnification", new AcceptableValueRange<float>(0f, 3f), new ConfigurationManagerAttributes { Order = 70 }));
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Chance Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
+            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
             SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
-            VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.Plus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
-            VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.Minus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
+            VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.KeypadPlus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
+            VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.KeypadMinus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
 
-            if (!EnableVariableZoom.Value) 
+            ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 10f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
+            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.01f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(-1f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+
+            /*            new TacticalRangeFinderControllerPatch().Enable();*/
+            /*            new OnWeaponParametersChangedPatch().Enable();*/
+
+            if (!EnableVariableZoom.Value)
             {
                 new OpticSightAwakePatch().Enable();
             }
-
-/*            new TacticalRangeFinderControllerPatch().Enable();*/
-/*            new OnWeaponParametersChangedPatch().Enable();*/
-
             new method_20Patch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
             new SetScopeModePatch().Enable();
+            if (ChangeMouseSens.Value) 
+            {
+                new AimingSensitivityPatch().Enable();
+            }
         }
 
 
