@@ -25,7 +25,6 @@ namespace FOVFix
                 Plugin.AimingSens = newSens;
                 if (Plugin.isRealismModPresent) 
                 {
-                    Logger.LogWarning("Realism Not Present");
                     ____aimingSens = newSens;
                 }
             }
