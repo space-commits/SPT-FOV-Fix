@@ -15,7 +15,6 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-
         public static bool IsOptic;
         public static bool HasRAPTAR = false;
         public static bool IsReady = false;
@@ -27,8 +26,9 @@ namespace FOVFix
         public static bool IsAiming = false;
         public static bool ChangeSight = false;
 
-        public static ConfigEntry<bool> TrueOneX { get; set; }
-        public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
+       /* public static ConfigEntry<bool> TrueOneX { get; set; }*/
+       /*public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }*/
+
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
         public static ConfigEntry<float> PistolOffset { get; set; }
@@ -95,17 +95,17 @@ namespace FOVFix
 
         private void Awake()
         {
-            string scopeFOV = "1. Scope Zoom";
+            /*            string scopeFOV = "1. Scope Zoom";*/
+            string variable = "1. Variable Zoom.";
             string adsFOV = "2. ADS FOV";
             string cameraPostiion = "3. ADS Camera Position";
             string toggleZoom = "4. Toggleable Zoom";
-            string misc = "5. Misc.";
-            string variable = "6. Variable Zoom.";
-            string sens = "7. Mouse Sensitivity.";
+            string sens = "5. Mouse Sensitivity.";
+            string misc = "6. Misc.";
 
-            GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi", 0.75f, new ConfigDescription("Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.1f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
-            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
-
+/*            GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi (Deprecated)", 0.75f, new ConfigDescription("Only Used If Variable Zoom Is Disabled. Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.01f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
+*//*            TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
+*/
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
             PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
@@ -148,21 +148,17 @@ namespace FOVFix
             MouseWheelBind = Config.Bind(variable, "Mouswheel + Keybind", new KeyboardShortcut(KeyCode.RightControl), new ConfigDescription("Hold While Using Mouse Wheel.", null, new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 6f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
-            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.001f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 10f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
+            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
 
 
             /*            disableRangeF = Config.Bind<bool>(misc, "Disable Range Finder Patch", false, new ConfigDescription("Disables Patching For Range Finders. Use This Option If There Are Any Unforseen Issues With Range Finders.", null, new ConfigurationManagerAttributes { Order = 3 }));
             */
             /*            new TacticalRangeFinderControllerPatch().Enable();*/
             /*            new OnWeaponParametersChangedPatch().Enable();*/
-            /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
-*/
+            /*            rangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));*/
+            /* new OpticSightAwakePatch().Enable();*/
 
-            if (!EnableVariableZoom.Value)
-            {
-                new OpticSightAwakePatch().Enable();
-            }
             new method_20Patch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
