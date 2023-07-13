@@ -66,7 +66,7 @@
     "5c0517910db83400232ffee5": {
         "ItemID": "5c0517910db83400232ffee5",
         "Name": "scope_all_valday_ps320",
-        "MinZoom": 1.5,
+        "MinZoom": 1.1,
         "MaxZoom": 6,
         "IsFixed": "true",
         "CanToggle": "true"
@@ -197,7 +197,7 @@
         "MinZoom": 3,
         "MaxZoom": 10,
         "IsFixed": "false",
-        "CanToggle": "false"
+        "CanToggle": "true"
     },
     "5d0a3e8cd7ad1a6f6a3d35bd": {
         "ItemID": "5d0a3e8cd7ad1a6f6a3d35bd",
@@ -205,12 +205,12 @@
         "MinZoom": 3,
         "MaxZoom": 10,
         "IsFixed": "false",
-        "CanToggle": "false"
+        "CanToggle": "true"
     },
     "5b2388675acfc4771e1be0be": {
         "ItemID": "5b2388675acfc4771e1be0be",
         "Name": "scope_30mm_burris_fullfield_tac30_1_4x24",
-        "MinZoom": 1.3,
+        "MinZoom": 1.05,
         "MaxZoom": 4,
         "IsFixed": "false",
         "CanToggle": "false"
@@ -218,7 +218,7 @@
     "5b3b99475acfc432ff4dcbee": {
         "ItemID": "5b3b99475acfc432ff4dcbee",
         "Name": "scope_30mm_eotech_vudu_1_6x24",
-        "MinZoom": 1.2,
+        "MinZoom": 1.025,
         "MaxZoom": 6,
         "IsFixed": "false",
         "CanToggle": "false"
@@ -234,7 +234,7 @@
     "617151c1d92c473c770214ab": {
         "ItemID": "617151c1d92c473c770214ab",
         "Name": "scope_30mm_s&b_pm_ii_1_8x24",
-        "MinZoom": 1.15,
+        "MinZoom": 1.01,
         "MaxZoom": 8,
         "IsFixed": "false",
         "CanToggle": "false"
@@ -317,7 +317,7 @@
         "MinZoom": 1,
         "MaxZoom": 1,
         "IsFixed": "true",
-        "CanToggle": "false"
+        "CanToggle": "true"
     },
     "609bab8b455afd752b2e6138": {
         "ItemID": "609bab8b455afd752b2e6138",

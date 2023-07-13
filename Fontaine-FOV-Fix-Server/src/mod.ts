@@ -16,12 +16,16 @@ class Mod implements IPostDBLoadMod {
 
         for (let i in itemDB) {
             let serverItem = itemDB[i];
-            if(serverItem._id === "5c07dd120db834001c39092d" || serverItem._id === "5c0a2cec0db834001b7ce47d" || serverItem._parent === "55818add4bdc2d5b648b456f" || serverItem._parent === "55818ae44bdc2dde698b456c" || serverItem._parent === "55818ae44bdc2dde698b456c" || serverItem._parent ==="55818aeb4bdc2ddc698b456a"){
-                for(let j in ScopeTemplates){
+            if (serverItem._id === "5c07dd120db834001c39092d" || serverItem._id === "5c0a2cec0db834001b7ce47d" || serverItem._parent === "55818add4bdc2d5b648b456f" || serverItem._parent === "55818ae44bdc2dde698b456c" || serverItem._parent === "55818ae44bdc2dde698b456c" || serverItem._parent === "55818aeb4bdc2ddc698b456a") {
+                for (let j in ScopeTemplates) {
                     let fileItem = ScopeTemplates[j];
-                    if(fileItem.ItemID === serverItem._id){
+                    if (fileItem.ItemID === serverItem._id) {
 
-                        if(fileItem.IsFixed == true){
+
+                        if (serverItem._id === "5d0a3a58d7ad1a669c15ca14" || serverItem._id === "5d0a3e8cd7ad1a6f6a3d35bd") {
+                            serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
+                        }
+                        else if (fileItem.IsFixed == true) {
                             serverItem._props.Zooms = [[fileItem.MinZoom]];
                         }
                         else {
