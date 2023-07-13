@@ -25,7 +25,7 @@ class Mod implements IPostDBLoadMod {
                         if (serverItem._id === "5d0a3a58d7ad1a669c15ca14" || serverItem._id === "5d0a3e8cd7ad1a6f6a3d35bd") {
                             serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
                         }
-                        else if (fileItem.IsFixed == true) {
+                        else if (fileItem.IsFixed == true && fileItem.CanToggle == false ) {
                             serverItem._props.Zooms = [[fileItem.MinZoom]];
                         }
                         else {
