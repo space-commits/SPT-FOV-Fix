@@ -60,6 +60,8 @@ namespace FOVFix
 
         public static bool IsFixedMag = false;
         public static bool CanToggle = false;
+        public static bool IsSpecial = false;
+        public static bool IsFucky = false;
         public static float MinZoom = 1f;
         public static float MaxZoom = 1f;
         public static float CurrentZoom = 1f;
@@ -218,7 +220,7 @@ namespace FOVFix
             {
                 Plugin.haveResetDict = false;
 
-                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && !Plugin.CanToggle && Plugin.IsAiming)
+                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && (!Plugin.CanToggle || Plugin.IsSpecial) && Plugin.IsAiming)
                 {
                     if (Plugin.UseSmoothZoom.Value)
                     {

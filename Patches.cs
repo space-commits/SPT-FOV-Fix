@@ -122,15 +122,22 @@ namespace FOVFix
                                 Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
                                 SightModClass sightModClass = currentAimingMod as SightModClass;
                                 GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
-                                bool isFixedMag = currentAimingMod.Template.HasShoulderContact;
-                                bool canToggle = currentAimingMod.Template.ToolModdable;
+                                Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
+                                Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
+                                Plugin.IsFucky = Plugin.CanToggle && !Plugin.IsFixedMag && inter.Zooms[0].Length > 2;
+                                Plugin.IsSpecial = Plugin.CanToggle && !Plugin.IsFixedMag;
                                 float minZoom = 1f;
                                 float maxZoom = 1f;
 
-                                if (isFixedMag)
+                                if (Plugin.IsFixedMag)
                                 {
                                     minZoom = inter.Zooms[0][0];
                                     maxZoom = minZoom;
+                                }
+                                else if (Plugin.IsFucky)
+                                {
+                                    minZoom = inter.Zooms[0][0];
+                                    maxZoom = inter.Zooms[0][2];
                                 }
                                 else
                                 {
@@ -140,8 +147,6 @@ namespace FOVFix
 
                                 Plugin.MinZoom = minZoom;
                                 Plugin.MaxZoom = maxZoom;
-                                Plugin.IsFixedMag = isFixedMag;
-                                Plugin.CanToggle = canToggle;
 
                                 Plugin.CurrentWeapID = __instance.Item.Id.ToString();
                                 Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
@@ -176,9 +181,9 @@ namespace FOVFix
                                     Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
                                 }
 
-                                bool isElcan = isFixedMag && canToggle;
-
-                                if (!isElcan && (isFixedMag || !weapExists || !scopeExists))
+                                bool isElcan = Plugin.IsFixedMag && Plugin.CanToggle;
+                
+                                if (!isElcan && (Plugin.IsFixedMag || !weapExists || !scopeExists))
                                 {
                                     Plugin.CurrentZoom = minZoom;
                                     Plugin.ZoomScope(minZoom);
