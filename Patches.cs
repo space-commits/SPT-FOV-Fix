@@ -426,7 +426,7 @@ namespace FOVFix
             }
         }
     }
-/*    public class OpticSightAwakePatch : ModulePatch
+    public class OpticSightAwakePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
@@ -449,61 +449,60 @@ namespace FOVFix
             }
             return false;
         }
-    }*/
+    }
 
-    /*
-        public class OnWeaponParametersChangedPatch : ModulePatch
+    public class OnWeaponParametersChangedPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
         {
-            protected override MethodBase GetTargetMethod()
-            {
-                return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
-            }
+            return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
+        }
 
-            [PatchPostfix]
-            private static void PatchPostfix(ShotEffector __instance)
+        [PatchPostfix]
+        private static void PatchPostfix(ShotEffector __instance)
+        {
+            IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
+            if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
             {
-                IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
-                if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
+                Plugin.HasRAPTAR = false;
+
+                if (!_weapon.IsUnderbarrelWeapon)
                 {
-                    Plugin.HasRAPTAR = false;
-
-                    if (!_weapon.IsUnderbarrelWeapon)
+                    Weapon weap = _weapon.Item as Weapon;
+                    Mod[] weapMods = weap.Mods;
+                    foreach (Mod mod in weapMods)
                     {
-                        Weapon weap = _weapon.Item as Weapon;
-                        Mod[] weapMods = weap.Mods;
-                        foreach (Mod mod in weapMods)
+                        if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
                         {
-                            if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
-                            {
-                                Plugin.HasRAPTAR = true;
-                            }
+                            Plugin.HasRAPTAR = true;
                         }
                     }
-
                 }
+
             }
         }
+    }
 
 
-        public class TacticalRangeFinderControllerPatch : ModulePatch
+    public class TacticalRangeFinderControllerPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
         {
-            protected override MethodBase GetTargetMethod()
-            {
-                return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
-            }
-
-            [PatchPostfix]
-            private static void PatchPostfix()
-            {
-
-                if (Plugin.HasRAPTAR == false && Plugin.DisableRangeF.Value == false)
-                {
-                    CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
-                }
-
-            }
+            return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.NonPublic);
         }
-    */
+
+        [PatchPostfix]
+        private static void PatchPostfix()
+        {
+
+            if (Plugin.HasRAPTAR == false)
+            {
+                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
+            }
+
+        }
+    }
+
 
     //better to do it in method_17Patch, as this method also sets FOV in general.
     /*    public class SetFovPatch : ModulePatch
