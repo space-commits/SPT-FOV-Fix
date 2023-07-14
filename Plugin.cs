@@ -91,7 +91,8 @@ namespace FOVFix
 
         public static float AimingSens = 1f;
 
-        public static bool isRealismModPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
+        public static bool RealismModIsPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
+        public static bool RecoilStandaloneIsPresent = Chainloader.PluginInfos.ContainsKey("RecoilStandalone");
 
         private void Awake()
         {
@@ -148,7 +149,7 @@ namespace FOVFix
             MouseWheelBind = Config.Bind(variable, "Mouswheel + Keybind", new KeyboardShortcut(KeyCode.RightControl), new ConfigDescription("Hold While Using Mouse Wheel.", null, new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 10f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 5f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
             MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
 
 
@@ -205,11 +206,12 @@ namespace FOVFix
                 {
                     cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
 
-                    /*
-                                        float factor = 2.0f * Mathf.Tan(0.5f * Plugin.BaseScopeFOV.Value * Mathf.Deg2Rad);
-                                        float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
-                                        cam.fieldOfView = zoomedFOV;
-                    */
+                    //alternative calculation, doesn't work as well but might be useful in future
+/*
+                    float factor = 2.0f * currentZoom * Mathf.Tan(Plugin.BaseScopeFOV.Value * 0.5f * Mathf.Deg2Rad);
+                    float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
+                    cam.fieldOfView = zoomedFOV;*/
+
                 }
             }
         }
