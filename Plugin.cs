@@ -87,7 +87,7 @@ namespace FOVFix
 
 
         public static ConfigEntry<float> MouseSensFactor { get; set; }
-        public static ConfigEntry<float> MouseSensLowerLimit { get; set; }
+/*        public static ConfigEntry<float> MouseSensLowerLimit { get; set; }*/
         public static ConfigEntry<bool> ChangeMouseSens { get; set; }
 
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
@@ -108,7 +108,7 @@ namespace FOVFix
             string scopeFOV = "7. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
-            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 27f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
+            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
             MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.1f, new ConfigDescription("FOV Is Determined By Base FOV / Magnification Raised To This Power Factor. Higher Factor Means More Zoom At Higher Magnification", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 70 }));
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
             ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom Or Using Scroll Wheel, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
@@ -144,9 +144,9 @@ namespace FOVFix
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 10f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
-            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
-
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 90f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 200f), new ConfigurationManagerAttributes { Order = 50 }));
+/*            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+*/
             PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 8f, new ConfigDescription("If Using Realism Or Combat Stances, It Is Recommended To Set This To 0. The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
             OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
             CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -207,16 +207,6 @@ namespace FOVFix
 
         public static void ZoomScope(float currentZoom)
         {
-            /*            for (int num = 0; num != Player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache.ModesCount; num++)
-                        {
-                            OpticSight opticSight = Player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache.GetOpticSight(num);
-                            opticSight.TemplateCamera.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
-
-                        }
-
-            */
-
-
             OpticCratePanel panelUI = (OpticCratePanel)AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel").GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
             panelUI.Show(currentZoom + "x");
 
@@ -227,7 +217,8 @@ namespace FOVFix
                 {
                     cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
 
-/*                    float mainCamFOV = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.FieldOfView;
+/*
+                    float mainCamFOV = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.FieldOfView;
                     float newFOV = 2.0f * Mathf.Atan(Mathf.Tan(mainCamFOV * 0.5f * Mathf.PI / 180f) / (2.0f * currentZoom)) * 180f / Mathf.PI * 2.0f;
                     float adjustedFOV = 2.0f * Mathf.Atan(Mathf.Tan(newFOV * 0.5f * Mathf.PI / 180f) * (1.3f / 10.0f)) * 180f / Mathf.PI * 2.0f;
 
@@ -287,15 +278,13 @@ namespace FOVFix
                     }
                 }
 
-                if (((EnableExtraZoomOptic.Value || EnableExtraZoomNonOptic.Value) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
+                if ((((EnableExtraZoomOptic.Value && Plugin.IsOptic) || (EnableExtraZoomNonOptic.Value && !Plugin.IsOptic)) && Plugin.IsAiming) || Plugin.EnableZoomOutsideADS.Value)
                 {
-                    var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-
-                    if (HoldZoom.Value)
+                    if (Plugin.HoldZoom.Value)
                     {
-
                         if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
                         {
+                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = true;
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = true;
@@ -304,6 +293,7 @@ namespace FOVFix
                         }
                         if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
                         {
+                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = false;
                         }
@@ -312,10 +302,20 @@ namespace FOVFix
                     {
                         if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                         {
+                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = !Plugin.DoZoom;
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.CalledZoom = !Plugin.CalledZoom;
                         }
                     }
+                }
+                if (!Plugin.IsAiming && Plugin.CalledZoom && !Plugin.HoldZoom.Value && !Plugin.EnableZoomOutsideADS.Value)
+                {
+                    Logger.LogWarning("un zooming");
+                    var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+                    Plugin.DoZoom = false;
+                    method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                    Plugin.CalledZoom = false;
                 }
             }
 

@@ -108,9 +108,9 @@ namespace FOVFix
                     maxZoom = inter.Zooms[0][1];
                 }
 
-                isFucky = minZoom == 1 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle;
+                isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
 
-                if (!canToggle && !isFucky)
+                if (!canToggle && !isFucky )
                 {
                     return false;
                 }
@@ -221,8 +221,7 @@ namespace FOVFix
                                     maxZoom = inter.Zooms[0][1];
                                 }
 
-                                Plugin.IsFucky = minZoom == 1 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle;
-
+                                Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
 
                                 if (Plugin.IsFucky && !Plugin.IsFixedMag && !Plugin.CanToggle)
                                 {
@@ -477,7 +476,7 @@ namespace FOVFix
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
 
-                            if (Plugin.DoZoom && ((Plugin.EnableExtraZoomOptic.Value && isOptic) || (Plugin.EnableExtraZoomNonOptic.Value && !isOptic) || (Plugin.EnableZoomOutsideADS.Value && !Plugin.IsAiming)))
+                            if (Plugin.DoZoom)
                             {
                                 float zoomFactor = isOptic ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
                                 float zoomedFOV = fov * zoomFactor;
