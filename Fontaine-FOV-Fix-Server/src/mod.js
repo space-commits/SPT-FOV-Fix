@@ -15,11 +15,17 @@ class Mod {
                         if (serverItem._id === "5d0a3a58d7ad1a669c15ca14" || serverItem._id === "5d0a3e8cd7ad1a6f6a3d35bd") {
                             serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
                         }
+                        else if (serverItem._id === "57aca93d2459771f2c7e26db" || serverItem._id === "57ac965c24597706be5f975c" || serverItem._id === "5c0517910db83400232ffee5") {
+                            serverItem._props.Zooms = [[fileItem.MaxZoom, fileItem.MinZoom]];
+                        }
                         else if (fileItem.IsFixed == true && fileItem.CanToggle == false) {
                             serverItem._props.Zooms = [[fileItem.MinZoom]];
                         }
                         else {
                             serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom]];
+                        }
+                        for (let k in serverItem._props.AimSensitivity[0]) {
+                            serverItem._props.AimSensitivity[0][k] = 0.7;
                         }
                         serverItem._props.HasShoulderContact = fileItem.IsFixed;
                         serverItem._props.ToolModdable = fileItem.CanToggle;

@@ -9,6 +9,8 @@ using EFT.Animations;
 using EFT.InventoryLogic;
 using EFT.CameraControl;
 using BepInEx.Bootstrap;
+using EFT.UI;
+using System;
 
 namespace FOVFix
 {
@@ -61,7 +63,7 @@ namespace FOVFix
 
         public static bool IsFixedMag = false;
         public static bool CanToggle = false;
-        public static bool IsSpecial = false;
+        public static bool CanToggleButNotFixed = false;
         public static bool IsFucky = false;
         public static float MinZoom = 1f;
         public static float MaxZoom = 1f;
@@ -109,7 +111,7 @@ namespace FOVFix
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 27f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
             MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.1f, new ConfigDescription("FOV Is Determined By Base FOV / Magnification Raised To This Power Factor. Higher Factor Means More Zoom At Higher Magnification", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 70 }));
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.1f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
+            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom Or Using Scroll Wheel, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
             SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
             UseMouseWheel = Config.Bind<bool>(variable, "Use Mouse Wheel", false, new ConfigDescription("Mouse Scroll Changes Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
             UseMouseWheelPlusKey = Config.Bind<bool>(variable, "Need To Hold Key With Mouse Wheel", false, new ConfigDescription("Required To Hold The Mousewheel Keybind + Scroll To Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
@@ -142,7 +144,7 @@ namespace FOVFix
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 5f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 10f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 50 }));
             MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
 
             PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 8f, new ConfigDescription("If Using Realism Or Combat Stances, It Is Recommended To Set This To 0. The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
@@ -163,22 +165,22 @@ namespace FOVFix
             {
                 new ChangeAimingModePatch().Enable();
                 new SetScopeModePatch().Enable();
+                new OperationSetScopeModePatch().Enable();
 
-                if (ChangeMouseSens.Value)
+                if (Plugin.ChangeMouseSens.Value)
                 {
                     new AimingSensitivityPatch().Enable();
                 }
             }
             else 
             {
-                new OpticSightAwakePatch().Enable();
+              
                 new TacticalRangeFinderControllerPatch().Enable();
                 new OnWeaponParametersChangedPatch().Enable();
+                new OpticSightAwakePatch().Enable();
             }
 
-
         }
-
 
         public static void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
         {
@@ -205,18 +207,36 @@ namespace FOVFix
 
         public static void ZoomScope(float currentZoom)
         {
+            /*            for (int num = 0; num != Player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache.ModesCount; num++)
+                        {
+                            OpticSight opticSight = Player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache.GetOpticSight(num);
+                            opticSight.TemplateCamera.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
+
+                        }
+
+            */
+
+
+            OpticCratePanel panelUI = (OpticCratePanel)AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel").GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
+            panelUI.Show(currentZoom + "x");
+
             Camera[] cams = Camera.allCameras;
-            foreach (Camera cam in cams) 
+            foreach (Camera cam in cams)
             {
-                if (cam.name == "BaseOpticCamera(Clone)") 
+                if (cam.name == "BaseOpticCamera(Clone)")
                 {
                     cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
 
+/*                    float mainCamFOV = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.FieldOfView;
+                    float newFOV = 2.0f * Mathf.Atan(Mathf.Tan(mainCamFOV * 0.5f * Mathf.PI / 180f) / (2.0f * currentZoom)) * 180f / Mathf.PI * 2.0f;
+                    float adjustedFOV = 2.0f * Mathf.Atan(Mathf.Tan(newFOV * 0.5f * Mathf.PI / 180f) * (1.3f / 10.0f)) * 180f / Mathf.PI * 2.0f;
+
+                    cam.fieldOfView = adjustedFOV;*/
                     //alternative calculation, doesn't work as well but might be useful in future
-/*
-                    float factor = 2.0f * currentZoom * Mathf.Tan(Plugin.BaseScopeFOV.Value * 0.5f * Mathf.Deg2Rad);
-                    float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
-                    cam.fieldOfView = zoomedFOV;*/
+
+                    /*      float factor = 2.0f * currentZoom * Mathf.Tan(Plugin.BaseScopeFOV.Value * 0.5f * Mathf.Deg2Rad);
+                          float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
+                          cam.fieldOfView = zoomedFOV;*/
 
                 }
             }
@@ -230,7 +250,7 @@ namespace FOVFix
             {
                 Plugin.haveResetDict = false;
 
-                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && (!Plugin.CanToggle || Plugin.IsSpecial) && Plugin.IsAiming)
+                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
                 {
                     if (Plugin.UseSmoothZoom.Value)
                     {
@@ -258,7 +278,7 @@ namespace FOVFix
                     {
                         if (Input.GetKey(MouseWheelBind.Value.MainKey) || !Plugin.UseMouseWheelPlusKey.Value)
                         {
-                            float scrollDelta = Input.mouseScrollDelta.y;
+                            float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomSteps.Value;
                             if (scrollDelta != 0f) 
                             {
                                 Plugin.HandleZoomInput(scrollDelta);
