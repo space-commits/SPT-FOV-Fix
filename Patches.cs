@@ -181,122 +181,119 @@ namespace FOVFix
             {
                 Plugin.IsAiming = __result;
 
-                if (Plugin.EnableVariableZoom.Value)
+                if (Plugin.EnableVariableZoom.Value && Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight))
                 {
-                    if (Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight))
+                    Plugin.ChangeSight = false;
+                    ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+                    if (pwa.CurrentScope.IsOptic)
                     {
-                        Plugin.ChangeSight = false;
-                        ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-                        if (pwa.CurrentScope.IsOptic)
+                        adsTimer += Time.deltaTime;
+
+                        if (adsTimer >= 0.5f)
                         {
-                            adsTimer += Time.deltaTime;
+                            hasSetFov = true;
+                            Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
+                            SightModClass sightModClass = currentAimingMod as SightModClass;
+                            SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
+                            GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+                            Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
+                            Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
+                            Plugin.CanToggleButNotFixed = Plugin.CanToggle && !Plugin.IsFixedMag;
+                            float minZoom = 1f;
+                            float maxZoom = 1f;
 
-                            if (adsTimer >= 0.5f)
+
+                            if (Plugin.IsFixedMag)
                             {
-                                hasSetFov = true;
-                                Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
-                                SightModClass sightModClass = currentAimingMod as SightModClass;
-                                SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
-                                GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
-                                Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
-                                Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
-                                Plugin.CanToggleButNotFixed = Plugin.CanToggle && !Plugin.IsFixedMag;
-                                float minZoom = 1f;
-                                float maxZoom = 1f;
+                                minZoom = inter.Zooms[0][0];
+                                maxZoom = minZoom;
+                            }
+                            else if (Plugin.CanToggleButNotFixed && inter.Zooms[0].Length > 2)
+                            {
+                                minZoom = inter.Zooms[0][0];
+                                maxZoom = inter.Zooms[0][2];
+                            }
+                            else
+                            {
+                                minZoom = inter.Zooms[0][0];
+                                maxZoom = inter.Zooms[0][1];
+                            }
 
-                      
-                                if (Plugin.IsFixedMag)
+                            Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
+
+                            if (Plugin.IsFucky && !Plugin.IsFixedMag && !Plugin.CanToggle)
+                            {
+                                __instance.SetScopeMode(getScopeMode(player.ProceduralWeaponAnimation.CurrentAimingMod, __instance.Item));
+                            }
+
+
+                            Plugin.MinZoom = minZoom;
+                            Plugin.MaxZoom = maxZoom;
+
+                            Plugin.CurrentWeapID = __instance.Item.Id.ToString();
+                            Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
+
+                            bool weapExists = true;
+                            bool scopeExists = false;
+                            float rememberedZoom = minZoom;
+
+                            if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+                            {
+                                weapExists = false;
+                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
+                            }
+
+                            List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                            foreach (Dictionary<string, float> scopeDict in scopes)
+                            {
+                                if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
                                 {
-                                    minZoom = inter.Zooms[0][0];
-                                    maxZoom = minZoom;
+                                    rememberedZoom = scopeDict[Plugin.CurrentScopeID];
+                                    scopeExists = true;
+                                    break;
                                 }
-                                else if (Plugin.CanToggleButNotFixed && inter.Zooms[0].Length > 2)
-                                {
-                                    minZoom = inter.Zooms[0][0];
-                                    maxZoom = inter.Zooms[0][2];
-                                }
-                                else
-                                {
-                                    minZoom = inter.Zooms[0][0];
-                                    maxZoom = inter.Zooms[0][1];
-                                }
+                            }
 
-                                Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
-
-                                if (Plugin.IsFucky && !Plugin.IsFixedMag && !Plugin.CanToggle)
-                                {
-                                    __instance.SetScopeMode(getScopeMode(player.ProceduralWeaponAnimation.CurrentAimingMod, __instance.Item));
-                                }
-
-
-                                Plugin.MinZoom = minZoom;
-                                Plugin.MaxZoom = maxZoom;
-
-                                Plugin.CurrentWeapID = __instance.Item.Id.ToString();
-                                Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
-
-                                bool weapExists = true;
-                                bool scopeExists = false;
-                                float rememberedZoom = minZoom;
-
-                                if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
-                                {
-                                    weapExists = false;
-                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
-                                }
-
-                                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
-                                foreach (Dictionary<string, float> scopeDict in scopes)
-                                {
-                                    if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
-                                    {
-                                        rememberedZoom = scopeDict[Plugin.CurrentScopeID];
-                                        scopeExists = true;
-                                        break;
-                                    }
-                                }
-
-                                if (!scopeExists)
-                                {
-                                    Dictionary<string, float> newScope = new Dictionary<string, float>
+                            if (!scopeExists)
+                            {
+                                Dictionary<string, float> newScope = new Dictionary<string, float>
                                         {
                                            { Plugin.CurrentScopeID, minZoom }
                                         };
-                                    Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
-                                }
+                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
+                            }
 
-                                bool isElcan = Plugin.IsFixedMag && Plugin.CanToggle;
-                
-                                if (!isElcan && (Plugin.IsFixedMag || !weapExists || !scopeExists))
-                                {
-                                    Plugin.CurrentZoom = minZoom;
-                                    Plugin.ZoomScope(minZoom);
-                                }
+                            bool isElcan = Plugin.IsFixedMag && Plugin.CanToggle;
 
-                                if (weapExists && scopeExists)
-                                {
-                                    Plugin.CurrentZoom = rememberedZoom;
-                                    Plugin.ZoomScope(rememberedZoom);
-                                }
+                            if (!isElcan && (Plugin.IsFixedMag || !weapExists || !scopeExists))
+                            {
+                                Plugin.CurrentZoom = minZoom;
+                                Plugin.ZoomScope(minZoom);
+                            }
 
-                                if (isElcan)
-                                {
-                                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
-                                    Plugin.CurrentZoom = currentToggle;
-                                    Plugin.ZoomScope(currentToggle);
-                                }
+                            if (weapExists && scopeExists)
+                            {
+                                Plugin.CurrentZoom = rememberedZoom;
+                                Plugin.ZoomScope(rememberedZoom);
+                            }
+
+                            if (isElcan)
+                            {
+                                float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                                Plugin.CurrentZoom = currentToggle;
+                                Plugin.ZoomScope(currentToggle);
                             }
                         }
-                        else 
-                        {
-                            Plugin.CurrentZoom = 1f;
-                        }
                     }
-                    else if (!Plugin.IsAiming)
+                    else
                     {
-                        adsTimer = 0f;
-                        hasSetFov = false;
+                        Plugin.CurrentZoom = 1f;
                     }
+                }
+                else if (!Plugin.IsAiming)
+                {
+                    adsTimer = 0f;
+                    hasSetFov = false;
                 }
             }
         }
