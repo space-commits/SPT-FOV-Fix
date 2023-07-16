@@ -78,7 +78,7 @@
         "MaxZoom": 6,
         "IsFixed": true,
         "CanToggle": true,
-        "Unfuck": false
+        "Unfuck": true
     },
     "5c1cdd512e22161b267d91ae": {
         "ItemID": "5c1cdd512e22161b267d91ae",

@@ -241,13 +241,18 @@ namespace FOVFix
                                 minZoom = inter.Zooms[0][0];
                                 maxZoom = inter.Zooms[0][2];
                             }
-                            else
+                            else if (inter.Zooms[0][0] > inter.Zooms[0][1])
+                            {
+                                maxZoom = inter.Zooms[0][0];
+                                minZoom = inter.Zooms[0][1];
+                            }
+                            else 
                             {
                                 minZoom = inter.Zooms[0][0];
                                 maxZoom = inter.Zooms[0][1];
                             }
 
-                            Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
+                            Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle && currentAimingMod.TemplateId != "5b2388675acfc4771e1be0be");
                             if (Plugin.IsFucky)
                             {
                                 __instance.SetScopeMode(getScopeModeFullList(__instance.Item, player));
@@ -349,12 +354,12 @@ namespace FOVFix
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 vector = new Vector2(-70f, 70f);
+            Vector2 vector = new Vector2(-60f, 60f);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
-            if (isAiming)
+     /*       if (isAiming)
             {
                 vector *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
-            }
+            }*/
             Vector3 eulerAngles = __instance.ProceduralWeaponAnimation.HandsContainer.CameraTransform.eulerAngles;
             if (eulerAngles.x >= 50f && eulerAngles.x <= 90f && __instance.MovementContext.IsSprintEnabled)
             {
