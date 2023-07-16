@@ -108,8 +108,6 @@ namespace FOVFix
                 maxZoom = inter.Zooms[0][1];
             }
 
-            Logger.LogWarning("SelectedScopeIndex " + sightComp.SelectedScopeIndex);
-            Logger.LogWarning("SelectedScopeMode " + sightComp.SelectedScopeMode);
             isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
             if (!canToggle && !Plugin.IsFucky)
             {
@@ -204,29 +202,6 @@ namespace FOVFix
             return sightStructList.ToArray();
         }
 
-        private static GStruct144[] getScopeMode(SightComponent sightComponent, Weapon weapon, ManualLogSource logger)
-        {
-            List<GStruct144> list = new List<GStruct144>();
-            int aimIndex = weapon.AimIndex.Value;
-            int index = 0;
-            for (int i = 0; i < sightComponent.ScopesCount; i++)
-            {
-                int sightMode = (sightComponent.ScopesSelectedModes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesSelectedModes[i];
-                int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                logger.LogWarning(sightComponent.Item.LocalizedName());
-                list.Add(new GStruct144
-                {
-                    Id = sightComponent.Item.Id,
-                    ScopeIndexInsideSight = i,
-                    ScopeMode = ((index == aimIndex) ? (sightMode + 1) : sightMode),
-                    ScopeCalibrationIndex = scopeCalibrationIndex
-                });
-                index++;
-            }
-            return list.ToArray();
-
-        }
-
         [PatchPostfix]
         private static void PatchPostfix(Player.FirearmController __instance, bool __result)
         {
@@ -271,8 +246,7 @@ namespace FOVFix
                                 minZoom = inter.Zooms[0][0];
                                 maxZoom = inter.Zooms[0][1];
                             }
-                            Logger.LogWarning("aiming SelectedScopeIndex " + sightComp.SelectedScopeIndex);
-                            Logger.LogWarning("aiming SelectedScopeMode " + sightComp.SelectedScopeMode);
+
                             Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
                             if (Plugin.IsFucky)
                             {
@@ -375,7 +349,7 @@ namespace FOVFix
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 vector = instance.MOUSE_LOOK_HORIZONTAL_LIMIT;
+            Vector2 vector = new Vector2(-70f, 70f);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
             if (isAiming)
             {
