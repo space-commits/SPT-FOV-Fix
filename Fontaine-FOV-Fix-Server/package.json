@@ -1,6 +1,6 @@
 {
     "name": "Fontaine FOV Fix",
-    "version": "1.0.0",
+    "version": "1.6.2",
     "main": "src/mod.js",
     "license": "CC BY-NC-SA",
     "author": "Fontaine",
