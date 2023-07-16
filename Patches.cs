@@ -252,7 +252,7 @@ namespace FOVFix
                                 maxZoom = inter.Zooms[0][1];
                             }
 
-                            Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle);
+                            Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle && currentAimingMod.TemplateId != "5b2388675acfc4771e1be0be");
                             if (Plugin.IsFucky)
                             {
                                 __instance.SetScopeMode(getScopeModeFullList(__instance.Item, player));
