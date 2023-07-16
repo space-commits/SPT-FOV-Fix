@@ -31,12 +31,11 @@ namespace FOVFix
                     if (cam.name == "FPS Camera") 
                     {
                         mainCamera = cam;
-                        break;
+                        continue;
                     }
                     if (cam.name == "BaseOpticCamera(Clone)") 
                     {
                         scopeCamera = cam;
-                        break;
                     }
                 }
 
@@ -54,8 +53,6 @@ namespace FOVFix
                     ____aimingSens = newSens;
                 }
             }
-
-
         }
     }
 }

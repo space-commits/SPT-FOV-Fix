@@ -62,7 +62,7 @@ namespace FOVFix
         {
             switch (zoom)
             {
-                case <= 1:
+                case <= 1.5f:
                     return Plugin.OneADSMulti.Value;
                 case <= 2:
                     return Plugin.TwoADSMulti.Value;

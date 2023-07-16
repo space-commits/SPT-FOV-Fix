@@ -11,6 +11,7 @@ using EFT.CameraControl;
 using BepInEx.Bootstrap;
 using EFT.UI;
 using System;
+using System.Reflection;
 
 namespace FOVFix
 {
@@ -108,7 +109,7 @@ namespace FOVFix
             string scopeFOV = "7. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
-            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
+            BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV.", 30f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
             MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.1f, new ConfigDescription("FOV Is Determined By Base FOV / Magnification Raised To This Power Factor. Higher Factor Means More Zoom At Higher Magnification", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 70 }));
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
             ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom Or Using Scroll Wheel, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
@@ -231,6 +232,9 @@ namespace FOVFix
 
                 }
             }
+
+            MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
         }
 
         void Update()
@@ -284,7 +288,7 @@ namespace FOVFix
                     {
                         if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
                         {
-                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+                            MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = true;
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = true;
@@ -293,7 +297,7 @@ namespace FOVFix
                         }
                         if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
                         {
-                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+                            MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = false;
                         }
@@ -302,7 +306,7 @@ namespace FOVFix
                     {
                         if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                         {
-                            var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+                            MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = !Plugin.DoZoom;
                             method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = !Plugin.CalledZoom;
@@ -311,8 +315,7 @@ namespace FOVFix
                 }
                 if (!Plugin.IsAiming && Plugin.CalledZoom && !Plugin.HoldZoom.Value && !Plugin.EnableZoomOutsideADS.Value)
                 {
-                    Logger.LogWarning("un zooming");
-                    var method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
+                    MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                     Plugin.DoZoom = false;
                     method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
                     Plugin.CalledZoom = false;
