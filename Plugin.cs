@@ -72,8 +72,6 @@ namespace FOVFix
         public static float MaxZoom = 1f;
         public static float CurrentZoom = 1f;
 
-        public static float CurrentBrightness = 1f;
-
         public static string CurrentWeapID = "";
         public static string CurrentScopeID = "";
 
@@ -95,11 +93,6 @@ namespace FOVFix
 /*        public static ConfigEntry<float> MouseSensLowerLimit { get; set; }*/
         public static ConfigEntry<bool> ChangeMouseSens { get; set; }
 
-        public static ConfigEntry<float> r { get; set; }
-        public static ConfigEntry<float> g { get; set; }
-        public static ConfigEntry<float> b { get; set; }
-        public static ConfigEntry<float> a { get; set; }
-
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
         public static float AimingSens = 1f;
@@ -109,8 +102,6 @@ namespace FOVFix
 
         private void Awake()
         {
-            CollimatorSight.OnCollimatorUpdated += colmUpdate;
- 
             string variable = "1. Variable Zoom.";
             string adsFOV = "2. Player Camera ADS FOV";
             string cameraPostiion = "3. ADS Player Camera Position";
@@ -118,7 +109,6 @@ namespace FOVFix
             string sens = "5. Mouse Sensitivity.";
             string misc = "6. Misc.";
             string scopeFOV = "7. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
-            string test = "7. Test";
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 100 }));
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
@@ -169,11 +159,6 @@ namespace FOVFix
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
             RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
 
-            r = Config.Bind<float>(test, "r", 1, new ConfigDescription("", new AcceptableValueRange<float>(0f, 20f), new ConfigurationManagerAttributes { Order = 4 }));
-            g = Config.Bind<float>(test, "g", 1, new ConfigDescription("", new AcceptableValueRange<float>(0f, 20f), new ConfigurationManagerAttributes { Order = 3 }));
-            b = Config.Bind<float>(test, "b", 1, new ConfigDescription("", new AcceptableValueRange<float>(0f, 20f), new ConfigurationManagerAttributes { Order = 2 }));
-            a = Config.Bind<float>(test, "a", 1, new ConfigDescription("", new AcceptableValueRange<float>(0f, 20f), new ConfigurationManagerAttributes { Order = 1 }));
-
             new method_20Patch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
@@ -192,7 +177,6 @@ namespace FOVFix
             }
             else 
             {
-              
                 new TacticalRangeFinderControllerPatch().Enable();
                 new OnWeaponParametersChangedPatch().Enable();
                 new OpticSightAwakePatch().Enable();
@@ -234,19 +218,6 @@ namespace FOVFix
                 if (cam.name == "BaseOpticCamera(Clone)")
                 {
                     cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
-
-/*
-                    float mainCamFOV = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.FieldOfView;
-                    float newFOV = 2.0f * Mathf.Atan(Mathf.Tan(mainCamFOV * 0.5f * Mathf.PI / 180f) / (2.0f * currentZoom)) * 180f / Mathf.PI * 2.0f;
-                    float adjustedFOV = 2.0f * Mathf.Atan(Mathf.Tan(newFOV * 0.5f * Mathf.PI / 180f) * (1.3f / 10.0f)) * 180f / Mathf.PI * 2.0f;
-
-                    cam.fieldOfView = adjustedFOV;*/
-                    //alternative calculation, doesn't work as well but might be useful in future
-
-                    /*      float factor = 2.0f * currentZoom * Mathf.Tan(Plugin.BaseScopeFOV.Value * 0.5f * Mathf.Deg2Rad);
-                          float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
-                          cam.fieldOfView = zoomedFOV;*/
-
                 }
             }
 
@@ -254,62 +225,9 @@ namespace FOVFix
             method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
         }
 
-        public void HandleBrightnessAdjustment(float brightNessDelta)
-        {
-     /*       if (Plugin.IsOptic)
-            {
-                for (int num = 0; num != player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache.ModesCount; num++)
-                {
-                    ScopePrefabCache cache = player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache;
-                    OpticSight optic = cache.GetOpticSight(num);
-                    if (optic.enabled) 
-                    {
-                        Vector3 scale = new Vector3(g.Value, b.Value, a.Value);
-                        optic.transform.localScale = scale;
-                        *//*optic.FastVignette.darkness = 0;*//*
-                    }
-                }
-            }*/
-
-            ScopePrefabCache cache = player.ProceduralWeaponAnimation.CurrentScope.ScopePrefabCache;
-            OpticSight optic = cache.GetOpticSight(cache.CurrentModeId);
-            if (optic.enabled)
-            {
-                Vector3 scale = new Vector3(g.Value, b.Value, a.Value);
-                optic.transform.localScale = scale;
-                /*optic.FastVignette.darkness = 0;*/
-            }
-
-            Plugin.CurrentBrightness = Mathf.Clamp(Plugin.CurrentBrightness + brightNessDelta, 0, 20f);
-            Logger.LogWarning(Plugin.CurrentBrightness);
-        }
-
-        private void colmUpdate(CollimatorSight sight)
-        {
-              Material mat = sight.CollimatorMeshRenderer.material;
-              Color color = new Color(Plugin.CurrentBrightness, g.Value, b.Value, a.Value);
-              mat.color = color;
-            /* mat.mainTextureScale = new Vector2(r.Value, g.Value);*/
-
-              Vector3 scale = new Vector3 (g.Value, b.Value, a.Value);
-              sight.transform.localScale = scale;
-
-              sight.CollimatorMeshRenderer.enabled = false;
-              sight.CollimatorMeshRenderer.enabled = true;
-        }
-
         void Update()
         {
             Helper.CheckIsReady();
-
-            if (Input.GetKey(VariableZoomOut.Value.MainKey))
-            {
-                HandleBrightnessAdjustment(-Plugin.SmoothZoomSpeed.Value);
-            }
-            if (Input.GetKey(VariableZoomIn.Value.MainKey))
-            {
-                HandleBrightnessAdjustment(Plugin.SmoothZoomSpeed.Value);
-            }
 
             if (Plugin.IsReady && Plugin.WeaponReady && player.HandsController != null)
             {
