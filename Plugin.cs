@@ -12,6 +12,8 @@ using BepInEx.Bootstrap;
 using EFT.UI;
 using System;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using Sirenix.Serialization.Utilities;
 
 namespace FOVFix
 {
@@ -22,7 +24,7 @@ namespace FOVFix
         public static bool HasRAPTAR = false;
         public static bool IsReady = false;
         public static bool WeaponReady = false;
-        public static Player Player;
+        public static Player player;
         public static bool CalledZoom = false;
         public static bool ZoomReset = false;
         public static bool DoZoom = false;
@@ -175,7 +177,6 @@ namespace FOVFix
             }
             else 
             {
-              
                 new TacticalRangeFinderControllerPatch().Enable();
                 new OnWeaponParametersChangedPatch().Enable();
                 new OpticSightAwakePatch().Enable();
@@ -217,31 +218,18 @@ namespace FOVFix
                 if (cam.name == "BaseOpticCamera(Clone)")
                 {
                     cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
-
-/*
-                    float mainCamFOV = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.FieldOfView;
-                    float newFOV = 2.0f * Mathf.Atan(Mathf.Tan(mainCamFOV * 0.5f * Mathf.PI / 180f) / (2.0f * currentZoom)) * 180f / Mathf.PI * 2.0f;
-                    float adjustedFOV = 2.0f * Mathf.Atan(Mathf.Tan(newFOV * 0.5f * Mathf.PI / 180f) * (1.3f / 10.0f)) * 180f / Mathf.PI * 2.0f;
-
-                    cam.fieldOfView = adjustedFOV;*/
-                    //alternative calculation, doesn't work as well but might be useful in future
-
-                    /*      float factor = 2.0f * currentZoom * Mathf.Tan(Plugin.BaseScopeFOV.Value * 0.5f * Mathf.Deg2Rad);
-                          float zoomedFOV = 2.0f * Mathf.Atan(factor / (2.0f * currentZoom)) * Mathf.Rad2Deg;
-                          cam.fieldOfView = zoomedFOV;*/
-
                 }
             }
 
             MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+            method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
         }
 
         void Update()
         {
             Helper.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Player.HandsController != null)
+            if (Plugin.IsReady && Plugin.WeaponReady && player.HandsController != null)
             {
                 Plugin.haveResetDict = false;
 
@@ -290,7 +278,7 @@ namespace FOVFix
                         {
                             MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = true;
-                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = true;
                             Plugin.DoZoom = false;
 
@@ -298,7 +286,7 @@ namespace FOVFix
                         if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
                         {
                             MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
-                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = false;
                         }
                     }
@@ -308,7 +296,7 @@ namespace FOVFix
                         {
                             MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                             Plugin.DoZoom = !Plugin.DoZoom;
-                            method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                            method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = !Plugin.CalledZoom;
                         }
                     }
@@ -317,7 +305,7 @@ namespace FOVFix
                 {
                     MethodInfo method_20 = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_20");
                     Plugin.DoZoom = false;
-                    method_20.Invoke(Player.ProceduralWeaponAnimation, new object[] { });
+                    method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                     Plugin.CalledZoom = false;
                 }
             }

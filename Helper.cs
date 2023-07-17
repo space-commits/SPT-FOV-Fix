@@ -31,7 +31,7 @@ namespace FOVFix
                 Player player = gameWorld.AllPlayers[0];
                 if (player != null && player?.HandsController != null)
                 {
-                    Plugin.Player = player; 
+                    Plugin.player = player; 
                     if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
                     {
                         Plugin.WeaponReady = true;
