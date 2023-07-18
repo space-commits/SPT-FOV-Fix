@@ -210,7 +210,7 @@ namespace FOVFix
         public static void ZoomScope(float currentZoom)
         {
             OpticCratePanel panelUI = (OpticCratePanel)AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel").GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
-            panelUI.Show(currentZoom + "x");
+            panelUI.Show(Math.Round(currentZoom, 1) + "x");
 
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams)
