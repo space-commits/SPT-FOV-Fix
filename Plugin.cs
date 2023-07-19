@@ -61,7 +61,6 @@ namespace FOVFix
         public static ConfigEntry<float> NonOpticExtraZoom { get; set; }
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
 
-
         private static bool haveResetDict = false;  
 
         public static bool IsFixedMag = false;
@@ -88,10 +87,21 @@ namespace FOVFix
         public static ConfigEntry<KeyboardShortcut> VariableZoomOut { get; set; }
         public static ConfigEntry<KeyboardShortcut> MouseWheelBind { get; set; }
 
-
         public static ConfigEntry<float> MouseSensFactor { get; set; }
-/*        public static ConfigEntry<float> MouseSensLowerLimit { get; set; }*/
         public static ConfigEntry<bool> ChangeMouseSens { get; set; }
+        public static ConfigEntry<bool> UseBasicSensCalc { get; set; }
+
+        public static ConfigEntry<float> OneSensMulti { get; set; }
+        public static ConfigEntry<float> TwoSensMulti { get; set; }
+        public static ConfigEntry<float> ThreeSensMulti { get; set; }
+        public static ConfigEntry<float> FourSensMulti { get; set; }
+        public static ConfigEntry<float> FiveSensMulti { get; set; }
+        public static ConfigEntry<float> SixSensMulti { get; set; }
+        public static ConfigEntry<float> EightSensMulti { get; set; }
+        public static ConfigEntry<float> TenSensMulti { get; set; }
+        public static ConfigEntry<float> TwelveSensMulti { get; set; }
+        public static ConfigEntry<float> HighSensMulti { get; set; }
+
 
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
@@ -147,9 +157,19 @@ namespace FOVFix
             NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 1f, new ConfigDescription("FOV Multiplier When Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor..", 90f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(2f, 99f), new ConfigurationManagerAttributes { Order = 50 }));
-/*            MouseSensLowerLimit = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Lower Limit", 0.009f, new ConfigDescription("The Lower Possible Mouse Sensitivity While Aiming.", new AcceptableValueRange<float>(0.001f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
-*/
+            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor..", 90f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 200f), new ConfigurationManagerAttributes { Order = 60 }));
+            UseBasicSensCalc = Config.Bind<bool>(sens, "Use Preset Sensitivity Reduction", false, new ConfigDescription("Will Use The Values Below Instead Of Calculating Sensitivity Automatically. Mouse Sens Reduction Factor Will Be Ignored.", null, new ConfigurationManagerAttributes { Order = 11 }));
+            OneSensMulti = Config.Bind<float>(sens, "1x Sens Multi", 1f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
+            TwoSensMulti = Config.Bind<float>(sens, "2x Sens Multi", 0.45f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 9 }));
+            ThreeSensMulti = Config.Bind<float>(sens, "3x Sens Multi", 0.3f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 8 }));
+            FourSensMulti = Config.Bind<float>(sens, "4x Sens Multi", 0.2f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 7 }));
+            FiveSensMulti = Config.Bind<float>(sens, "5x Sens Multi", 0.15f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 6 }));
+            SixSensMulti = Config.Bind<float>(sens, "6x Sens Multi", 0.125f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 5 }));
+            EightSensMulti = Config.Bind<float>(sens, "8x Sens Multi", 0.08f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 4 }));
+            TenSensMulti = Config.Bind<float>(sens, "10x Sens Multi", 0.04f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 3 }));
+            TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
+            HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
+
             PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 8f, new ConfigDescription("If Using Realism Or Combat Stances, It Is Recommended To Set This To 0. The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
             OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
             CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
