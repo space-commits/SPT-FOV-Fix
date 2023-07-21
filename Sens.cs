@@ -1,53 +1,32 @@
 ﻿using Aki.Reflection.Patching;
 using Comfort.Common;
 using EFT;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 using UnityEngine;
+using static MonoMod.Cil.RuntimeILReferenceBag.FastDelegateInvokers;
 
 namespace FOVFix
 {
     public class AimingSensitivityPatch : ModulePatch
     {
-        public static float GetZoomSensValue(float magnificaiton) 
-        {
-            switch (magnificaiton)
-            {
-                case <= 1.5f:
-                    return Plugin.OneSensMulti.Value;
-                case <= 2:
-                    return Plugin.TwoSensMulti.Value;
-                case <= 3:
-                    return Plugin.ThreeSensMulti.Value;
-                case <= 4:
-                    return Plugin.FourSensMulti.Value;
-                case <= 5:
-                    return Plugin.FiveSensMulti.Value;
-                case <= 6:
-                    return Plugin.SixSensMulti.Value;
-                case <= 8:
-                    return Plugin.EightSensMulti.Value;
-                case <= 10:
-                    return Plugin.TenSensMulti.Value;
-                case <= 12:
-                    return Plugin.TwelveSensMulti.Value;
-                case > 12:
-                    return Plugin.HighSensMulti.Value;
-                default:
-                    return 1;
-            }
-        }
-
+     
 
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player.FirearmController).GetMethod("get_AimingSensitivity");
         }
         [PatchPrefix]
-        public static void PatchPrefix(ref float ____aimingSens)
+        public static void PatchPrefix(Player.FirearmController __instance, ref float ____aimingSens)
         {
+            bool isToggleZoomAiming = Plugin.CalledZoom && Plugin.IsAiming;
+            bool isToggleZoomOptic = isToggleZoomAiming && Plugin.IsOptic;
+            float toggleZoomMulti = isToggleZoomOptic ? Plugin.ToggleZoomOpticSensMulti.Value : isToggleZoomAiming ? Plugin.ToggleZoomSensMulti.Value: 1f;
+
+
             if (Plugin.IsAiming)
             {
                 /*  float baseSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity;
@@ -57,7 +36,7 @@ namespace FOVFix
 
                 if (Plugin.UseBasicSensCalc.Value)
                 {
-                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity *  GetZoomSensValue(Plugin.CurrentZoom);
+                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity *  Helper.GetZoomSensValue(Plugin.CurrentZoom) * toggleZoomMulti;
                     Plugin.AimingSens = newSens;
                 }
                 else 
@@ -84,7 +63,7 @@ namespace FOVFix
                     float exponent = 100f / Plugin.MouseSensFactor.Value;
                     float tanRatio = (float)(Mathf.Tan(realAimedFOV / 2) / Mathf.Tan(hipFOV / 2));
                     float inGameSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity;
-                    newSens = Mathf.Pow(tanRatio, exponent) * inGameSens;
+                    newSens = Mathf.Pow(tanRatio, exponent) * inGameSens * toggleZoomMulti;
                     Plugin.AimingSens = newSens;
                 }
                

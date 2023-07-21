@@ -32,7 +32,7 @@ namespace FOVFix
         {
             if (__instance.CanChangeScopeStates(scopeStates))
             {
-                if (Plugin.CanToggle)
+                if (Plugin.CanToggle || !Plugin.IsOptic)
                 {
                     FirearmsAnimator fAnimator = (FirearmsAnimator)AccessTools.Field(typeof(Player.FirearmController.GClass1528), "firearmsAnimator_0").GetValue(__instance);
                     fAnimator.ModToggleTrigger();
@@ -74,46 +74,50 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(Player.FirearmController __instance, GStruct144[] scopeStates)
         {
-            Plugin.ChangeSight = true;
-
-            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
-            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-            isOptic = pwa.CurrentScope.IsOptic;
-
-            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
-            SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
-            SightModClass sightModClass = currentAimingMod as SightModClass;
-            GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
-
-            canToggle = currentAimingMod.Template.ToolModdable;
-            isFixedMag = currentAimingMod.Template.HasShoulderContact;
-            canToggleButNotFixed = canToggle && !isFixedMag;
-
-            float minZoom = 1f;
-            float maxZoom = 1f;
-
-            if (isFixedMag)
+            if (Plugin.IsOptic) 
             {
-                minZoom = inter.Zooms[0][0];
-                maxZoom = minZoom;
-            }
-            else if (canToggleButNotFixed && inter.Zooms[0].Length > 2)
-            {
-                minZoom = inter.Zooms[0][0];
-                maxZoom = inter.Zooms[0][2];
-            }
-            else
-            {
-                minZoom = inter.Zooms[0][0];
-                maxZoom = inter.Zooms[0][1];
-            }
+                Plugin.ChangeSight = true;
 
-            isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
-            if (!canToggle && !Plugin.IsFucky)
-            {
-                return false;
-            }
+                Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+                ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+                isOptic = pwa.CurrentScope.IsOptic;
 
+                Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+                SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
+                SightModClass sightModClass = currentAimingMod as SightModClass;
+                GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+
+                canToggle = currentAimingMod.Template.ToolModdable;
+                isFixedMag = currentAimingMod.Template.HasShoulderContact;
+                canToggleButNotFixed = canToggle && !isFixedMag;
+
+                float minZoom = 1f;
+                float maxZoom = 1f;
+
+                if (isFixedMag)
+                {
+                    minZoom = inter.Zooms[0][0];
+                    maxZoom = minZoom;
+                }
+                else if (canToggleButNotFixed && inter.Zooms[0].Length > 2)
+                {
+                    minZoom = inter.Zooms[0][0];
+                    maxZoom = inter.Zooms[0][2];
+                }
+                else
+                {
+                    minZoom = inter.Zooms[0][0];
+                    maxZoom = inter.Zooms[0][1];
+                }
+
+                isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
+                if (!canToggle && !Plugin.IsFucky)
+                {
+                    return false;
+                }
+
+                return true;
+            }
             return true;
         }
 
@@ -216,6 +220,7 @@ namespace FOVFix
                     ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
                     if (pwa.CurrentScope.IsOptic)
                     {
+                        Plugin.IsOptic = true;
                         adsTimer += Time.deltaTime;
 
                         if (adsTimer >= 0.5f)

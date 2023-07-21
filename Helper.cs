@@ -84,5 +84,35 @@ namespace FOVFix
                     return 1;
             }
         }
+
+        public static float GetZoomSensValue(float magnificaiton)
+        {
+            switch (magnificaiton)
+            {
+                case <= 1.5f:
+                    return Plugin.OneSensMulti.Value;
+                case <= 2:
+                    return Plugin.TwoSensMulti.Value;
+                case <= 3:
+                    return Plugin.ThreeSensMulti.Value;
+                case <= 4:
+                    return Plugin.FourSensMulti.Value;
+                case <= 5:
+                    return Plugin.FiveSensMulti.Value;
+                case <= 6:
+                    return Plugin.SixSensMulti.Value;
+                case <= 8:
+                    return Plugin.EightSensMulti.Value;
+                case <= 10:
+                    return Plugin.TenSensMulti.Value;
+                case <= 12:
+                    return Plugin.TwelveSensMulti.Value;
+                case > 12:
+                    return Plugin.HighSensMulti.Value;
+                default:
+                    return 1;
+            }
+        }
+
     }
 }
