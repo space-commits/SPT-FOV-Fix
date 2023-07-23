@@ -348,31 +348,31 @@ namespace FOVFix
         {
 
             bool bool_1 = (bool)AccessTools.Field(typeof(Player), "bool_1").GetValue(__instance);
-            bool bool_2 = (bool)AccessTools.Field(typeof(Player), "bool_2").GetValue(__instance);
-            bool bool_3 = (bool)AccessTools.Field(typeof(Player), "bool_3").GetValue(__instance);
+            bool mouseLookControl = (bool)AccessTools.Field(typeof(Player), "bool_2").GetValue(__instance);
+            bool isResettingLook = (bool)AccessTools.Field(typeof(Player), "bool_3").GetValue(__instance);
             bool bool_4 = (bool)AccessTools.Field(typeof(Player), "bool_4").GetValue(__instance);
-            bool bool_5 = (bool)AccessTools.Field(typeof(Player), "bool_5").GetValue(__instance);
+            bool isLooking = (bool)AccessTools.Field(typeof(Player), "bool_5").GetValue(__instance);
             bool bool_6 = (bool)AccessTools.Field(typeof(Player), "bool_6").GetValue(__instance);
 
-            float float_0 = (float)AccessTools.Field(typeof(Player), "float_0").GetValue(__instance);
-            float float_1 = (float)AccessTools.Field(typeof(Player), "float_1").GetValue(__instance);
+            float lookZ = (float)AccessTools.Field(typeof(Player), "float_0").GetValue(__instance);
+            float verticalLimit = (float)AccessTools.Field(typeof(Player), "float_1").GetValue(__instance);
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
             Vector2 vector = new Vector2(-60f, 60f);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
-     /*       if (isAiming)
+            if (isAiming)
             {
                 vector *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
-            }*/
+            }
             Vector3 eulerAngles = __instance.ProceduralWeaponAnimation.HandsContainer.CameraTransform.eulerAngles;
             if (eulerAngles.x >= 50f && eulerAngles.x <= 90f && __instance.MovementContext.IsSprintEnabled)
             {
                 mouse_LOOK_VERTICAL_LIMIT.y = 0f;
             }
-            AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Clamp(float_0 - deltaLookY, vector.x, vector.y));
-            AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Clamp(float_1 + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
-            float x2 = (float_1 > 0f) ? (float_1 * (1f - float_0 / vector.y * (float_0 / vector.y))) : float_1;
+            AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Clamp(lookZ - deltaLookY, vector.x, vector.y));
+            AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Clamp(verticalLimit + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
+            float x2 = (verticalLimit > 0f) ? (verticalLimit * (1f - lookZ / vector.y * (lookZ / vector.y))) : verticalLimit;
             if (bool_4)
             {
                 AccessTools.Field(typeof(Player), "bool_3").SetValue(__instance, false);
@@ -390,26 +390,26 @@ namespace FOVFix
             {
                 AccessTools.Field(typeof(Player), "bool_2").SetValue(__instance, true);
             }
-            if (!bool_2 && withReturn)
+            if (!mouseLookControl && withReturn)
             {
-                if (Mathf.Abs(float_0) > 0.01f)
+                if (Mathf.Abs(lookZ) > 0.01f)
                 {
-                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Lerp(float_0, 0f, Time.deltaTime * 15f));
+                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Lerp(lookZ, 0f, Time.deltaTime * 15f));
                 }
                 else
                 {
                     AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, 0f);
                 }
-                if (Mathf.Abs(float_1) > 0.01f)
+                if (Mathf.Abs(verticalLimit) > 0.01f)
                 {
-                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Lerp(float_1, 0f, Time.deltaTime * 15f));
+                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Lerp(verticalLimit, 0f, Time.deltaTime * 15f));
                 }
                 else
                 {
                     AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, 0f);
                 }
             }
-            if (!bool_3 && float_0 != 0f && float_1 != 0f)
+            if (!isResettingLook && lookZ != 0f && verticalLimit != 0f)
             {
                 AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, true);
             }
@@ -417,11 +417,11 @@ namespace FOVFix
             {
                 AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, false);
             }
-            if (float_0 == 0f && float_1 == 0f)
+            if (lookZ == 0f && verticalLimit == 0f)
             {
                 AccessTools.Field(typeof(Player), "bool_4").SetValue(__instance, true);
             }
-            __instance.HeadRotation = new Vector3(x2, float_0, 0f);
+            __instance.HeadRotation = new Vector3(x2, lookZ, 0f);
             __instance.ProceduralWeaponAnimation.SetHeadRotation(__instance.HeadRotation);
             return false;
         }
