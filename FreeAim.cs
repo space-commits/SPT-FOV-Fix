@@ -33,22 +33,12 @@ namespace FOVFix
 
         private static Vector3 accumulatedRotationVect = Vector3.zero;
 
-        private static void panCamera(bool panLeft, bool panRight, bool panUp, bool panDown ) 
+        private static void panCamera(bool panLeft, bool panRight, bool panUp, bool panDown)
         {
-            if (panLeft)
-            {
-                PanCamLeft = true;
-                PanCamRight = false;
-                PanCamUp = false;
-                PanCamDown = false;
-            }
-            else if (panRight) 
-            {
-                PanCamLeft = false;
-                PanCamRight = true;
-                PanCamUp = false;
-                PanCamDown = false;
-            }
+            FreeAimController.PanCamLeft = panLeft;
+            FreeAimController.PanCamRight = panRight;
+            FreeAimController.PanCamUp = panUp;
+            FreeAimController.PanCamDown = panDown;
         }
 
         [PatchPostfix]
@@ -77,8 +67,6 @@ namespace FOVFix
 
             __instance.HandsContainer.HandsRotation.Zero = accumulatedRotationVect;
 
-            Logger.LogWarning("zero " + __instance.HandsContainer.HandsRotation.Zero);
-
             if (accumulatedRotationVect.x > -Plugin.DeadZoneXLimit.Value && accumulatedRotationVect.x < Plugin.DeadZoneXLimit.Value && accumulatedRotationVect.z > -Plugin.DeadZoneYLimit.Value && accumulatedRotationVect.z < Plugin.DeadZoneYLimit.Value)
             {
                 FreeAimController.IsInDeadZone = true;
@@ -87,9 +75,21 @@ namespace FOVFix
             {
                 FreeAimController.IsInDeadZone = false;
 
-                if (accumulatedRotationVect.x > -Plugin.DeadZoneXLimit.Value) 
+                if (accumulatedRotationVect.x <= -Plugin.DeadZoneXLimit.Value * hipMult) 
                 {
-                 
+                    panCamera(false, false, true, false);
+                }
+                if (accumulatedRotationVect.x >= Plugin.DeadZoneXLimit.Value * hipMult)
+                {
+                    panCamera(false, false, false, true);
+                }
+                if (accumulatedRotationVect.z <= -Plugin.DeadZoneYLimit.Value * hipMult)
+                {
+                    panCamera(true, false, false, false);
+                }
+                if (accumulatedRotationVect.z >= Plugin.DeadZoneYLimit.Value * hipMult)
+                {
+                    panCamera(false, true, false, false);
                 }
             }
 
@@ -117,9 +117,31 @@ namespace FOVFix
                 {
                     if (!Plugin.FreeAimBlocksRotation.Value)
                     {
-                        deltaRotation *= Plugin.FreeAimHipDeadzoneMulti.Value;
+                        deltaRotation *= Plugin.FreeAimRotationReduction.Value;
                         return true;
                     }
+                    return false;
+                }
+                else
+                {
+                    if (FreeAimController.PanCamLeft)
+                    {
+                        deltaRotation.x += -1f * Plugin.CamRotationMulti.Value;
+                    }
+                    if (FreeAimController.PanCamRight)
+                    {
+                        deltaRotation.x += 1f * Plugin.CamRotationMulti.Value;
+                    }
+                    if (FreeAimController.PanCamUp)
+                    {
+                        deltaRotation.y += -1f * Plugin.CamRotationMulti.Value;
+                    }
+                    if (FreeAimController.PanCamDown)
+                    {
+                        deltaRotation.y += 1f * Plugin.CamRotationMulti.Value;
+                    }
+                    deltaRotation = MovementContext.ClampRotation(deltaRotation);
+                    MovementContext.Rotation += deltaRotation;
                     return false;
                 }
             }

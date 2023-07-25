@@ -114,7 +114,7 @@ namespace FOVFix
         public static ConfigEntry<float> FreeAimHipDeadzoneMulti { get; set; }
         public static ConfigEntry<bool> FreeAimBlocksRotation { get; set; }
         public static ConfigEntry<float> FreeAimRotationReduction { get; set; }
-
+        public static ConfigEntry<float> CamRotationMulti { get; set; }
 
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
@@ -196,12 +196,13 @@ namespace FOVFix
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
             RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15f, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
 
-            DeadZoneXLimit = Config.Bind<float>(freeaim, "Deadzone Vertical Limit", 3f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 1 }));
-            DeadZoneYLimit = Config.Bind<float>(freeaim, "Deadzone Horizontal Limit", 3f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 10 }));
+            DeadZoneXLimit = Config.Bind<float>(freeaim, "Deadzone Vertical Limit", 4f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 1 }));
+            DeadZoneYLimit = Config.Bind<float>(freeaim, "Deadzone Horizontal Limit", 7f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 10 }));
             FreeAimADSSens = Config.Bind<float>(freeaim, "Free Aim ADS Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
             FreeAimHipSens = Config.Bind<float>(freeaim, "Free Aim Hipfire Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
             FreeAimRotationReduction = Config.Bind<float>(freeaim, "Free Aim Camera Rotation Reduction", 0.5f, new ConfigDescription("Multi For How Much Camera Is Allowed To Rotate While Weapon Is In Deadzone.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
             FreeAimHipDeadzoneMulti = Config.Bind<float>(freeaim, "Free Aim Hipfire Deadzone Multi", 1f, new ConfigDescription("Changes The Size Of The Primary Deadzone While Not Aiming.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 45 }));
+            CamRotationMulti = Config.Bind<float>(freeaim, "Camera Rotation Multi", 0.5f, new ConfigDescription("Multi For The Amount Of Camera Rotation When Weapon Is Outside Dead Zone", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 50 }));
             FreeAimBlocksRotation = Config.Bind<bool>(freeaim, "Free Aim Blocks Camera Rotation", false, new ConfigDescription("Instead Of Allowing Some Camera Rotation While In Deadzone, Camera Rotation Is Blocked.", null, new ConfigurationManagerAttributes { Order = 60 }));
             EnableFreeAim = Config.Bind<bool>(freeaim, "Enable Free Aim", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 70 }));
 
