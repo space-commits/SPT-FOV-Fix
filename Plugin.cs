@@ -104,13 +104,25 @@ namespace FOVFix
         public static ConfigEntry<float> TwelveSensMulti { get; set; }
         public static ConfigEntry<float> HighSensMulti { get; set; }
 
+        public static ConfigEntry<float> DeadZoneXLimit { get; set; }
+        public static ConfigEntry<float> DeadZoneYLimit { get; set; }
+        public static ConfigEntry<float> FreeAimADSSens { get; set; }
+        public static ConfigEntry<float> FreeAimHipSens { get; set; }
+        public static ConfigEntry<bool> EnableFreeAimHip { get; set; }
+        public static ConfigEntry<bool> EnableFreeAimADS { get; set; }
+        public static ConfigEntry<bool> EnableFreeAim { get; set; }
+        public static ConfigEntry<float> FreeAimHipDeadzoneMulti { get; set; }
+        public static ConfigEntry<bool> FreeAimBlocksRotation { get; set; }
+        public static ConfigEntry<float> FreeAimRotationReduction { get; set; }
+
 
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
         public static float AimingSens = 1f;
 
-        public static bool RealismModIsPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
-        public static bool RecoilStandaloneIsPresent = Chainloader.PluginInfos.ContainsKey("RecoilStandalone");
+        private static bool checkedForMods = false;
+        public static bool RealismModIsPresent = false;
+        public static bool RecoilStandaloneIsPresent = false;
 
         private void Awake()
         {
@@ -120,7 +132,8 @@ namespace FOVFix
             string toggleZoom = "4. Toggleable Zoom";
             string sens = "5. Mouse Sensitivity.";
             string misc = "6. Misc.";
-            string scopeFOV = "7. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
+            string freeaim = "7. Free Aim (Aiming Deadzone)";
+            string scopeFOV = "8. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("Allows Scopes That Should Have Variable Zoom To Have It.", null, new ConfigurationManagerAttributes { Order = 100 }));
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
@@ -181,7 +194,16 @@ namespace FOVFix
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi (Deprecated)", 0.75f, new ConfigDescription("Only Used If Variable Zoom Is Disabled. Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.01f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
-            RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
+            RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15f, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
+
+            DeadZoneXLimit = Config.Bind<float>(freeaim, "Deadzone Vertical Limit", 3f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 1 }));
+            DeadZoneYLimit = Config.Bind<float>(freeaim, "Deadzone Horizontal Limit", 3f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 10 }));
+            FreeAimADSSens = Config.Bind<float>(freeaim, "Free Aim ADS Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
+            FreeAimHipSens = Config.Bind<float>(freeaim, "Free Aim Hipfire Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
+            FreeAimRotationReduction = Config.Bind<float>(freeaim, "Free Aim Camera Rotation Reduction", 0.5f, new ConfigDescription("Multi For How Much Camera Is Allowed To Rotate While Weapon Is In Deadzone.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
+            FreeAimHipDeadzoneMulti = Config.Bind<float>(freeaim, "Free Aim Hipfire Deadzone Multi", 1f, new ConfigDescription("Changes The Size Of The Primary Deadzone While Not Aiming.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 45 }));
+            FreeAimBlocksRotation = Config.Bind<bool>(freeaim, "Free Aim Blocks Camera Rotation", false, new ConfigDescription("Instead Of Allowing Some Camera Rotation While In Deadzone, Camera Rotation Is Blocked.", null, new ConfigurationManagerAttributes { Order = 60 }));
+            EnableFreeAim = Config.Bind<bool>(freeaim, "Enable Free Aim", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 70 }));
 
             new method_20Patch().Enable();
             new FreeLookPatch().Enable();
@@ -204,6 +226,12 @@ namespace FOVFix
                 new TacticalRangeFinderControllerPatch().Enable();
                 new OnWeaponParametersChangedPatch().Enable();
                 new OpticSightAwakePatch().Enable();
+            }
+
+            if (Plugin.EnableFreeAim.Value) 
+            {
+                new FreeAimPatch().Enable();
+                new RotatePatch().Enable();
             }
 
         }
@@ -251,8 +279,15 @@ namespace FOVFix
 
         void Update()
         {
-            Helper.CheckIsReady();
+            Utils.CheckIsReady();
 
+            if (!checkedForMods) 
+            {
+                RealismModIsPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
+                RecoilStandaloneIsPresent = Chainloader.PluginInfos.ContainsKey("RecoilStandalone");
+                checkedForMods = true;
+            }
+  
             if (Plugin.IsReady && Plugin.WeaponReady && player.HandsController != null)
             {
                 Plugin.haveResetDict = false;

@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace FOVFix
 {
-  public static class Helper
+  public static class Utils
   {
 
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";

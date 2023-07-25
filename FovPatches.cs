@@ -503,7 +503,7 @@ namespace FOVFix
                                 zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
                             }
 
-                            float zoomMulti = Plugin.EnableVariableZoom.Value ? Helper.getADSFoVMulti(Plugin.CurrentZoom) : Helper.getADSFoVMulti(zoom);
+                            float zoomMulti = Plugin.EnableVariableZoom.Value ? Utils.getADSFoVMulti(Plugin.CurrentZoom) : Utils.getADSFoVMulti(zoom);
                             float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             bool isOptic = __instance.CurrentScope.IsOptic;

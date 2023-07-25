@@ -36,7 +36,7 @@ namespace FOVFix
 
                 if (Plugin.UseBasicSensCalc.Value)
                 {
-                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity *  Helper.GetZoomSensValue(Plugin.CurrentZoom) * toggleZoomMulti;
+                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity *  Utils.GetZoomSensValue(Plugin.CurrentZoom) * toggleZoomMulti;
                     Plugin.AimingSens = newSens;
                 }
                 else 
