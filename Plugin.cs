@@ -359,9 +359,19 @@ namespace FOVFix
                 {
                     StartRotation(new Vector2(0f, 0.4f));
                 }
-                if (FreeAimController.PanCameraToAiming) 
+                if (Plugin.IsAiming)
                 {
-                    StartRotation(new Vector2(FreeAimController.PanAimX, FreeAimController.PanAimY));
+                    if (FreeAimController.CanPanCameraToAiming)
+                    {
+                        FreeAimController.PanAimVert = FreeAimController.WeapRotation.x * Plugin.test1.Value;
+                        FreeAimController.PanAimHorz = FreeAimController.WeapRotation.z * Plugin.test2.Value;
+                        StartRotation(new Vector2(FreeAimController.PanAimHorz, FreeAimController.PanAimVert)); 
+                        FreeAimController.CanPanCameraToAiming = false;
+                    }
+                }
+                else
+                {
+                    FreeAimController.CanPanCameraToAiming = true;
                 }
             }
     

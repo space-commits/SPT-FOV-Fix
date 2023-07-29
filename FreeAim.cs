@@ -18,14 +18,16 @@ namespace FOVFix
     {
         public static bool IsInDeadZone = false;
 
-        public static bool PanCameraToAiming = false;
-        public static float PanAimX = 0f;
-        public static float PanAimY = 0f;
+        public static bool CanPanCameraToAiming = false;
+        public static float PanAimVert = 0f;
+        public static float PanAimHorz = 0f;
 
         public static bool PanCamRight = false;
         public static bool PanCamLeft = false;
         public static bool PanCamUp = false;
         public static bool PanCamDown = false;
+
+        public static Vector3 WeapRotation = Vector3.zero;  
     }
 
 
@@ -40,7 +42,7 @@ namespace FOVFix
 
         private static Vector3 accumulatedRotation = Vector3.zero;
 
-        private static bool correctedAim = false;
+        private static bool wasAiming = false;
 
         private static bool gotCamOffset = false;
 
@@ -72,15 +74,6 @@ namespace FOVFix
 
                     if (player.IsYourPlayer)
                     {
-                        /*               Quaternion highReadyMiniTargetQuaternion = Quaternion.Euler(new Vector3(Plugin.test1.Value, Plugin.test2.Value, Plugin.test3.Value));
-                                       __instance.HandsContainer.CameraTransform.localRotation = highReadyMiniTargetQuaternion;*/
-
-                        /*         if (!gotCamOffset)
-                                 {
-                                     offset = Quaternion.Inverse(__instance.HandsContainer.WeaponRootAnim.localRotation) * __instance.HandsContainer.CameraTransform.localRotation;
-
-                                     gotCamOffset = true;
-                                 }*/
 
                         if (Plugin.isRotating)
                         {
@@ -126,7 +119,6 @@ namespace FOVFix
 
                             Logger.LogWarning("=========================extended==============================");
 
-
                             if (mouseY >= 0.3f)
                             {
                                 panCamera(false, false, true, false);
@@ -161,16 +153,26 @@ namespace FOVFix
 
                         //pan camaera aproximately in direction of aiming, can work out basic formula for ration between acculuamted rotation and pan camera amount,
                         //will need to be able to pan in both x and y
-                        if (Plugin.IsAiming)
+                        if (Plugin.IsAiming && !FreeAimController.IsInDeadZone)
                         {
-                            __instance.HandsContainer.CameraRotation.Zero = Vector3.Lerp(__instance.HandsContainer.CameraRotation.Zero, new Vector3(Plugin.test1.Value, Plugin.test2.Value, Plugin.test3.Value), Plugin.test4.Value);
-
+                            /*         __instance.HandsContainer.CameraRotation.Zero = Vector3.Lerp(__instance.HandsContainer.CameraRotation.Zero, new Vector3(accumulatedRotation.x, -accumulatedRotation.z, 0f), Plugin.test4.Value);*/
+                            __instance.HandsContainer.HandsRotation.Zero = Vector3.Lerp(__instance.HandsContainer.HandsRotation.Zero, __instance.RotationZeroSum, Plugin.test4.Value);
+                            accumulatedRotation = Vector3.zero;
 
                         }
+                        else 
+                        {
+                            __instance.HandsContainer.HandsRotation.Zero = Vector3.Lerp(__instance.HandsContainer.HandsRotation.Zero, accumulatedRotation + __instance.RotationZeroSum, Plugin.test4.Value);
+                        }
+
+                        FreeAimController.WeapRotation = accumulatedRotation;
+                 
+
 
                         Logger.LogWarning(accumulatedRotation);
 
-                        __instance.HandsContainer.HandsRotation.Zero = accumulatedRotation; // TRY LERPING THIS INSTEAD, might get sway back
+
+                       
 
                /*         __instance.HandsContainer.DefaultAimPlane = __instance.HandsContainer.FarPlane;*/ //don't think this was doing anything, but in case it was leaving it here for now
 
@@ -196,7 +198,7 @@ namespace FOVFix
         [PatchPostfix]
         public static void PatchPostfix(ref float ___float_10)
         {
-            ___float_10 = Plugin.test1.Value;
+            ___float_10 = 1f;
         }
     }
 
