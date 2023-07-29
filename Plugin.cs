@@ -14,6 +14,8 @@ using System;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Sirenix.Serialization.Utilities;
+using static UnityEngine.GraphicsBuffer;
+using System.Collections;
 
 namespace FOVFix
 {
@@ -116,6 +118,11 @@ namespace FOVFix
         public static ConfigEntry<float> FreeAimRotationReduction { get; set; }
         public static ConfigEntry<float> CamRotationMulti { get; set; }
 
+        public static ConfigEntry<float> test1 { get; set; }
+        public static ConfigEntry<float> test2 { get; set; }
+        public static ConfigEntry<float> test3 { get; set; }
+        public static ConfigEntry<float> test4 { get; set; }
+
         public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
         public static float AimingSens = 1f;
@@ -123,6 +130,10 @@ namespace FOVFix
         private static bool checkedForMods = false;
         public static bool RealismModIsPresent = false;
         public static bool RecoilStandaloneIsPresent = false;
+
+        public static Vector2 camPanRotation = Vector2.zero;
+        public static bool isRotating = false;
+        private Vector2 targetRotation = Vector2.zero;
 
         private void Awake()
         {
@@ -134,6 +145,13 @@ namespace FOVFix
             string misc = "6. Misc.";
             string freeaim = "7. Free Aim (Aiming Deadzone)";
             string scopeFOV = "8. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
+
+            string testing = ".0. Testing";
+            test1 = Config.Bind<float>(testing, "test 1", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 600, IsAdvanced = true }));
+            test2 = Config.Bind<float>(testing, "test 2", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 500, IsAdvanced = true }));
+            test3 = Config.Bind<float>(testing, "test 3", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 400, IsAdvanced = true }));
+            test4 = Config.Bind<float>(testing, "test 4", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 300, IsAdvanced = true }));
+
 
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("Allows Scopes That Should Have Variable Zoom To Have It.", null, new ConfigurationManagerAttributes { Order = 100 }));
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Base FOV Value Which Magnification Modifies (Non-Linearly). Set This So That 1x Looks Like 1x, Unless You Want More Zoom.", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
@@ -233,6 +251,8 @@ namespace FOVFix
             {
                 new FreeAimPatch().Enable();
                 new RotatePatch().Enable();
+                new InitTransformsPatch().Enable();
+                new CalculateScaleValueByFovPatch().Enable();
             }
 
         }
@@ -278,8 +298,74 @@ namespace FOVFix
             method_20.Invoke(player.ProceduralWeaponAnimation, new object[] { });
         }
 
+
+        public void StartRotation(Vector2 input)
+        {
+            targetRotation = input;
+            StartCoroutine(RotateCamera());
+        }
+
+        private float EaseInOutSine(float t)
+        {
+            return -0.5f * (Mathf.Cos(Mathf.PI * t) - 1f);
+        }
+
+        private IEnumerator RotateCamera()
+        {
+            isRotating = true;
+
+            float rotateTime = 0.2f;
+            float elapsedTime = 0f;
+            while (elapsedTime < rotateTime)
+            {
+                /*        float t = Mathf.SmoothStep(0f, 1f, elapsedTime / Plugin.test1.Value);*/
+                float t = EaseInOutSine(elapsedTime / rotateTime);
+                Vector2 currentRotation = Vector2.Lerp(Vector2.zero, targetRotation, t);
+                elapsedTime += Time.deltaTime;
+                Plugin.camPanRotation = currentRotation;
+                yield return null;
+            }
+            elapsedTime = 0f;
+            while (elapsedTime < rotateTime)
+            {
+                float t = EaseInOutSine(elapsedTime / rotateTime);
+                Vector2 currentRotation = Vector2.Lerp(targetRotation, Vector2.zero, t);
+                elapsedTime += Time.deltaTime;
+                Plugin.camPanRotation = currentRotation;
+                yield return null;
+            }
+
+            Plugin.camPanRotation = Vector2.zero;
+            isRotating = false;
+        }
+
         void Update()
         {
+            if (!FreeAimController.IsInDeadZone) 
+            {
+                if (!isRotating && FreeAimController.PanCamRight)
+                {
+                    StartRotation(new Vector2(0.4f, 0));
+                }
+                if (!isRotating && FreeAimController.PanCamLeft)
+                {
+                    StartRotation(new Vector2(-0.4f, 0));
+                }
+                if (!isRotating && FreeAimController.PanCamUp)
+                {
+                    StartRotation(new Vector2(0f, -0.4f));
+                }
+                if (!isRotating && FreeAimController.PanCamDown)
+                {
+                    StartRotation(new Vector2(0f, 0.4f));
+                }
+                if (FreeAimController.PanCameraToAiming) 
+                {
+                    StartRotation(new Vector2(FreeAimController.PanAimX, FreeAimController.PanAimY));
+                }
+            }
+    
+
             Utils.CheckIsReady();
 
             if (!checkedForMods) 
