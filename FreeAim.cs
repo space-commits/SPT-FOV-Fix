@@ -19,8 +19,7 @@ namespace FOVFix
         public static bool IsInDeadZone = false;
 
         public static bool DoPanCameraToAiming = false;
-        public static float PanAimVert = 0f;
-        public static float PanAimHorz = 0f;
+        public static bool DoPanCameraFromAiming = false;
 
         public static bool PanCamRight = false;
         public static bool PanCamLeft = false;
@@ -66,7 +65,7 @@ namespace FOVFix
                     if (player.IsYourPlayer)
                     {
 
-                        if (Plugin.isRotating)
+                     /*   if (Plugin.isRotating)
                         {
                             __instance.HandsContainer.HandsRotation.Damping = 0.5f;
                             __instance.HandsContainer.HandsRotation.InputIntensity = 1f;
@@ -79,18 +78,17 @@ namespace FOVFix
                             __instance.HandsContainer.HandsRotation.InputIntensity = 1f;
                             __instance.HandsContainer.HandsRotation.AccelerationMax = 10f;
                             __instance.HandsContainer.HandsRotation.ReturnSpeed = 1f;
-                        }
- 
+                        }*/
+
+                        __instance.HandsContainer.HandsRotation.Damping = 0.5f;
+                        __instance.HandsContainer.HandsRotation.InputIntensity = 1f;
+                        __instance.HandsContainer.HandsRotation.AccelerationMax = 10f;
+                        __instance.HandsContainer.HandsRotation.ReturnSpeed = 1f;
+
+                        float sensMulti = Plugin.IsAiming ? Plugin.FreeAimADSSens.Value : Plugin.FreeAimHipSens.Value;
 
                         float mouseX = Input.GetAxis("Mouse X");
                         float mouseY = Input.GetAxis("Mouse Y");
-
-                 /*       if (mouseX != 0 || mouseY != 0)
-                        {
-                            Logger.LogWarning("weap " + mouseX + " " + mouseY);
-                        }
-*/
-                        float sensMulti = Plugin.IsAiming ? Plugin.FreeAimADSSens.Value : Plugin.FreeAimHipSens.Value;
 
                         if (!doRotationReset) 
                         {
@@ -98,16 +96,21 @@ namespace FOVFix
                             accumulatedRotation.z += mouseX * sensMulti;
                         }
              
-
                         float hipMult = Plugin.FreeAimHipDeadzoneMulti.Value;
 
-                        if (!doRotationReset && (mouseX * sensMulti < 0.5f && mouseX * sensMulti > -0.5f) && (mouseY * sensMulti < 0.5f && mouseY * sensMulti > -0.5f))
+                        if (!doRotationReset) 
                         {
                             accumulatedRotation.x = Mathf.Clamp(accumulatedRotation.x, -Plugin.DeadZoneXLimit.Value * hipMult, Plugin.DeadZoneXLimit.Value * hipMult);
                             accumulatedRotation.z = Mathf.Clamp(accumulatedRotation.z, -Plugin.DeadZoneYLimit.Value * hipMult, Plugin.DeadZoneYLimit.Value * hipMult);
+                        }
+
+                        if (!doRotationReset && (mouseX * sensMulti < Plugin.PanCamThreshold.Value && mouseX * sensMulti > -Plugin.PanCamThreshold.Value) && (mouseY * sensMulti < Plugin.PanCamThreshold.Value && mouseY * sensMulti > -Plugin.PanCamThreshold.Value))
+                        {
+         /*                   accumulatedRotation.x = Mathf.Clamp(accumulatedRotation.x, -Plugin.DeadZoneXLimit.Value * hipMult, Plugin.DeadZoneXLimit.Value * hipMult);
+                            accumulatedRotation.z = Mathf.Clamp(accumulatedRotation.z, -Plugin.DeadZoneYLimit.Value * hipMult, Plugin.DeadZoneYLimit.Value * hipMult);*/
                             panCamera(false, false, false, false);
                         }
-                        else if(!FreeAimController.IsInDeadZone)
+                        else if (!FreeAimController.IsInDeadZone)
                         {
 
                             Logger.LogWarning("making cam pan");
@@ -128,38 +131,45 @@ namespace FOVFix
                             {
                                 panCamera(false, true, false, false);
                             }
-                            else 
+                            else
                             {
                                 panCamera(false, false, false, false);
                             }
                         }
 
-                        if (!doRotationReset  && Plugin.isRotating) //suspect
+          /*              if (!doRotationReset  && Plugin.isRotating) //looks a bit jank, need to maybe instead lerp accumulatedRotation
                         {
                             accumulatedRotation.x = Mathf.Clamp(accumulatedRotation.x, -Plugin.DeadZoneXLimit.Value * hipMult * 4, Plugin.DeadZoneXLimit.Value * hipMult * 4);
                             accumulatedRotation.z = Mathf.Clamp(accumulatedRotation.z, -Plugin.DeadZoneYLimit.Value * hipMult * 4, Plugin.DeadZoneYLimit.Value * hipMult * 4);
-                        }
+                        }*/
 
                         if (accumulatedRotation.x > -Plugin.DeadZoneXLimit.Value && accumulatedRotation.x < Plugin.DeadZoneXLimit.Value && accumulatedRotation.z > -Plugin.DeadZoneYLimit.Value && accumulatedRotation.z < Plugin.DeadZoneYLimit.Value)
                         {
                             FreeAimController.IsInDeadZone = true;
                         }
-                        else
+                        else 
                         {
                             FreeAimController.IsInDeadZone = false;
                         }
 
-                        if (wasAiming != Plugin.IsAiming && Plugin.IsAiming && !FreeAimController.IsInDeadZone)
+                        if (wasAiming != Plugin.IsAiming && Plugin.IsAiming && (Plugin.AlwaysResetOnAim.Value || !FreeAimController.IsInDeadZone))
                         {
                             Logger.LogWarning("aim");
                             FreeAimController.DoPanCameraToAiming = true;
                             doRotationReset = true;
                         }
-                 
-                        if (!FreeAimController.DoPanCameraToAiming && doRotationReset) 
+
+                        if (wasAiming != Plugin.IsAiming && !Plugin.IsAiming && Plugin.ResetWhenUnaiming.Value)
+                        {
+                            Logger.LogWarning("un-aim");
+                            FreeAimController.DoPanCameraFromAiming = true;
+                            doRotationReset = true;
+                        }
+
+                        if (!FreeAimController.DoPanCameraToAiming && FreeAimController.DoPanCameraFromAiming && doRotationReset) 
                         {
                             Logger.LogWarning("reseting");
-                            accumulatedRotation = Vector3.Lerp(accumulatedRotation, Vector3.zero, Plugin.test3.Value);
+                            accumulatedRotation = Vector3.Lerp(accumulatedRotation, Vector3.zero, 0.1f);
                             Logger.LogWarning(__instance.HandsContainer.HandsRotation.Zero);
                             if (accumulatedRotation.x <= 0.01f && accumulatedRotation.x >= -0.01f && accumulatedRotation.z <= 0.01f && accumulatedRotation.z >= -0.01f)
                             {
@@ -167,19 +177,13 @@ namespace FOVFix
                                 doRotationReset = false;
                                 accumulatedRotation = Vector3.zero;
                             }
-
-                        }
-                        else
-                        {
-                             // + __instance.RotationZeroSum
                         }
 
-                        __instance.HandsContainer.HandsRotation.Zero = Vector3.Lerp(__instance.HandsContainer.HandsRotation.Zero, accumulatedRotation, Plugin.test4.Value);
+                        __instance.HandsContainer.HandsRotation.Zero = Vector3.Lerp(__instance.HandsContainer.HandsRotation.Zero, accumulatedRotation, 1f);  // + __instance.RotationZeroSum
 
                         wasAiming = Plugin.IsAiming;
                         FreeAimController.WeapRotation = accumulatedRotation;
-                  /*      Logger.LogWarning(__instance.HandsContainer.HandsRotation.Zero);*/
-
+ 
                         /*__instance.HandsContainer.DefaultAimPlane = __instance.HandsContainer.FarPlane;*/ //don't think this was doing anything, but in case it was leaving it here for now*/
                     }
                 }
@@ -201,7 +205,7 @@ namespace FOVFix
         [PatchPostfix]
         public static void PatchPostfix(ref float ___float_10)
         {
-            ___float_10 = 1f;
+            ___float_10 = Plugin.FovScale.Value;
         }
     }
 
@@ -239,14 +243,7 @@ namespace FOVFix
             return typeof(MovementState).GetMethod("Rotate", BindingFlags.Instance | BindingFlags.Public);
         }
 
-        private static float targetX = 0f;
-        private static float targetY = 0f;
-
-        private static float currentX = 0f;
-        private static float currentY = 0f;
-
-        private static bool doRotation = false;
-        private static bool rotationIsReset = false;
+        private static float rotationMulti = 0f;
 
         [PatchPrefix]
         private static bool Prefix(MovementState __instance, ref Vector2 deltaRotation, bool ignoreClamp)
@@ -316,26 +313,28 @@ namespace FOVFix
                                 Logger.LogWarning("currentX " + currentX);
                                 Logger.LogWarning("targetX " + targetX);*/
 
-                    if (FreeAimController.IsInDeadZone)
+
+                    if (!Plugin.AlwaysAllowRotation.Value)
                     {
-                        if (!Plugin.FreeAimBlocksRotation.Value)
+                        if (FreeAimController.IsInDeadZone)
                         {
-                            deltaRotation *= Plugin.FreeAimRotationReduction.Value;
+                            rotationMulti = Mathf.Lerp(rotationMulti, 0f, Plugin.DeadZoneRotateResetSpeed.Value);
                         }
                         else
                         {
-                            deltaRotation = Vector2.zero;
+                            rotationMulti = Mathf.Lerp(rotationMulti, Plugin.CamRotationMulti.Value, Plugin.RotateRampUpSpeed.Value);
                         }
+                        deltaRotation *= rotationMulti;
                     }
-                    else 
+                    else
                     {
                         deltaRotation *= Plugin.CamRotationMulti.Value;
                     }
-
+                  
                     deltaRotation = MovementContext.ClampRotation(deltaRotation);
                     MovementContext.Rotation += Plugin.camPanRotation + deltaRotation;
 
-                    return false;
+                    return false; 
                 }
             }
             return true;

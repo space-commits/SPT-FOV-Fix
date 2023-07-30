@@ -1,21 +1,16 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
-using UnityEngine;
-using System.Collections.Generic;
 using Comfort.Common;
 using EFT;
-using HarmonyLib;
 using EFT.Animations;
-using EFT.InventoryLogic;
-using EFT.CameraControl;
-using BepInEx.Bootstrap;
 using EFT.UI;
+using HarmonyLib;
 using System;
-using System.Reflection;
-using System.Text.RegularExpressions;
-using Sirenix.Serialization.Utilities;
-using static UnityEngine.GraphicsBuffer;
 using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEngine;
 
 namespace FOVFix
 {
@@ -114,9 +109,26 @@ namespace FOVFix
         public static ConfigEntry<bool> EnableFreeAimADS { get; set; }
         public static ConfigEntry<bool> EnableFreeAim { get; set; }
         public static ConfigEntry<float> FreeAimHipDeadzoneMulti { get; set; }
-        public static ConfigEntry<bool> FreeAimBlocksRotation { get; set; }
-        public static ConfigEntry<float> FreeAimRotationReduction { get; set; }
         public static ConfigEntry<float> CamRotationMulti { get; set; }
+
+        public static ConfigEntry<bool> AlwaysResetOnAim { get; set; }
+        public static ConfigEntry<bool> AlwaysAllowRotation { get; set; }
+        public static ConfigEntry<bool> ResetWhenUnaiming { get; set; }
+
+        public static ConfigEntry<float> PanCamSpeed { get; set; }
+        public static ConfigEntry<float> PanCamAmount { get; set; }
+        public static ConfigEntry<float> PanAimAmount { get; set; }
+        public static ConfigEntry<float> PanCamThreshold { get; set; }
+        public static ConfigEntry<float> DeadZoneRotateResetSpeed { get; set; }
+        public static ConfigEntry<float> RotateRampUpSpeed { get; set; }
+
+        public static ConfigEntry<float> WeapDamping { get; set; }
+        public static ConfigEntry<float> ReturnSpeed { get; set; }
+        public static ConfigEntry<float> InputIntensity { get; set; }
+
+        public static ConfigEntry<float> FovScale { get; set; }
+        public static ConfigEntry<bool> EnableFovScaleFix { get; set; }
+
 
         public static ConfigEntry<float> test1 { get; set; }
         public static ConfigEntry<float> test2 { get; set; }
@@ -209,25 +221,50 @@ namespace FOVFix
             OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
             CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
             CameraSmoothOut = Config.Bind<float>(misc, "Camera Smooth Out", 6f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 50 }));
+            EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", true, new ConfigDescription("A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", null, new ConfigurationManagerAttributes { Order = 60 }));
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi (Deprecated)", 0.75f, new ConfigDescription("Only Used If Variable Zoom Is Disabled. Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.01f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
             RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15f, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
 
-            DeadZoneXLimit = Config.Bind<float>(freeaim, "Deadzone Vertical Limit", 4f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 1 }));
-            DeadZoneYLimit = Config.Bind<float>(freeaim, "Deadzone Horizontal Limit", 7f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 10 }));
-            FreeAimADSSens = Config.Bind<float>(freeaim, "Free Aim ADS Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
-            FreeAimHipSens = Config.Bind<float>(freeaim, "Free Aim Hipfire Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 35 }));
-            FreeAimRotationReduction = Config.Bind<float>(freeaim, "Free Aim Camera Rotation Reduction", 0.5f, new ConfigDescription("Multi For How Much Camera Is Allowed To Rotate While Weapon Is In Deadzone.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
-            FreeAimHipDeadzoneMulti = Config.Bind<float>(freeaim, "Free Aim Hipfire Deadzone Multi", 1f, new ConfigDescription("Changes The Size Of The Primary Deadzone While Not Aiming.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 45 }));
-            CamRotationMulti = Config.Bind<float>(freeaim, "Camera Rotation Multi", 0.5f, new ConfigDescription("Multi For The Amount Of Camera Rotation When Weapon Is Outside Dead Zone", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 50 }));
-            FreeAimBlocksRotation = Config.Bind<bool>(freeaim, "Free Aim Blocks Camera Rotation", false, new ConfigDescription("Instead Of Allowing Some Camera Rotation While In Deadzone, Camera Rotation Is Blocked.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            EnableFreeAim = Config.Bind<bool>(freeaim, "Enable Free Aim", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 70 }));
+            //////////////////////////////////////////
+
+            WeapDamping = Config.Bind<float>(freeaim, "Weapon Stiffness", 0.5f, new ConfigDescription("The Stiffnses Of Weapon Roation.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 30 }));
+            ReturnSpeed = Config.Bind<float>(freeaim, "Weapon Return Speed", 1f, new ConfigDescription("How Fast The Weapon Reacts To Movement.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 40 }));
+            InputIntensity = Config.Bind<float>(freeaim, "Weapon Sensitivity", 1f, new ConfigDescription("How Sensitive The Weapon Is To Movement.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 50 }));
+
+            PanCamSpeed = Config.Bind<float>(freeaim, "Camera Pan Speed", 0.2f, new ConfigDescription("The Speed At Which The Camera Pans When The Pan Camera Threshold Is Exceeded.", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes { Order = 60 }));
+            PanCamAmount = Config.Bind<float>(freeaim, "Camera Pan Amount", 0.45f, new ConfigDescription("The Amount Of Rotation The Camera Does When Panning.", new AcceptableValueRange<float>(0f, 5f), new ConfigurationManagerAttributes { Order = 70 }));
+            PanAimAmount = Config.Bind<float>(freeaim, "Aiming Camera Pan Amount", 0.03f, new ConfigDescription("The Amount Of Rotation The Camera Does When Recentering When Aiming.", new AcceptableValueRange<float>(0f, 5f), new ConfigurationManagerAttributes { Order = 80 }));
+            PanCamThreshold = Config.Bind<float>(freeaim, "Camera Pan Threshold", 0.45f, new ConfigDescription("The Mouse Input Threshold Required For The Camera To Pan.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 90 }));
+
+            DeadZoneRotateResetSpeed = Config.Bind<float>(freeaim, "Rotation Ramp Down Up Speed", 0.1f, new ConfigDescription("The Speed At Which Camera Rotation Ramps Up When Exiting Deadzone.", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes { Order = 100 }));
+            RotateRampUpSpeed = Config.Bind<float>(freeaim, "Rotation Ramp Up Speed", 0.05f, new ConfigDescription("The Speed At Which Camera Rotation Rampds Down When Entering Deadzone.", new AcceptableValueRange<float>(0f, 1f), new ConfigurationManagerAttributes { Order = 110 }));
+
+            ResetWhenUnaiming = Config.Bind<bool>(freeaim, "Reset Rotation On Un-Aiming", true, new ConfigDescription("If Enabled, Un-Aiming Will Recenter The Weapon And Player Camera.", null, new ConfigurationManagerAttributes { Order = 115 }));
+            AlwaysResetOnAim = Config.Bind<bool>(freeaim, "Always Reset Rotation On Aiming", true, new ConfigDescription("If Enabled, Aiming Will Recenter The Weapon And Player Camera. If Disable, It Will Only Do This If The Weapon Is Outside Of The Deadzone If That Option Is Enabled.", null, new ConfigurationManagerAttributes { Order = 120 }));
+            AlwaysAllowRotation = Config.Bind<bool>(freeaim, "Always Allow Camera Rotation", false, new ConfigDescription("If Enabled, Always Allow The Player Camera To Rotate With Weapon Rotation. The Amount Is Determined By The Camera Rotation Multi.", null, new ConfigurationManagerAttributes { Order = 130 }));
+
+            DeadZoneXLimit = Config.Bind<float>(freeaim, "Deadzone Vertical Limit", 3.5f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 140 }));
+            DeadZoneYLimit = Config.Bind<float>(freeaim, "Deadzone Horizontal Limit", 4.5f, new ConfigDescription("", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 150 }));
+            FreeAimADSSens = Config.Bind<float>(freeaim, "Free Aim ADS Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 160 }));
+            FreeAimHipSens = Config.Bind<float>(freeaim, "Free Aim Hipfire Sens", 1f, new ConfigDescription("How Sensitive Weapon Rotation Is To Mouse Input.", new AcceptableValueRange<float>(0f, 30f), new ConfigurationManagerAttributes { Order = 170 }));
+            FreeAimHipDeadzoneMulti = Config.Bind<float>(freeaim, "Free Aim Hipfire Deadzone Multi", 1f, new ConfigDescription("Changes The Size Of The Primary Deadzone While Not Aiming.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 180 }));
+            CamRotationMulti = Config.Bind<float>(freeaim, "Camera Rotation Multi", 0.5f, new ConfigDescription("Multi For The Amount Of Camera Rotation When Weapon Is Outside Dead Zone.", new AcceptableValueRange<float>(0f, 4f), new ConfigurationManagerAttributes { Order = 190 }));
+            EnableFreeAim = Config.Bind<bool>(freeaim, "Enable Free Aim", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 200 }));
+            ////////////////////////////////////
+            
 
             new method_20Patch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
+
+            if (Plugin.EnableFovScaleFix.Value) 
+            {
+                new CalculateScaleValueByFovPatch().Enable();
+            }
 
             if (Plugin.EnableVariableZoom.Value)
             {
@@ -252,7 +289,6 @@ namespace FOVFix
                 new FreeAimPatch().Enable();
                 new RotatePatch().Enable();
                 new InitTransformsPatch().Enable();
-                new CalculateScaleValueByFovPatch().Enable();
             }
 
         }
@@ -314,7 +350,7 @@ namespace FOVFix
         {
             isRotating = true;
 
-            float rotateTime = 0.2f;
+            float rotateTime = PanCamSpeed.Value;
             float elapsedTime = 0f;
             while (elapsedTime < rotateTime)
             {
@@ -334,41 +370,41 @@ namespace FOVFix
                 Plugin.camPanRotation = currentRotation;
                 yield return null;
             }
-            Logger.LogWarning("did rotation");
             Plugin.camPanRotation = Vector2.zero;
             isRotating = false;
         }
 
         void Update()
         {
-            if (!FreeAimController.IsInDeadZone) 
+            if (!FreeAimController.IsInDeadZone)
             {
                 if (!isRotating && FreeAimController.PanCamRight)
                 {
-                    StartRotation(new Vector2(0.4f, 0));
+                    StartRotation(new Vector2(PanCamAmount.Value, 0));
                 }
                 if (!isRotating && FreeAimController.PanCamLeft)
                 {
-                    StartRotation(new Vector2(-0.4f, 0));
+                    StartRotation(new Vector2(-PanCamAmount.Value, 0));
                 }
                 if (!isRotating && FreeAimController.PanCamUp)
                 {
-                    StartRotation(new Vector2(0f, -0.4f));
+                    StartRotation(new Vector2(0f, -PanCamAmount.Value));
                 }
                 if (!isRotating && FreeAimController.PanCamDown)
                 {
-                    StartRotation(new Vector2(0f, 0.4f));
-                }
-                if (FreeAimController.DoPanCameraToAiming)
-                {
-                    Logger.LogWarning("calling rotation");
-                    FreeAimController.PanAimVert = FreeAimController.WeapRotation.x * Plugin.test1.Value;
-                    FreeAimController.PanAimHorz = FreeAimController.WeapRotation.z * Plugin.test2.Value;
-                    StartRotation(new Vector2(FreeAimController.PanAimHorz, FreeAimController.PanAimVert));
-                    FreeAimController.DoPanCameraToAiming = false;
+                    StartRotation(new Vector2(0f, PanCamAmount.Value));
                 }
             }
-    
+            if (FreeAimController.DoPanCameraToAiming && (AlwaysResetOnAim.Value || !FreeAimController.IsInDeadZone || FreeAimController.DoPanCameraFromAiming))
+            {
+                Logger.LogWarning("calling rotation");
+                float vert = FreeAimController.WeapRotation.x * PanAimAmount.Value;
+                float horz = FreeAimController.WeapRotation.z * PanAimAmount.Value;
+                StartRotation(new Vector2(horz, vert)); 
+                FreeAimController.DoPanCameraToAiming = false;
+                FreeAimController.DoPanCameraFromAiming = false;
+            }
+
 
             Utils.CheckIsReady();
 
