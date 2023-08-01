@@ -20,6 +20,21 @@ using UnityEngine.Experimental.GlobalIllumination;
 namespace FOVFix
 {
 
+
+    public class CalculateScaleValueByFovPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(Player).GetMethod("CalculateScaleValueByFov");
+        }
+
+        [PatchPostfix]
+        public static void PatchPostfix(ref float ___float_10)
+        {
+            ___float_10 = Plugin.FovScale.Value;
+        }
+    }
+
     public class OperationSetScopeModePatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

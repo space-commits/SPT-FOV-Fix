@@ -21,25 +21,6 @@ namespace FOVFix
 
         public static string[] scopeTypes = new string[] { "55818acf4bdc2dde698b456b", "55818ad54bdc2ddc698b4569", "55818add4bdc2d5b648b456f", "55818ae44bdc2dde698b456c", "55818ac54bdc2d5b648b456e", "55818aeb4bdc2ddc698b456a" };
 
-        public static unsafe int FloatToInt32Bits(float f)
-        {
-            return *((int*)&f);
-        }
-
-        public static bool FloatsAreAproxEqual(float a, float b, int maxDeltaBits)
-        {
-            int aInt = FloatToInt32Bits(a);
-            if (aInt < 0)
-                aInt = Int32.MinValue - aInt;
-
-            int bInt = FloatToInt32Bits(b);
-            if (bInt < 0)
-                bInt = Int32.MinValue - bInt;
-
-            int intDiff = Math.Abs(aInt - bInt);
-            return intDiff <= (1 << maxDeltaBits);
-        }
-
         public static void CheckIsReady()
         {
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
