@@ -39,21 +39,21 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player.FirearmController.GClass1528).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(Player.FirearmController.GClass1578).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(Player.FirearmController.GClass1528 __instance, GStruct144[] scopeStates)
+        private static bool PatchPrefix(Player.FirearmController.GClass1578 __instance, GStruct155[] scopeStates)
         {
             if (__instance.CanChangeScopeStates(scopeStates))
             {
                 if (Plugin.CanToggle || !Plugin.IsOptic)
                 {
-                    FirearmsAnimator fAnimator = (FirearmsAnimator)AccessTools.Field(typeof(Player.FirearmController.GClass1528), "firearmsAnimator_0").GetValue(__instance);
+                    FirearmsAnimator fAnimator = (FirearmsAnimator)AccessTools.Field(typeof(Player.FirearmController.GClass1578), "firearmsAnimator_0").GetValue(__instance);
                     fAnimator.ModToggleTrigger();
                 }
-                GClass1596 gclass1596_0 = (GClass1596)AccessTools.Field(typeof(Player.FirearmController.GClass1528), "gclass1596_0").GetValue(__instance);
-                gclass1596_0.UpdateScopesMode();
+                GClass1660 gclass1660_0 = (GClass1660)AccessTools.Field(typeof(Player.FirearmController.GClass1578), "gclass1660_0").GetValue(__instance);
+                gclass1660_0.UpdateScopesMode();
             }
             return false;
         }
@@ -87,7 +87,7 @@ namespace FOVFix
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(Player.FirearmController __instance, GStruct144[] scopeStates)
+        private static bool PatchPrefix(Player.FirearmController __instance)
         {
             if (Plugin.IsOptic) 
             {
@@ -100,7 +100,7 @@ namespace FOVFix
                 Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
                 SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                 SightModClass sightModClass = currentAimingMod as SightModClass;
-                GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+                GInterface260 inter = (GInterface260)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0").GetValue(sightModClass.Sight);
 
                 canToggle = currentAimingMod.Template.ToolModdable;
                 isFixedMag = currentAimingMod.Template.HasShoulderContact;
@@ -181,7 +181,7 @@ namespace FOVFix
 
         private static bool hasScopeAimBone(SightComponent sightComp, Player player)
         {
-            List<ProceduralWeaponAnimation.GClass2075> scopeAimTransforms = player.ProceduralWeaponAnimation.ScopeAimTransforms;
+            List<ProceduralWeaponAnimation.GClass2137> scopeAimTransforms = player.ProceduralWeaponAnimation.ScopeAimTransforms;
             for (int i = 0; i < scopeAimTransforms.Count; i++)
             {
                 if (scopeAimTransforms[i].Mod != null && scopeAimTransforms[i].Mod.Equals(sightComp))
@@ -192,11 +192,11 @@ namespace FOVFix
             return false;
         }
 
-        private static GStruct144[] getScopeModeFullList(Weapon weapon, Player player)
+        private static GStruct155[] getScopeModeFullList(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<GStruct144> sightStructList = new List<GStruct144>();
+            List<GStruct155> sightStructList = new List<GStruct155>();
             int aimIndex = weapon.AimIndex.Value;
             int index = 0;
             foreach (SightComponent sightComponent in sightEnumerable) 
@@ -207,7 +207,7 @@ namespace FOVFix
                     {
                         int sightMode = (sightComponent.ScopesSelectedModes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesSelectedModes[i];
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new GStruct144
+                        sightStructList.Add(new GStruct155
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = i,
@@ -244,7 +244,7 @@ namespace FOVFix
                             Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
                             SightModClass sightModClass = currentAimingMod as SightModClass;
                             SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
-                            GInterface248 inter = (GInterface248)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface248_0").GetValue(sightModClass.Sight);
+                            GInterface260 inter = (GInterface260)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0").GetValue(sightModClass.Sight);
                             Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
                             Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
                             Plugin.CanToggleButNotFixed = Plugin.CanToggle && !Plugin.IsFixedMag;
@@ -453,56 +453,63 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ___float_10, float ___float_9, float ___float_16, Player.ValueBlender ___valueBlender_0, Vector3 ___vector3_2, Vector3 ___vector3_7, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ___valueBlenderDelay_0, Quaternion ___quaternion_3, Quaternion ___quaternion_4)
         {
-            Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
-            float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
+            GInterface114 ginterface114 = (GInterface114)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "ginterface114_0").GetValue(__instance);
 
-            float camZ = firearmController != null && __instance.IsAiming == true && !Plugin.IsOptic && firearmController.Item.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
-
-            Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
-            Vector2 a = new Vector2(localPosition.x, localPosition.y);
-            Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
-            float num = __instance.IsAiming ? (___float_9 * __instance.CameraSmoothBlender.Value * ___float_10) : Plugin.CameraSmoothOut.Value;
-            Vector2 vector = Vector2.Lerp(a, b, dt * num);
-            float num2 = localPosition.z;
-            float num3 = Plugin.IsOptic ? Plugin.OpticSmoothTime.Value * dt : firearmController != null && firearmController.Item.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
-            float num4 = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
-            num2 = Mathf.Lerp(num2, camZ, num3 * num4);
-            Vector3 localPosition2 = new Vector3(vector.x, vector.y, num2) + __instance.HandsContainer.CameraPosition.GetRelative();
-            if (___float_16 > 0f)
+            if (ginterface114 != null && ginterface114.Weapon != null)
             {
-                float value = ___valueBlender_0.Value;
-                if (__instance.IsAiming && value > 0f)
-                {
-                    __instance.HandsContainer.SwaySpring.ApplyVelocity(___vector3_2 * value);
-                }
-            }
-            __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
-            Quaternion b2 = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
-            __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, b2, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
+                Weapon weapon = ginterface114.Weapon;
 
-            return false;
+                float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
+
+                float camZ = __instance.IsAiming == true && !Plugin.IsOptic && weapon.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+
+                Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
+                Vector2 a = new Vector2(localPosition.x, localPosition.y);
+                Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
+                float num = __instance.IsAiming ? (___float_9 * __instance.CameraSmoothBlender.Value * ___float_10) : Plugin.CameraSmoothOut.Value;
+                Vector2 vector = Vector2.Lerp(a, b, dt * num);
+                float num2 = localPosition.z;
+                float num3 = Plugin.IsOptic ? Plugin.OpticSmoothTime.Value * dt : weapon.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
+                float num4 = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
+                num2 = Mathf.Lerp(num2, camZ, num3 * num4);
+                Vector3 localPosition2 = new Vector3(vector.x, vector.y, num2) + __instance.HandsContainer.CameraPosition.GetRelative();
+                if (___float_16 > 0f)
+                {
+                    float value = ___valueBlender_0.Value;
+                    if (__instance.IsAiming && value > 0f)
+                    {
+                        __instance.HandsContainer.SwaySpring.ApplyVelocity(___vector3_2 * value);
+                    }
+                }
+                __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
+                Quaternion b2 = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
+                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, b2, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
+
+                return false;
+            }
+            return true;
         }
     }
 
-    public class method_20Patch : ModulePatch
+    public class method_21Patch : ModulePatch
     {
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_20", BindingFlags.Instance | BindingFlags.NonPublic);
+            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_21", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
         [PatchPostfix]
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
 ;
-            Player.FirearmController firearmController = (Player.FirearmController)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "firearmController_0").GetValue(__instance);
+            GInterface114 ginterface114 = (GInterface114)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "ginterface114_0").GetValue(__instance);
             float baseFOV = (float)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "Single_2").GetValue(__instance);
 
-            if (firearmController != null)
+            if (ginterface114 != null && ginterface114.Weapon != null)
             {
-                Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(firearmController);
-
+                Weapon weapon = ginterface114.Weapon;
+                Player player = Singleton<GameWorld>.Instance.GetAlivePlayerByProfileID(weapon.Owner.ID);
                 if (!player.IsAI)
                 {
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
@@ -534,10 +541,8 @@ namespace FOVFix
                             }
                    
                             CameraClass.Instance.SetFov(fov, 1f, !isAiming);
-                        }
-                        /*                       var method_0 = AccessTools.Method(typeof(EFT.Animations.ProceduralWeaponAnimation), "method_0");
 
-                                               method_0.Invoke(__instance, new object[] { });*/
+                        }
                     }
                 }
             }

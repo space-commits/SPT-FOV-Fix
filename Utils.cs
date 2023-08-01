@@ -26,9 +26,9 @@ namespace FOVFix
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
             SessionResultPanel sessionResultPanel = Singleton<SessionResultPanel>.Instance;
 
-            if (gameWorld?.AllPlayers.Count > 0)
+            if (gameWorld?.AllAlivePlayersList.Count > 0)
             {
-                Player player = gameWorld.AllPlayers[0];
+                Player player = gameWorld.AllAlivePlayersList[0];
                 if (player != null && player?.HandsController != null)
                 {
                     Plugin.player = player; 
@@ -39,7 +39,7 @@ namespace FOVFix
                 }
             }
 
-            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count <= 0 || sessionResultPanel != null)
+            if (gameWorld == null || gameWorld.AllAlivePlayersList == null || gameWorld.AllAlivePlayersList.Count <= 0 || sessionResultPanel != null)
             {
                 Plugin.IsReady = false;
             }
