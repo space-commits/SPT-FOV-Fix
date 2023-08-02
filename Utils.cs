@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace FOVFix
 {
-  public static class Helper
+  public static class Utils
   {
 
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
@@ -26,9 +26,9 @@ namespace FOVFix
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
             SessionResultPanel sessionResultPanel = Singleton<SessionResultPanel>.Instance;
 
-            if (gameWorld?.AllPlayers.Count > 0)
+            if (gameWorld?.AllAlivePlayersList.Count > 0)
             {
-                Player player = gameWorld.AllPlayers[0];
+                Player player = gameWorld.AllAlivePlayersList[0];
                 if (player != null && player?.HandsController != null)
                 {
                     Plugin.player = player; 
@@ -39,7 +39,7 @@ namespace FOVFix
                 }
             }
 
-            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count <= 0 || sessionResultPanel != null)
+            if (gameWorld == null || gameWorld.AllAlivePlayersList == null || gameWorld.AllAlivePlayersList.Count <= 0 || sessionResultPanel != null)
             {
                 Plugin.IsReady = false;
             }
@@ -84,5 +84,35 @@ namespace FOVFix
                     return 1;
             }
         }
+
+        public static float GetZoomSensValue(float magnificaiton)
+        {
+            switch (magnificaiton)
+            {
+                case <= 1.5f:
+                    return Plugin.OneSensMulti.Value;
+                case <= 2:
+                    return Plugin.TwoSensMulti.Value;
+                case <= 3:
+                    return Plugin.ThreeSensMulti.Value;
+                case <= 4:
+                    return Plugin.FourSensMulti.Value;
+                case <= 5:
+                    return Plugin.FiveSensMulti.Value;
+                case <= 6:
+                    return Plugin.SixSensMulti.Value;
+                case <= 8:
+                    return Plugin.EightSensMulti.Value;
+                case <= 10:
+                    return Plugin.TenSensMulti.Value;
+                case <= 12:
+                    return Plugin.TwelveSensMulti.Value;
+                case > 12:
+                    return Plugin.HighSensMulti.Value;
+                default:
+                    return 1;
+            }
+        }
+
     }
 }
