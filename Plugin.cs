@@ -122,10 +122,12 @@ namespace FOVFix
         public static bool isRotating = false;
         private Vector2 targetRotation = Vector2.zero;
 
-        private static MethodInfo aimParamsMethod = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_21");
+        private static MethodInfo aimParamsMethod;
 
         private void Awake()
         {
+            aimParamsMethod = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_21");
+
             string variable = "1. Variable Zoom.";
             string adsFOV = "2. Player Camera ADS FOV";
             string cameraPostiion = "3. ADS Player Camera Position";
@@ -133,8 +135,8 @@ namespace FOVFix
             string sens = "5. Mouse Sensitivity.";
             string misc = "6. Misc.";
             string scopeFOV = "7. Scope Zoom (IF VARIABLE ZOOM IS DISABLED).";
-
             string testing = ".0. Testing";
+
             test1 = Config.Bind<float>(testing, "test 1", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 600, IsAdvanced = true }));
             test2 = Config.Bind<float>(testing, "test 2", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 500, IsAdvanced = true }));
             test3 = Config.Bind<float>(testing, "test 3", 1f, new ConfigDescription("", new AcceptableValueRange<float>(-5000f, 5000f), new ConfigurationManagerAttributes { Order = 400, IsAdvanced = true }));

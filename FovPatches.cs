@@ -17,6 +17,12 @@ using static CC_Vintage;
 using BepInEx.Logging;
 using UnityEngine.Experimental.GlobalIllumination;
 
+using PlayerInterface = GInterface114;
+using WeaponState = GClass1660;
+using FCSubClass = EFT.Player.FirearmController.GClass1578;
+using ScopeStatesStruct = GStruct155;
+using SightComptInterface = GInterface260;
+
 namespace FOVFix
 {
 
@@ -37,23 +43,29 @@ namespace FOVFix
 
     public class OperationSetScopeModePatch : ModulePatch
     {
+        private static FieldInfo fAnimatorField;
+        private static FieldInfo weaponStateField;
+
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player.FirearmController.GClass1578).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
+            fAnimatorField = AccessTools.Field(typeof(FCSubClass), "firearmsAnimator_0");
+            weaponStateField = AccessTools.Field(typeof(FCSubClass), "gclass1660_0");
+
+            return typeof(FCSubClass).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(Player.FirearmController.GClass1578 __instance, GStruct155[] scopeStates)
+        private static bool PatchPrefix(FCSubClass __instance, ScopeStatesStruct[] scopeStates)
         {
             if (__instance.CanChangeScopeStates(scopeStates))
             {
                 if (Plugin.CanToggle || !Plugin.IsOptic)
                 {
-                    FirearmsAnimator fAnimator = (FirearmsAnimator)AccessTools.Field(typeof(Player.FirearmController.GClass1578), "firearmsAnimator_0").GetValue(__instance);
+                    FirearmsAnimator fAnimator = (FirearmsAnimator)fAnimatorField.GetValue(__instance);
                     fAnimator.ModToggleTrigger();
                 }
-                GClass1660 gclass1660_0 = (GClass1660)AccessTools.Field(typeof(Player.FirearmController.GClass1578), "gclass1660_0").GetValue(__instance);
-                gclass1660_0.UpdateScopesMode();
+                WeaponState weaponState = (WeaponState)weaponStateField.GetValue(__instance);
+                weaponState.UpdateScopesMode();
             }
             return false;
         }
@@ -75,6 +87,9 @@ namespace FOVFix
 
     public class SetScopeModePatch : ModulePatch
     {
+        private static FieldInfo playerField;
+        private static FieldInfo sighCompField;
+
         private static bool canToggle = false;
         private static bool isFixedMag = false;
         private static bool isOptic = false;
@@ -83,6 +98,9 @@ namespace FOVFix
 
         protected override MethodBase GetTargetMethod()
         {
+            playerField = AccessTools.Field(typeof(EFT.Player.FirearmController), "_player");
+            sighCompField = AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0");
+
             return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
@@ -93,14 +111,14 @@ namespace FOVFix
             {
                 Plugin.ChangeSight = true;
 
-                Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+                Player player = (Player)playerField.GetValue(__instance);
                 ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
                 isOptic = pwa.CurrentScope.IsOptic;
 
                 Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
                 SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                 SightModClass sightModClass = currentAimingMod as SightModClass;
-                GInterface260 inter = (GInterface260)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0").GetValue(sightModClass.Sight);
+                SightComptInterface inter = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
 
                 canToggle = currentAimingMod.Template.ToolModdable;
                 isFixedMag = currentAimingMod.Template.HasShoulderContact;
@@ -139,7 +157,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(Player.FirearmController __instance)
         {
-            Player player = (Player)AccessTools.Field(typeof(EFT.Player.FirearmController), "_player").GetValue(__instance);
+            Player player = (Player)playerField.GetValue(__instance);
             if (isOptic)
             {
                 if (!canToggle)
@@ -161,11 +179,17 @@ namespace FOVFix
 
     public class IsAimingPatch : ModulePatch
     {
+        private static FieldInfo playerField;
+        private static FieldInfo sightComptField;
+
         private static bool hasSetFov = false;
         private static float adsTimer = 0f;
 
         protected override MethodBase GetTargetMethod()
         {
+            playerField = AccessTools.Field(typeof(EFT.Player.FirearmController), "_player");
+            sightComptField = AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0");
+
             return typeof(Player.FirearmController).GetMethod("get_IsAiming", BindingFlags.Instance | BindingFlags.Public);
         }
 
@@ -192,11 +216,11 @@ namespace FOVFix
             return false;
         }
 
-        private static GStruct155[] getScopeModeFullList(Weapon weapon, Player player)
+        private static ScopeStatesStruct[] getScopeModeFullList(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<GStruct155> sightStructList = new List<GStruct155>();
+            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
             int aimIndex = weapon.AimIndex.Value;
             int index = 0;
             foreach (SightComponent sightComponent in sightEnumerable) 
@@ -207,7 +231,7 @@ namespace FOVFix
                     {
                         int sightMode = (sightComponent.ScopesSelectedModes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesSelectedModes[i];
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new GStruct155
+                        sightStructList.Add(new ScopeStatesStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = i,
@@ -224,7 +248,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(Player.FirearmController __instance, bool __result)
         {
-            Player player = (Player)AccessTools.Field(typeof(EFT.Player.ItemHandsController), "_player").GetValue(__instance);
+            Player player = (Player)playerField.GetValue(__instance);
             if (player.IsYourPlayer) 
             {
                 Plugin.IsAiming = __result;
@@ -244,7 +268,7 @@ namespace FOVFix
                             Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
                             SightModClass sightModClass = currentAimingMod as SightModClass;
                             SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
-                            GInterface260 inter = (GInterface260)AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "ginterface260_0").GetValue(sightModClass.Sight);
+                            SightComptInterface sightCompInter = (SightComptInterface)sightComptField.GetValue(sightModClass.Sight);
                             Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
                             Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
                             Plugin.CanToggleButNotFixed = Plugin.CanToggle && !Plugin.IsFixedMag;
@@ -253,23 +277,23 @@ namespace FOVFix
 
                             if (Plugin.IsFixedMag)
                             {
-                                minZoom = inter.Zooms[0][0];
+                                minZoom = sightCompInter.Zooms[0][0];
                                 maxZoom = minZoom;
                             }
-                            else if (Plugin.CanToggleButNotFixed && inter.Zooms[0].Length > 2)
+                            else if (Plugin.CanToggleButNotFixed && sightCompInter.Zooms[0].Length > 2)
                             {
-                                minZoom = inter.Zooms[0][0];
-                                maxZoom = inter.Zooms[0][2];
+                                minZoom = sightCompInter.Zooms[0][0];
+                                maxZoom = sightCompInter.Zooms[0][2];
                             }
-                            else if (inter.Zooms[0][0] > inter.Zooms[0][1])
+                            else if (sightCompInter.Zooms[0][0] > sightCompInter.Zooms[0][1])
                             {
-                                maxZoom = inter.Zooms[0][0];
-                                minZoom = inter.Zooms[0][1];
+                                maxZoom = sightCompInter.Zooms[0][0];
+                                minZoom = sightCompInter.Zooms[0][1];
                             }
                             else 
                             {
-                                minZoom = inter.Zooms[0][0];
-                                maxZoom = inter.Zooms[0][1];
+                                minZoom = sightCompInter.Zooms[0][0];
+                                maxZoom = sightCompInter.Zooms[0][1];
                             }
 
                             Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle && currentAimingMod.TemplateId != "5b2388675acfc4771e1be0be");
@@ -353,8 +377,28 @@ namespace FOVFix
 
     public class FreeLookPatch : ModulePatch
     {
+        private static FieldInfo bool1Field;
+        private static FieldInfo bool2Field;
+        private static FieldInfo bool3Field;
+        private static FieldInfo bool4Field;
+        private static FieldInfo bool5Field;
+        private static FieldInfo bool6Field;
+
+        private static FieldInfo float0Field;
+        private static FieldInfo float1Field;
+
         protected override MethodBase GetTargetMethod()
         {
+            bool1Field = AccessTools.Field(typeof(Player), "bool_1");
+            bool2Field = AccessTools.Field(typeof(Player), "bool_2");
+            bool3Field = AccessTools.Field(typeof(Player), "bool_3");
+            bool4Field = AccessTools.Field(typeof(Player), "bool_4");
+            bool5Field = AccessTools.Field(typeof(Player), "bool_5");
+            bool6Field = AccessTools.Field(typeof(Player), "bool_6");
+
+            float0Field = AccessTools.Field(typeof(Player), "float_0");
+            float1Field = AccessTools.Field(typeof(Player), "float_1");
+
             return typeof(Player).GetMethod("Look", BindingFlags.Instance | BindingFlags.Public);
         }
 
@@ -362,15 +406,15 @@ namespace FOVFix
         private static bool Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
         {
 
-            bool bool_1 = (bool)AccessTools.Field(typeof(Player), "bool_1").GetValue(__instance);
-            bool mouseLookControl = (bool)AccessTools.Field(typeof(Player), "bool_2").GetValue(__instance);
-            bool isResettingLook = (bool)AccessTools.Field(typeof(Player), "bool_3").GetValue(__instance);
-            bool bool_4 = (bool)AccessTools.Field(typeof(Player), "bool_4").GetValue(__instance);
-            bool isLooking = (bool)AccessTools.Field(typeof(Player), "bool_5").GetValue(__instance);
-            bool bool_6 = (bool)AccessTools.Field(typeof(Player), "bool_6").GetValue(__instance);
+            bool bool_1 = (bool)bool1Field.GetValue(__instance);
+            bool mouseLookControl = (bool)bool2Field.GetValue(__instance);
+            bool isResettingLook = (bool)bool3Field.GetValue(__instance);
+            bool bool_4 = (bool)bool4Field.GetValue(__instance);
+            bool isLooking = (bool)bool5Field.GetValue(__instance);
+            bool bool_6 = (bool)bool6Field.GetValue(__instance);
 
-            float lookZ = (float)AccessTools.Field(typeof(Player), "float_0").GetValue(__instance);
-            float verticalLimit = (float)AccessTools.Field(typeof(Player), "float_1").GetValue(__instance);
+            float lookZ = (float)float0Field.GetValue(__instance);
+            float verticalLimit = (float)float1Field.GetValue(__instance);
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
@@ -385,56 +429,56 @@ namespace FOVFix
             {
                 mouse_LOOK_VERTICAL_LIMIT.y = 0f;
             }
-            AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Clamp(lookZ - deltaLookY, vector.x, vector.y));
-            AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Clamp(verticalLimit + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
+            float0Field.SetValue(__instance, Mathf.Clamp(lookZ - deltaLookY, vector.x, vector.y));
+            float1Field.SetValue(__instance, Mathf.Clamp(verticalLimit + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
             float x2 = (verticalLimit > 0f) ? (verticalLimit * (1f - lookZ / vector.y * (lookZ / vector.y))) : verticalLimit;
             if (bool_4)
             {
-                AccessTools.Field(typeof(Player), "bool_3").SetValue(__instance, false);
-                AccessTools.Field(typeof(Player), "bool_4").SetValue(__instance, false);
+                bool3Field.SetValue(__instance, false);
+                bool4Field.SetValue(__instance, false);
             }
             if (bool_1)
             {
-                AccessTools.Field(typeof(Player), "bool_2").SetValue(__instance, false);
-                AccessTools.Field(typeof(Player), "bool_1").SetValue(__instance, false);
-                AccessTools.Field(typeof(Player), "bool_3").SetValue(__instance, true);
+                bool2Field.SetValue(__instance, false);
+                bool1Field.SetValue(__instance, false);
+                bool3Field.SetValue(__instance, true);
                 deltaLookY = 0f;
                 deltaLookX = 0f;
             }
             if (Math.Abs(deltaLookY) >= 1E-45f && Math.Abs(deltaLookX) >= 1E-45f)
             {
-                AccessTools.Field(typeof(Player), "bool_2").SetValue(__instance, true);
+                bool2Field.SetValue(__instance, true);
             }
             if (!mouseLookControl && withReturn)
             {
                 if (Mathf.Abs(lookZ) > 0.01f)
                 {
-                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, Mathf.Lerp(lookZ, 0f, Time.deltaTime * 15f));
+                    float0Field.SetValue(__instance, Mathf.Lerp(lookZ, 0f, Time.deltaTime * 15f));
                 }
                 else
                 {
-                    AccessTools.Field(typeof(Player), "float_0").SetValue(__instance, 0f);
+                    float0Field.SetValue(__instance, 0f);
                 }
                 if (Mathf.Abs(verticalLimit) > 0.01f)
                 {
-                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, Mathf.Lerp(verticalLimit, 0f, Time.deltaTime * 15f));
+                    float1Field.SetValue(__instance, Mathf.Lerp(verticalLimit, 0f, Time.deltaTime * 15f));
                 }
                 else
                 {
-                    AccessTools.Field(typeof(Player), "float_1").SetValue(__instance, 0f);
+                    float1Field.SetValue(__instance, 0f);
                 }
             }
             if (!isResettingLook && lookZ != 0f && verticalLimit != 0f)
             {
-                AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, true);
+                bool5Field.SetValue(__instance, true);
             }
             else
             {
-                AccessTools.Field(typeof(Player), "bool_5").SetValue(__instance, false);
+                bool5Field.SetValue(__instance, false);
             }
             if (lookZ == 0f && verticalLimit == 0f)
             {
-                AccessTools.Field(typeof(Player), "bool_4").SetValue(__instance, true);
+                bool4Field.SetValue(__instance, true);
             }
             __instance.HeadRotation = new Vector3(x2, lookZ, 0f);
             __instance.ProceduralWeaponAnimation.SetHeadRotation(__instance.HeadRotation);
@@ -493,9 +537,18 @@ namespace FOVFix
 
     public class method_21Patch : ModulePatch
     {
+        private static FieldInfo playerInterfaceField;
+        private static FieldInfo isAimingField;
+        private static PropertyInfo baseFOVField;
+        private static PropertyInfo aimIndexField;
 
         protected override MethodBase GetTargetMethod()
         {
+            playerInterfaceField = AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "ginterface114_0");
+            isAimingField = AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1");
+            aimIndexField = AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex");
+            baseFOVField = AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "Single_2");
+
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_21", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
@@ -503,23 +556,21 @@ namespace FOVFix
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
 ;
-            GInterface114 ginterface114 = (GInterface114)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "ginterface114_0").GetValue(__instance);
-            float baseFOV = (float)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "Single_2").GetValue(__instance);
+            PlayerInterface playerField = (PlayerInterface)playerInterfaceField.GetValue(__instance);
+            float baseFOV = (float)baseFOVField.GetValue(__instance);
+            int aimIndex = (int)aimIndexField.GetValue(__instance);
+            bool isAiming = (bool)isAimingField.GetValue(__instance);
 
-            if (ginterface114 != null && ginterface114.Weapon != null)
+            if (playerField != null && playerField.Weapon != null)
             {
-                Weapon weapon = ginterface114.Weapon;
+                Weapon weapon = playerField.Weapon;
                 Player player = Singleton<GameWorld>.Instance.GetAlivePlayerByProfileID(weapon.Owner.ID);
                 if (!player.IsAI)
                 {
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
-                        int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);
-
-                        if (!__instance.Sprint && AimIndex < __instance.ScopeAimTransforms.Count)
+                        if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
                         {
-                            bool isAiming = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
-
                             float zoom = 1;
                             if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                             {
@@ -550,16 +601,13 @@ namespace FOVFix
             {
                 if (__instance.PointOfView == EPointOfView.FirstPerson)
                 {
-                    int AimIndex = (int)AccessTools.Property(typeof(EFT.Animations.ProceduralWeaponAnimation), "AimIndex").GetValue(__instance);
-                    if (!__instance.Sprint && AimIndex < __instance.ScopeAimTransforms.Count)
-                    {
 
-                        bool bool_1 = (bool)AccessTools.Field(typeof(EFT.Animations.ProceduralWeaponAnimation), "bool_1").GetValue(__instance);
-                       
+                    if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
+                    {
                         float sightFOV = baseFOV * Plugin.RangeFinderADSMulti.Value * Plugin.GlobalADSMulti.Value;
                         float fov = __instance.IsAiming ? sightFOV : baseFOV;
 
-                        CameraClass.Instance.SetFov(fov, 1f, !bool_1);
+                        CameraClass.Instance.SetFov(fov, 1f, !isAiming);
                     }
                 }
             }
@@ -592,15 +640,19 @@ namespace FOVFix
 
     public class OnWeaponParametersChangedPatch : ModulePatch
     {
+        private static FieldInfo weaponField;
+
         protected override MethodBase GetTargetMethod()
         {
+            weaponField = AccessTools.Field(typeof(ShotEffector), "_weapon");
+
             return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPostfix]
         private static void PatchPostfix(ShotEffector __instance)
         {
-            IWeapon _weapon = (IWeapon)AccessTools.Field(typeof(ShotEffector), "_weapon").GetValue(__instance);
+            IWeapon _weapon = (IWeapon)weaponField.GetValue(__instance);
             if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
             {
                 Plugin.HasRAPTAR = false;
