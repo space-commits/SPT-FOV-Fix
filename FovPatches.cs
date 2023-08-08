@@ -249,7 +249,7 @@ namespace FOVFix
         private static void PatchPostfix(Player.FirearmController __instance, bool __result)
         {
             Player player = (Player)playerField.GetValue(__instance);
-            if (player.IsYourPlayer) 
+            if (player != null && player.MovementContext.CurrentState.Name != EPlayerState.Stationary && player.IsYourPlayer) 
             {
                 Plugin.IsAiming = __result;
 
@@ -565,7 +565,7 @@ namespace FOVFix
             {
                 Weapon weapon = playerField.Weapon;
                 Player player = Singleton<GameWorld>.Instance.GetAlivePlayerByProfileID(weapon.Owner.ID);
-                if (!player.IsAI)
+                if (player != null && player.MovementContext.CurrentState.Name != EPlayerState.Stationary && player.IsYourPlayer)
                 {
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
