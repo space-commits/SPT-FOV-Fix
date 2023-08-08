@@ -122,11 +122,11 @@ namespace FOVFix
         public static bool isRotating = false;
         private Vector2 targetRotation = Vector2.zero;
 
-        private static MethodInfo aimParamsMethod;
+        public static MethodInfo PwaParamsMethod;
 
         private void Awake()
         {
-            aimParamsMethod = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_21");
+            PwaParamsMethod = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_21");
 
             string variable = "1. Variable Zoom.";
             string adsFOV = "2. Player Camera ADS FOV";
@@ -206,7 +206,7 @@ namespace FOVFix
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
             RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15f, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
 
-            new method_21Patch().Enable();
+            new PwaWeaponParamsPatch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
             new IsAimingPatch().Enable();
@@ -272,7 +272,7 @@ namespace FOVFix
                 }
             }
 
-            aimParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
         }
 
         void Update()
@@ -334,14 +334,14 @@ namespace FOVFix
                         if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
                         {
                             Plugin.DoZoom = true;
-                            aimParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = true;
                             Plugin.DoZoom = false;
 
                         }
                         if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
                         {
-                            aimParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = false;
                         }
                     }
@@ -350,7 +350,7 @@ namespace FOVFix
                         if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                         {
                             Plugin.DoZoom = !Plugin.DoZoom;
-                            aimParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                             Plugin.CalledZoom = !Plugin.CalledZoom;
                         }
                     }
@@ -358,7 +358,7 @@ namespace FOVFix
                 if (!Plugin.IsAiming && Plugin.CalledZoom && !Plugin.HoldZoom.Value && !Plugin.EnableZoomOutsideADS.Value)
                 {
                     Plugin.DoZoom = false;
-                    aimParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                    PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
                     Plugin.CalledZoom = false;
                 }
             }

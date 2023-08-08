@@ -73,14 +73,19 @@ namespace FOVFix
 
     public class ChangeAimingModePatch : ModulePatch
     {
+        private static FieldInfo playerField;
+
         protected override MethodBase GetTargetMethod()
         {
+            playerField = AccessTools.Field(typeof(EFT.Player.FirearmController), "_player");
+
             return typeof(Player.FirearmController).GetMethod("ChangeAimingMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
         private static void PatchPrefix(Player.FirearmController __instance)
         {
+            Logger.LogWarning("ChangeAimingMode");
             Plugin.ChangeSight = true;
         }
     }
@@ -92,7 +97,7 @@ namespace FOVFix
 
         private static bool canToggle = false;
         private static bool isFixedMag = false;
-        private static bool isOptic = false;
+        private static bool isOptic = false; 
         private static bool isFucky = false;
         private static bool canToggleButNotFixed = false;
 
@@ -110,6 +115,8 @@ namespace FOVFix
             if (Plugin.IsOptic) 
             {
                 Plugin.ChangeSight = true;
+
+                Logger.LogWarning("SetScopeModePatch");
 
                 Player player = (Player)playerField.GetValue(__instance);
                 ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
@@ -535,7 +542,7 @@ namespace FOVFix
         }
     }
 
-    public class method_21Patch : ModulePatch
+    public class PwaWeaponParamsPatch : ModulePatch
     {
         private static FieldInfo playerInterfaceField;
         private static FieldInfo isAimingField;
@@ -555,7 +562,6 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
-;
             PlayerInterface playerField = (PlayerInterface)playerInterfaceField.GetValue(__instance);
             float baseFOV = (float)baseFOVField.GetValue(__instance);
             int aimIndex = (int)aimIndexField.GetValue(__instance);
@@ -576,12 +582,11 @@ namespace FOVFix
                             {
                                 zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
                             }
-
-                            float zoomMulti = Plugin.EnableVariableZoom.Value ? Utils.getADSFoVMulti(Plugin.CurrentZoom) : Utils.getADSFoVMulti(zoom);
-                            float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
-                            float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
+                            float zoomMulti = !isOptic ? Utils.GetADSFoVMulti(1f) : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
+                            float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
+                            float fov = __instance.IsAiming ? sightFOV : baseFOV;
 
                             if (Plugin.DoZoom)
                             {
