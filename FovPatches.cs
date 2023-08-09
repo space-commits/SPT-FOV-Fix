@@ -85,7 +85,6 @@ namespace FOVFix
         [PatchPrefix]
         private static void PatchPrefix(Player.FirearmController __instance)
         {
-            Logger.LogWarning("ChangeAimingMode");
             Plugin.ChangeSight = true;
         }
     }
@@ -115,8 +114,6 @@ namespace FOVFix
             if (Plugin.IsOptic) 
             {
                 Plugin.ChangeSight = true;
-
-                Logger.LogWarning("SetScopeModePatch");
 
                 Player player = (Player)playerField.GetValue(__instance);
                 ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;

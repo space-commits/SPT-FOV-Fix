@@ -1,10 +1,10 @@
 {
     "name": "Fontaine FOV Fix",
-    "version": "1.0.0",
+    "version": "1.7.0",
     "main": "src/mod.js",
     "license": "CC BY-NC-SA",
     "author": "Fontaine",
-    "akiVersion": "3.5.x",
+    "akiVersion": "3.6.x",
     "scripts": {
         "setup": "npm i",
         "build": "node ./packageBuild.ts"
