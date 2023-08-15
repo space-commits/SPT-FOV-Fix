@@ -26,7 +26,7 @@ namespace FOVFix
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
             SessionResultPanel sessionResultPanel = Singleton<SessionResultPanel>.Instance;
 
-            Player player = gameWorld.MainPlayer;
+            Player player = gameWorld?.MainPlayer;
             if (player != null && player?.HandsController != null)
             {
                 Plugin.player = player;
@@ -54,6 +54,7 @@ namespace FOVFix
 
             return isScope;
         }
+
 
         public static float GetADSFoVMulti(float zoom) 
         {
