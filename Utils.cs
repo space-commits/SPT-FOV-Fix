@@ -55,7 +55,6 @@ namespace FOVFix
             return isScope;
         }
 
-
         public static float GetADSFoVMulti(float zoom) 
         {
             switch (zoom)

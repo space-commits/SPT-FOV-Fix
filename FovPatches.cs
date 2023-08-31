@@ -111,15 +111,16 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(Player.FirearmController __instance)
         {
-            if (Plugin.IsOptic) 
+            Player player = (Player)playerField.GetValue(__instance);
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+
+            if (Plugin.IsOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d") 
             {
                 Plugin.ChangeSight = true;
 
-                Player player = (Player)playerField.GetValue(__instance);
-                ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-                isOptic = pwa.CurrentScope.IsOptic;
 
-                Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+                isOptic = pwa.CurrentScope.IsOptic;
                 SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                 SightModClass sightModClass = currentAimingMod as SightModClass;
                 SightComptInterface inter = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
@@ -162,7 +163,9 @@ namespace FOVFix
         private static void PatchPostfix(Player.FirearmController __instance)
         {
             Player player = (Player)playerField.GetValue(__instance);
-            if (isOptic)
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+            if (isOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d")
             {
                 if (!canToggle)
                 {
@@ -569,8 +572,8 @@ namespace FOVFix
                     }
                 }
                 __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
-                Quaternion b2 = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
-                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, b2, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
+                Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
+                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, animatedRotation, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
 
                 return false;
             }
@@ -627,7 +630,7 @@ namespace FOVFix
 
                             if (Plugin.DoZoom)
                             {
-                                float zoomFactor = isOptic ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
+                                float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
                                 float zoomedFOV = fov * zoomFactor;
                                 CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
                                 return;
