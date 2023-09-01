@@ -571,8 +571,9 @@ namespace FOVFix
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(___vector3_2 * value);
                     }
                 }
-                __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
+
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
+                __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
                 __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, animatedRotation, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
 
                 return false;

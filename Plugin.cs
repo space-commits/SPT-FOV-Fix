@@ -119,7 +119,6 @@ namespace FOVFix
 
         private static bool checkedForMods = false;
         public static bool RealismModIsPresent = false;
-        public static bool RecoilStandaloneIsPresent = false;
 
         public static Vector2 camPanRotation = Vector2.zero;
         public static bool isRotating = false;
@@ -292,7 +291,6 @@ namespace FOVFix
             if (!checkedForMods) 
             {
                 RealismModIsPresent = Chainloader.PluginInfos.ContainsKey("RealismMod");
-                RecoilStandaloneIsPresent = Chainloader.PluginInfos.ContainsKey("RecoilStandalone");
                 checkedForMods = true;
             }
   

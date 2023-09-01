@@ -64,7 +64,7 @@ namespace FOVFix
                     Plugin.AimingSens = newSens;
                 }
                
-                if (!Plugin.RecoilStandaloneIsPresent && !Plugin.RealismModIsPresent)
+                if (!Plugin.RealismModIsPresent)
                 {
                     ____aimingSens = newSens;
                 }
