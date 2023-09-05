@@ -73,8 +73,12 @@ namespace FOVFix
 
     public class ChangeAimingModePatch : ModulePatch
     {
+        private static FieldInfo playerField;
+
         protected override MethodBase GetTargetMethod()
         {
+            playerField = AccessTools.Field(typeof(EFT.Player.FirearmController), "_player");
+
             return typeof(Player.FirearmController).GetMethod("ChangeAimingMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
@@ -92,7 +96,7 @@ namespace FOVFix
 
         private static bool canToggle = false;
         private static bool isFixedMag = false;
-        private static bool isOptic = false;
+        private static bool isOptic = false; 
         private static bool isFucky = false;
         private static bool canToggleButNotFixed = false;
 
@@ -107,15 +111,16 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(Player.FirearmController __instance)
         {
-            if (Plugin.IsOptic) 
+            Player player = (Player)playerField.GetValue(__instance);
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+
+            if (Plugin.IsOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d") 
             {
                 Plugin.ChangeSight = true;
 
-                Player player = (Player)playerField.GetValue(__instance);
-                ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-                isOptic = pwa.CurrentScope.IsOptic;
 
-                Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+                isOptic = pwa.CurrentScope.IsOptic;
                 SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                 SightModClass sightModClass = currentAimingMod as SightModClass;
                 SightComptInterface inter = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
@@ -144,11 +149,11 @@ namespace FOVFix
                 }
 
                 isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
-                if (!canToggle && !Plugin.IsFucky)
+                bool isSamVudu = currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value;
+                if ((!canToggle && !Plugin.IsFucky && !isSamVudu) || (isSamVudu && !Plugin.ToggleForFirstPlane))
                 {
                     return false;
                 }
-
                 return true;
             }
             return true;
@@ -158,7 +163,9 @@ namespace FOVFix
         private static void PatchPostfix(Player.FirearmController __instance)
         {
             Player player = (Player)playerField.GetValue(__instance);
-            if (isOptic)
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
+            if (isOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d")
             {
                 if (!canToggle)
                 {
@@ -245,15 +252,42 @@ namespace FOVFix
             return sightStructList.ToArray();
         }
 
+        private static ScopeStatesStruct[] doVuduZoom(Weapon weapon, Player player)
+        {
+            //you can thank BSG for this monstrosity 
+            IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
+            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
+            int aimIndex = weapon.AimIndex.Value;
+            foreach (SightComponent sightComponent in sightEnumerable)
+            {
+                if (hasScopeAimBone(sightComponent, player))
+                {
+                    for (int i = 0; i < sightComponent.ScopesCount; i++)
+                    {
+                        int index = Plugin.CurrentZoom == 1f ? (int)Plugin.CurrentZoom - 1 : Plugin.CurrentZoom == 1.5f ? 1 : (int)Plugin.CurrentZoom;
+
+                        sightStructList.Add(new ScopeStatesStruct
+                        {
+                            Id = sightComponent.Item.Id,
+                            ScopeIndexInsideSight = 0,
+                            ScopeMode = index,
+                            ScopeCalibrationIndex = index
+                        });
+                    }
+                }
+            }
+            return sightStructList.ToArray();
+        }
+
         [PatchPostfix]
         private static void PatchPostfix(Player.FirearmController __instance, bool __result)
         {
             Player player = (Player)playerField.GetValue(__instance);
-            if (player.IsYourPlayer) 
+            if (player != null && player.MovementContext.CurrentState.Name != EPlayerState.Stationary && player.IsYourPlayer) 
             {
                 Plugin.IsAiming = __result;
 
-                if (Plugin.EnableVariableZoom.Value && Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight))
+                if (Plugin.EnableVariableZoom.Value && Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight || (Plugin.ToggleForFirstPlane && Plugin.SamSwatVudu.Value && Plugin.CurrentScopeTempID == "5b3b99475acfc432ff4dcbee")))
                 {
                     Plugin.ChangeSight = false;
                     ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
@@ -280,6 +314,11 @@ namespace FOVFix
                                 minZoom = sightCompInter.Zooms[0][0];
                                 maxZoom = minZoom;
                             }
+                            else if (currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value) 
+                            {
+                                minZoom = sightCompInter.Zooms[0][0];
+                                maxZoom = sightCompInter.Zooms[0][6];
+                            }
                             else if (Plugin.CanToggleButNotFixed && sightCompInter.Zooms[0].Length > 2)
                             {
                                 minZoom = sightCompInter.Zooms[0][0];
@@ -290,40 +329,47 @@ namespace FOVFix
                                 maxZoom = sightCompInter.Zooms[0][0];
                                 minZoom = sightCompInter.Zooms[0][1];
                             }
-                            else 
+                            else
                             {
                                 minZoom = sightCompInter.Zooms[0][0];
                                 maxZoom = sightCompInter.Zooms[0][1];
                             }
 
                             Plugin.IsFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !Plugin.IsFixedMag && !Plugin.CanToggle && currentAimingMod.TemplateId != "5b2388675acfc4771e1be0be");
-                            if (Plugin.IsFucky)
+                            bool isSamVudu = currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value;
+                            if (Plugin.IsFucky && !isSamVudu)
                             {
                                 __instance.SetScopeMode(getScopeModeFullList(__instance.Item, player));
+                            }
+
+                            if (Plugin.ToggleForFirstPlane && Plugin.SamSwatVudu.Value && currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee")
+                            {
+                                __instance.SetScopeMode(doVuduZoom(__instance.Item, player));
+                                Plugin.ToggleForFirstPlane = false;
                             }
 
                             Plugin.MinZoom = minZoom;
                             Plugin.MaxZoom = maxZoom;
 
-                            Plugin.CurrentWeapID = __instance.Item.Id.ToString();
-                            Plugin.CurrentScopeID = pwa.CurrentAimingMod.Item.Id.ToString();
+                            Plugin.CurrentWeapInstanceID = __instance.Item.Id.ToString();
+                            Plugin.CurrentScopeInstanceID = pwa.CurrentAimingMod.Item.Id.ToString();
 
                             bool weapExists = true;
                             bool scopeExists = false;
                             float rememberedZoom = minZoom;
 
-                            if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapID))
+                            if (!Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapInstanceID))
                             {
                                 weapExists = false;
-                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID] = new List<Dictionary<string, float>>();
+                                Plugin.WeaponScopeValues[Plugin.CurrentWeapInstanceID] = new List<Dictionary<string, float>>();
                             }
 
-                            List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapID];
+                            List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapInstanceID];
                             foreach (Dictionary<string, float> scopeDict in scopes)
                             {
-                                if (scopeDict.ContainsKey(Plugin.CurrentScopeID))
+                                if (scopeDict.ContainsKey(Plugin.CurrentScopeInstanceID))
                                 {
-                                    rememberedZoom = scopeDict[Plugin.CurrentScopeID];
+                                    rememberedZoom = scopeDict[Plugin.CurrentScopeInstanceID];
                                     scopeExists = true;
                                     break;
                                 }
@@ -332,10 +378,10 @@ namespace FOVFix
                             if (!scopeExists)
                             {
                                 Dictionary<string, float> newScope = new Dictionary<string, float>
-                                        {
-                                           { Plugin.CurrentScopeID, minZoom }
-                                        };
-                                Plugin.WeaponScopeValues[Plugin.CurrentWeapID].Add(newScope);
+                                {
+                                  { Plugin.CurrentScopeInstanceID, minZoom }
+                                };
+                                Plugin.WeaponScopeValues[Plugin.CurrentWeapInstanceID].Add(newScope);
                             }
 
                             bool isElcan = Plugin.IsFixedMag && Plugin.CanToggle;
@@ -525,9 +571,10 @@ namespace FOVFix
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(___vector3_2 * value);
                     }
                 }
+
+                Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
                 __instance.HandsContainer.CameraTransform.localPosition = localPosition2;
-                Quaternion b2 = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
-                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, b2, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
+                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(___quaternion_3, animatedRotation, Single_1 * (1f - ___valueBlenderDelay_0.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ___vector3_7) * ___quaternion_4;
 
                 return false;
             }
@@ -535,7 +582,7 @@ namespace FOVFix
         }
     }
 
-    public class method_21Patch : ModulePatch
+    public class PwaWeaponParamsPatch : ModulePatch
     {
         private static FieldInfo playerInterfaceField;
         private static FieldInfo isAimingField;
@@ -555,7 +602,6 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
-;
             PlayerInterface playerField = (PlayerInterface)playerInterfaceField.GetValue(__instance);
             float baseFOV = (float)baseFOVField.GetValue(__instance);
             int aimIndex = (int)aimIndexField.GetValue(__instance);
@@ -565,7 +611,7 @@ namespace FOVFix
             {
                 Weapon weapon = playerField.Weapon;
                 Player player = Singleton<GameWorld>.Instance.GetAlivePlayerByProfileID(weapon.Owner.ID);
-                if (!player.IsAI)
+                if (player != null && player.MovementContext.CurrentState.Name != EPlayerState.Stationary && player.IsYourPlayer)
                 {
                     if (__instance.PointOfView == EPointOfView.FirstPerson)
                     {
@@ -575,24 +621,23 @@ namespace FOVFix
                             if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                             {
                                 zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                                Plugin.CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
                             }
-
-                            float zoomMulti = Plugin.EnableVariableZoom.Value ? Utils.getADSFoVMulti(Plugin.CurrentZoom) : Utils.getADSFoVMulti(zoom);
-                            float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
-                            float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
+                            float zoomMulti = !isOptic ? Utils.GetADSFoVMulti(1f) : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
+                            float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
+                            float fov = __instance.IsAiming ? sightFOV : baseFOV;
 
                             if (Plugin.DoZoom)
                             {
-                                float zoomFactor = isOptic ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
+                                float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
                                 float zoomedFOV = fov * zoomFactor;
                                 CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
                                 return;
                             }
                    
                             CameraClass.Instance.SetFov(fov, 1f, !isAiming);
-
                         }
                     }
                 }

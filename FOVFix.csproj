@@ -19,6 +19,7 @@
     <Reference Include="UnityEngine.CoreModule" />
 	<Reference Include="UnityEngine.UIModule" />
 	<Reference Include="Sirenix.Serialization" />
+	<Reference Include="Unity.Postprocessing.Runtime" />
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />

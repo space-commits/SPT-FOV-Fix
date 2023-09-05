@@ -20,7 +20,7 @@ class Mod implements IPostDBLoadMod {
         const activeMods = preAkiModLoader.getImportedModDetails();
         var geffModPresent = false;
         for (const modname in activeMods) {
-            if(modname.includes("ACOG4Life-OpticRework")){
+            if (modname.includes("ACOG4Life-OpticRework")) {
                 geffModPresent = true;
             }
         }
@@ -38,7 +38,7 @@ class Mod implements IPostDBLoadMod {
                         else if (serverItem._id === "5dfe6104585a0c3e995c7b82") {
                             serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom], [1]];
                         }
-                        else if (serverItem._id === "62ea7c793043d74a0306e19f") {
+                        else if (serverItem._id === "62ea7c793043d74a0306e19f" || serverItem._id === "622b4f54dc8dcc0ba8742f85" || serverItem._id === "622b4d7df9cfc87d675d2ded") {
                             serverItem._props.Zooms = [[fileItem.MinZoom], [1]];
                         }
                         else if (geffModPresent == false && (serverItem._id === "57aca93d2459771f2c7e26db" || serverItem._id === "57ac965c24597706be5f975c")) {
@@ -62,7 +62,6 @@ class Mod implements IPostDBLoadMod {
                                 serverItem._props.AimSensitivity[1][0] = 0.7;
                             }
                         }
-
 
                         serverItem._props.HasShoulderContact = fileItem.IsFixed;
                         serverItem._props.ToolModdable = fileItem.CanToggle;

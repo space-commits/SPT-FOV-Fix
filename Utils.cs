@@ -26,20 +26,17 @@ namespace FOVFix
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
             SessionResultPanel sessionResultPanel = Singleton<SessionResultPanel>.Instance;
 
-            if (gameWorld?.AllAlivePlayersList.Count > 0)
+            Player player = gameWorld?.MainPlayer;
+            if (player != null && player?.HandsController != null)
             {
-                Player player = gameWorld.AllAlivePlayersList[0];
-                if (player != null && player?.HandsController != null)
+                Plugin.player = player;
+                if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
                 {
-                    Plugin.player = player; 
-                    if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
-                    {
-                        Plugin.WeaponReady = true;
-                    }
+                    Plugin.WeaponReady = true;
                 }
             }
 
-            if (gameWorld == null || gameWorld.AllAlivePlayersList == null || gameWorld.AllAlivePlayersList.Count <= 0 || sessionResultPanel != null)
+            if (gameWorld == null || gameWorld.AllAlivePlayersList == null || gameWorld.MainPlayer == null || sessionResultPanel != null)
             {
                 Plugin.IsReady = false;
             }
@@ -58,7 +55,7 @@ namespace FOVFix
             return isScope;
         }
 
-        public static float getADSFoVMulti(float zoom) 
+        public static float GetADSFoVMulti(float zoom) 
         {
             switch (zoom)
             {

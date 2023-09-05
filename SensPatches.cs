@@ -13,19 +13,16 @@ namespace FOVFix
 {
     public class AimingSensitivityPatch : ModulePatch
     {
-     
-
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player.FirearmController).GetMethod("get_AimingSensitivity");
         }
+
         [PatchPrefix]
         public static void PatchPrefix(Player.FirearmController __instance, ref float ____aimingSens)
         {
-            bool isToggleZoomAiming = Plugin.CalledZoom && Plugin.IsAiming;
-            bool isToggleZoomOptic = isToggleZoomAiming && Plugin.IsOptic;
-            float toggleZoomMulti = isToggleZoomOptic ? Plugin.ToggleZoomOpticSensMulti.Value : isToggleZoomAiming ? Plugin.ToggleZoomSensMulti.Value: 1f;
 
+            float toggleZoomMulti = Plugin.CalledZoom && Plugin.IsAiming && Plugin.IsOptic ? Plugin.ToggleZoomOpticSensMulti.Value : Plugin.CalledZoom ? Plugin.ToggleZoomSensMulti.Value: 1f;
 
             if (Plugin.IsAiming)
             {
@@ -36,7 +33,7 @@ namespace FOVFix
 
                 if (Plugin.UseBasicSensCalc.Value)
                 {
-                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity *  Utils.GetZoomSensValue(Plugin.CurrentZoom) * toggleZoomMulti;
+                    newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity * Utils.GetZoomSensValue(Plugin.CurrentZoom) * toggleZoomMulti;
                     Plugin.AimingSens = newSens;
                 }
                 else 
@@ -67,7 +64,7 @@ namespace FOVFix
                     Plugin.AimingSens = newSens;
                 }
                
-                if (!Plugin.RecoilStandaloneIsPresent && !Plugin.RealismModIsPresent)
+                if (!Plugin.RealismModIsPresent)
                 {
                     ____aimingSens = newSens;
                 }

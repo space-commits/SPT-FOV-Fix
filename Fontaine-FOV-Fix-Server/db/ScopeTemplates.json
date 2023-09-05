@@ -372,8 +372,8 @@
     "5d1b5e94d7ad1a2b865a96b0": {
         "ItemID": "5d1b5e94d7ad1a2b865a96b0",
         "Name": "scope_all_flir_rs32_225_9x_35_60hz",
-        "MinZoom": 4,
-        "MaxZoom": 16,
+        "MinZoom":  2.25,
+        "MaxZoom": 9,
         "IsFixed": false,
         "CanToggle": false,
         "Unfuck": false
