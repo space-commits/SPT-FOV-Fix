@@ -63,11 +63,8 @@ namespace FOVFix
                     newSens = Mathf.Pow(tanRatio, exponent) * inGameSens * toggleZoomMulti;
                     Plugin.AimingSens = newSens;
                 }
-               
-                if (!Plugin.RealismModIsPresent)
-                {
-                    ____aimingSens = newSens;
-                }
+
+                ____aimingSens = newSens;
             }
         }
     }
