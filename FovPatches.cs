@@ -23,6 +23,7 @@ using ScopeStatesStruct = GStruct156;
 using SightComptInterface = GInterface254;
 using IWeapon = GInterface273;
 using WeaponState = GClass1555;
+using UnityEngine.Rendering.PostProcessing;
 
 namespace FOVFix
 {
@@ -35,10 +36,11 @@ namespace FOVFix
             return typeof(Player).GetMethod("CalculateScaleValueByFov");
         }
 
-        [PatchPostfix]
-        public static void PatchPostfix(ref float ___float_10)
+        [PatchPrefix]
+        public static bool Prefix(ref float ____ribcageScaleCompensated)
         {
-            ___float_10 = Plugin.FovScale.Value;
+            ____ribcageScaleCompensated = Plugin.FovScale.Value;
+            return false;
         }
     }
 
