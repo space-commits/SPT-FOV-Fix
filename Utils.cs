@@ -11,6 +11,7 @@ namespace FOVFix
 {
   public static class Utils
   {
+        public static string WeaponStateField = "gclass1555_0";
 
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
         public static string Collimator = "55818ad54bdc2ddc698b4569";
