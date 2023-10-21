@@ -27,8 +27,6 @@ using UnityEngine.Rendering.PostProcessing;
 
 namespace FOVFix
 {
-
-
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()

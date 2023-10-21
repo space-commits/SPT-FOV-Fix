@@ -289,7 +289,7 @@ namespace FOVFix
             {
                 Plugin.haveResetDict = false;
 
-                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
                 {
                     if (Plugin.UseSmoothZoom.Value)
                     {
