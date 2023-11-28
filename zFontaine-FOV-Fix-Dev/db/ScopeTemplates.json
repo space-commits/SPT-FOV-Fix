@@ -387,6 +387,24 @@
         "CanToggle": true,
         "Unfuck": false
     },
+    "6478641c19d732620e045e17": {
+        "ItemID": "6478641c19d732620e045e17",
+        "Name": "scope_all_sig_sauer_echo1_thermal_reflex_sight_1_2x_30hz,5x",
+        "MinZoom": 1,
+        "MaxZoom": 2,
+        "IsFixed": true,
+        "CanToggle": true,
+        "Unfuck": false
+    },
+    "63fc44e2429a8a166c7f61e6": {
+        "ItemID": "63fc44e2429a8a166c7f61e6",
+        "Name": "scope_base_armasight_zeus_pro_640_2_16x50_30hz",
+        "MinZoom": 2,
+        "MaxZoom": 16,
+        "IsFixed": false,
+        "CanToggle": true,
+        "Unfuck": false
+    },
     "5d53f4b7a4b936793d58c780": {
         "ItemID": "5d53f4b7a4b936793d58c780",
         "Name": "scope_ags_npz_pag17_2,7x",
