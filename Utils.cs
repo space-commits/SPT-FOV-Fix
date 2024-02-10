@@ -11,8 +11,6 @@ namespace FOVFix
 {
   public static class Utils
   {
-        public static string WeaponStateField = "gclass1555_0";
-
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
         public static string Collimator = "55818ad54bdc2ddc698b4569";
         public static string AssaultScope = "55818add4bdc2d5b648b456f";
@@ -30,7 +28,6 @@ namespace FOVFix
             Player player = gameWorld?.MainPlayer;
             if (player != null && player?.HandsController != null)
             {
-                Plugin.player = player;
                 if (player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon)
                 {
                     Plugin.WeaponReady = true;

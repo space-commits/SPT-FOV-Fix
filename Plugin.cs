@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using Comfort.Common;
 using EFT;
 using EFT.Animations;
@@ -17,14 +18,42 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
+        public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
+
+        private static FieldInfo opticCrateFieldInfo;
+        public static MethodInfo pwaParamsMethodInfo;
+
+        public static float AimingSens = 1f;
+
+        public static Vector2 camPanRotation = Vector2.zero;
+        public static bool isRotating = false;
+        private Vector2 targetRotation = Vector2.zero;
+
+        public static bool ToggleForFirstPlane = false;
+
+        private float time = 0f;
+
+        private static bool haveResetDict = false;
+
+        public static bool IsFixedMag = false;
+        public static bool CanToggle = false;
+        public static bool CanToggleButNotFixed = false;
+        public static bool IsFucky = false;
+        public static float MinZoom = 1f;
+        public static float MaxZoom = 1f;
+        public static float CurrentZoom = 1f;
+
+        public static string CurrentWeapInstanceID = "";
+        public static string CurrentScopeInstanceID = "";
+        public static string CurrentScopeTempID = "";
+
         public static bool IsOptic;
         public static bool HasRAPTAR = false;
         public static bool IsReady = false;
         public static bool WeaponReady = false;
-        public static Player player;
         public static bool CalledZoom = false;
         public static bool ZoomReset = false;
-        public static bool DoZoom = false;
+        public static bool ShouldDoZoom = false;
         public static bool IsAiming = false;
         public static bool ChangeSight = false;
 
@@ -61,21 +90,6 @@ namespace FOVFix
         public static ConfigEntry<float> ToggleZoomSensMulti { get; set; }
         public static ConfigEntry<bool> SamSwatVudu { get; set; }
 
-
-        private static bool haveResetDict = false;  
-
-        public static bool IsFixedMag = false;
-        public static bool CanToggle = false;
-        public static bool CanToggleButNotFixed = false;
-        public static bool IsFucky = false;
-        public static float MinZoom = 1f;
-        public static float MaxZoom = 1f;
-        public static float CurrentZoom = 1f;
-
-        public static string CurrentWeapInstanceID = "";
-        public static string CurrentScopeInstanceID = "";
-        public static string CurrentScopeTempID = "";
-
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
         public static ConfigEntry<bool> EnableVariableZoom { get; set; }
@@ -107,27 +121,16 @@ namespace FOVFix
         public static ConfigEntry<float> FovScale { get; set; }
         public static ConfigEntry<bool> EnableFovScaleFix { get; set; }
 
-
         public static ConfigEntry<float> test1 { get; set; }
         public static ConfigEntry<float> test2 { get; set; }
         public static ConfigEntry<float> test3 { get; set; }
         public static ConfigEntry<float> test4 { get; set; }
 
-        public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
-
-        public static float AimingSens = 1f;
-
-        public static Vector2 camPanRotation = Vector2.zero;
-        public static bool isRotating = false;
-        private Vector2 targetRotation = Vector2.zero;
-
-        public static MethodInfo PwaParamsMethod;
-
-        public static bool ToggleForFirstPlane = false;
 
         private void Awake()
         {
-            PwaParamsMethod = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_21");
+            opticCrateFieldInfo = AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel");
+            pwaParamsMethodInfo = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_23");
 
             string variable = "1. Variable Zoom.";
             string adsFOV = "2. Player Camera ADS FOV";
@@ -266,9 +269,8 @@ namespace FOVFix
 
         public static void ZoomScope(float currentZoom)
         {
-            OpticCratePanel panelUI = (OpticCratePanel)AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel").GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
+            OpticCratePanel panelUI = (OpticCratePanel)opticCrateFieldInfo.GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
             panelUI.Show(Math.Round(currentZoom, 1) + "x");
-
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams)
             {
@@ -278,14 +280,19 @@ namespace FOVFix
                 }
             }
 
-            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
         }
 
         void Update()
         {
-            Utils.CheckIsReady();
+            time += Time.deltaTime;
+            if (time > 1f)
+            {
+                Utils.CheckIsReady();
+                time = 0f;
+            }
 
-            if (Plugin.IsReady && Plugin.WeaponReady && player.HandsController != null)
+            if (Plugin.IsReady && Plugin.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
             {
                 Plugin.haveResetDict = false;
 
@@ -332,15 +339,15 @@ namespace FOVFix
                     {
                         if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
                         {
-                            Plugin.DoZoom = true;
-                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.ShouldDoZoom = true;
+                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
                             Plugin.CalledZoom = true;
-                            Plugin.DoZoom = false;
+                            Plugin.ShouldDoZoom = false;
 
                         }
                         if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
                         {
-                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
                             Plugin.CalledZoom = false;
                         }
                     }
@@ -348,16 +355,16 @@ namespace FOVFix
                     {
                         if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                         {
-                            Plugin.DoZoom = !Plugin.DoZoom;
-                            PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                            Plugin.ShouldDoZoom = !Plugin.ShouldDoZoom;
+                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
                             Plugin.CalledZoom = !Plugin.CalledZoom;
                         }
                     }
                 }
                 if (!Plugin.IsAiming && Plugin.CalledZoom && !Plugin.HoldZoom.Value && !Plugin.EnableZoomOutsideADS.Value)
                 {
-                    Plugin.DoZoom = false;
-                    PwaParamsMethod.Invoke(player.ProceduralWeaponAnimation, new object[] { });
+                    Plugin.ShouldDoZoom = false;
+                    pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
                     Plugin.CalledZoom = false;
                 }
             }
