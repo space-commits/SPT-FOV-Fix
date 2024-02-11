@@ -29,7 +29,7 @@ namespace FOVFix
         public static bool isRotating = false;
         private Vector2 targetRotation = Vector2.zero;
 
-        public static bool ToggleForFirstPlane = false;
+        public static bool DidToggleForFirstPlane = false;
 
         private float time = 0f;
 
@@ -60,6 +60,7 @@ namespace FOVFix
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
+        public static ConfigEntry<bool> AllowReticleToggle { get; set; }
 
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
@@ -199,6 +200,7 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
+            AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 5 }));
             PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
             OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
             CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -263,7 +265,7 @@ namespace FOVFix
             ZoomScope(CurrentZoom);
             if (zoomBefefore != CurrentZoom) 
             {
-                ToggleForFirstPlane = true;
+                DidToggleForFirstPlane = true;
             }
         }
 

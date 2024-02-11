@@ -1,26 +1,19 @@
 ﻿using Aki.Reflection.Patching;
-using Aki.Reflection.Utils;
+using Comfort.Common;
 using EFT;
+using EFT.Animations;
+using EFT.InventoryLogic;
 using HarmonyLib;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using System.Linq;
-using EFT.InventoryLogic;
-using Comfort.Common;
 using static EFT.Player;
-using EFT.Animations;
-using System.Runtime.CompilerServices;
-using System.Collections.Generic;
-using System.Collections;
-using static CC_Vintage;
-using BepInEx.Logging;
-using UnityEngine.Experimental.GlobalIllumination;
-using UnityEngine.Rendering.PostProcessing;
 using FCSubClass = EFT.Player.FirearmController.GClass1581;
+using IWeapon = GInterface320;
 using ScopeStatesStruct = GStruct163;
 using SightComptInterface = GInterface301;
-using IWeapon = GInterface320;
 using WeaponState = GClass1665;
 
 namespace FOVFix
@@ -95,7 +88,7 @@ namespace FOVFix
         private static bool canToggle = false;
         private static bool isFixedMag = false;
         private static bool isOptic = false; 
-        private static bool isFucky = false;
+/*        private static bool isCurrentlyFucky = false;*/
         private static bool canToggleButNotFixed = false;
 
         protected override MethodBase GetTargetMethod()
@@ -121,7 +114,7 @@ namespace FOVFix
                 isOptic = pwa.CurrentScope.IsOptic;
                 SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                 SightModClass sightModClass = currentAimingMod as SightModClass;
-                SightComptInterface inter = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
+                SightComptInterface zooms = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
 
                 canToggle = currentAimingMod.Template.ToolModdable;
                 isFixedMag = currentAimingMod.Template.HasShoulderContact;
@@ -132,23 +125,25 @@ namespace FOVFix
 
                 if (isFixedMag)
                 {
-                    minZoom = inter.Zooms[0][0];
+                    minZoom = zooms.Zooms[0][0];
                     maxZoom = minZoom;
                 }
-                else if (canToggleButNotFixed && inter.Zooms[0].Length > 2)
+                else if (canToggleButNotFixed && zooms.Zooms[0].Length > 2)
                 {
-                    minZoom = inter.Zooms[0][0];
-                    maxZoom = inter.Zooms[0][2];
+                    minZoom = zooms.Zooms[0][0];
+                    maxZoom = zooms.Zooms[0][2];
                 }
                 else
                 {
-                    minZoom = inter.Zooms[0][0];
-                    maxZoom = inter.Zooms[0][1];
+                    minZoom = zooms.Zooms[0][0];
+                    maxZoom = zooms.Zooms[0][1];
                 }
 
-                isFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
+                /*                isCurrentlyFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
+                */
+
                 bool isSamVudu = currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value;
-                if ((!canToggle && !Plugin.IsFucky && !isSamVudu) || (isSamVudu && !Plugin.ToggleForFirstPlane))
+                if ((!canToggle && !Plugin.IsFucky && !isSamVudu) || (isSamVudu && !Plugin.DidToggleForFirstPlane))
                 {
                     return false;
                 }
@@ -285,7 +280,7 @@ namespace FOVFix
             {
                 Plugin.IsAiming = __result;
 
-                if (Plugin.EnableVariableZoom.Value && Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight || (Plugin.ToggleForFirstPlane && Plugin.SamSwatVudu.Value && Plugin.CurrentScopeTempID == "5b3b99475acfc432ff4dcbee")))
+                if (Plugin.EnableVariableZoom.Value && Plugin.IsAiming && (!hasSetFov || Plugin.ChangeSight || (Plugin.DidToggleForFirstPlane && Plugin.SamSwatVudu.Value && Plugin.CurrentScopeTempID == "5b3b99475acfc432ff4dcbee")))
                 {
                     Plugin.ChangeSight = false;
                     ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
@@ -301,7 +296,7 @@ namespace FOVFix
                             SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                             SightComptInterface sightCompInter = (SightComptInterface)sightComptField.GetValue(sightModClass.Sight);
                             Plugin.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
-                            Plugin.CanToggle = currentAimingMod.Template.ToolModdable;
+                            Plugin.CanToggle = Plugin.AllowReticleToggle.Value ? true :  currentAimingMod.Template.ToolModdable;
                             Plugin.CanToggleButNotFixed = Plugin.CanToggle && !Plugin.IsFixedMag;
                             float minZoom = 1f;
                             float maxZoom = 1f;
@@ -339,10 +334,10 @@ namespace FOVFix
                                 __instance.SetScopeMode(getScopeModeFullList(__instance.Item, player));
                             }
 
-                            if (Plugin.ToggleForFirstPlane && Plugin.SamSwatVudu.Value && currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee")
+                            if (Plugin.DidToggleForFirstPlane && Plugin.SamSwatVudu.Value && currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee")
                             {
                                 __instance.SetScopeMode(doVuduZoom(__instance.Item, player));
-                                Plugin.ToggleForFirstPlane = false;
+                                Plugin.DidToggleForFirstPlane = false;
                             }
 
                             Plugin.MinZoom = minZoom;
@@ -548,7 +543,7 @@ namespace FOVFix
             if (player != null && firearmController.Weapon != null)
             {
                 float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
-                float camZ = __instance.IsAiming == true && !Plugin.IsOptic && firearmController.Weapon.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming == true && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming == true && Plugin.IsOptic == true ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+                float camZ = __instance.IsAiming && !Plugin.IsOptic && firearmController.Weapon.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 Vector3 currentLocalPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 Vector2 a = new Vector2(currentLocalPosition.x, currentLocalPosition.y);
                 Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
