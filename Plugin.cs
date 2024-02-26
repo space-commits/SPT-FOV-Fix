@@ -31,8 +31,6 @@ namespace FOVFix
 
         public static bool DidToggleForFirstPlane = false;
 
-        private float time = 0f;
-
         private static bool haveResetDict = false;
 
         public static bool IsFixedMag = false;
@@ -49,8 +47,6 @@ namespace FOVFix
 
         public static bool IsOptic;
         public static bool HasRAPTAR = false;
-        public static bool IsReady = false;
-        public static bool WeaponReady = false;
         public static bool CalledZoom = false;
         public static bool ZoomReset = false;
         public static bool ShouldDoZoom = false;
@@ -70,6 +66,7 @@ namespace FOVFix
         public static ConfigEntry<float> TwoADSMulti { get; set; }
         public static ConfigEntry<float> ThreeADSMulti { get; set; }
         public static ConfigEntry<float> FourADSMulti { get; set; }
+        public static ConfigEntry<float> FiveADSMulti { get; set; }
         public static ConfigEntry<float> SixADSMulti { get; set; }
         public static ConfigEntry<float> EightADSMulti { get; set; }
         public static ConfigEntry<float> TwelveADSMulti { get; set; }
@@ -165,6 +162,7 @@ namespace FOVFix
             TwoADSMulti = Config.Bind<float>(adsFOV, "2x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 8 }));
             ThreeADSMulti = Config.Bind<float>(adsFOV, "3x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 7 }));
             FourADSMulti = Config.Bind<float>(adsFOV, "4x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 6 }));
+            FiveADSMulti = Config.Bind<float>(adsFOV, "5x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 6 }));
             SixADSMulti = Config.Bind<float>(adsFOV, "6x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 5 }));
             EightADSMulti = Config.Bind<float>(adsFOV, "8x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 4 }));
             TwelveADSMulti = Config.Bind<float>(adsFOV, "12x ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 3 }));
@@ -287,14 +285,9 @@ namespace FOVFix
 
         void Update()
         {
-            time += Time.deltaTime;
-            if (time > 1f)
-            {
-                Utils.CheckIsReady();
-                time = 0f;
-            }
+            Utils.CheckIsReady();
 
-            if (Plugin.IsReady && Plugin.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
+            if (Utils.IsReady && Utils.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
             {
                 Plugin.haveResetDict = false;
 
@@ -371,7 +364,7 @@ namespace FOVFix
                 }
             }
 
-            if (!Plugin.IsReady && !Plugin.haveResetDict) 
+            if (!Utils.IsReady && !Plugin.haveResetDict) 
             {
                 Plugin.WeaponScopeValues.Clear();
                 Plugin.haveResetDict = true;
