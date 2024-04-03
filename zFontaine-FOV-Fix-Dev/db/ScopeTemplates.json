@@ -431,5 +431,14 @@
         "IsFixed": true,
         "CanToggle": false,
         "Unfuck": false
+    },
+    "6567e7681265c8a131069b0f": {
+        "ItemID": "6567e7681265c8a131069b0f",
+        "Name": "scope_30mm_sig_tango6t_1_6x24",
+        "MinZoom": 1,
+        "MaxZoom": 6,
+        "IsFixed": false,
+        "CanToggle": false,
+        "Unfuck": false
     }
 }

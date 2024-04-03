@@ -52,6 +52,7 @@ namespace FOVFix
         public static bool ShouldDoZoom = false;
         public static bool IsAiming = false;
         public static bool ChangeSight = false;
+        public static bool ToggledMagnification = false;
 
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
@@ -225,6 +226,7 @@ namespace FOVFix
                 new ChangeAimingModePatch().Enable();
                 new SetScopeModePatch().Enable();
                 new OperationSetScopeModePatch().Enable();
+                new KeyInputPatch().Enable();   
 
                 if (Plugin.ChangeMouseSens.Value)
                 {
@@ -241,27 +243,29 @@ namespace FOVFix
 
         public static void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
         {
-            if (Plugin.WeaponScopeValues.ContainsKey(Plugin.CurrentWeapInstanceID))
+            if (WeaponScopeValues.ContainsKey(CurrentWeapInstanceID))
             {
-                List<Dictionary<string, float>> scopes = Plugin.WeaponScopeValues[Plugin.CurrentWeapInstanceID];
+                List<Dictionary<string, float>> scopes = WeaponScopeValues[CurrentWeapInstanceID];
                 foreach (Dictionary<string, float> scopeDict in scopes)
                 {
-                    if (scopeDict.ContainsKey(Plugin.CurrentScopeInstanceID))
+                    if (scopeDict.ContainsKey(CurrentScopeInstanceID))
                     {
-                      scopeDict[Plugin.CurrentScopeInstanceID] = currentZoom;
+                      scopeDict[CurrentScopeInstanceID] = currentZoom;
                         break;
                     }
                 }
             }
         }
 
-        public static void HandleZoomInput(float zoomIncrement) 
+        public static void HandleZoomInput(float zoomIncrement, bool toggleZoom = false) 
         {
-            float zoomBefefore = CurrentZoom;
-            CurrentZoom = Mathf.Clamp(CurrentZoom + zoomIncrement, Plugin.MinZoom, Plugin.MaxZoom);
+            float zoomBefore = CurrentZoom;
+            CurrentZoom = 
+                !toggleZoom ? Mathf.Clamp(CurrentZoom + zoomIncrement, MinZoom, MaxZoom) :
+                zoomIncrement;
             UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
             ZoomScope(CurrentZoom);
-            if (zoomBefefore != CurrentZoom) 
+            if (zoomBefore != CurrentZoom) 
             {
                 DidToggleForFirstPlane = true;
             }
@@ -276,7 +280,7 @@ namespace FOVFix
             {
                 if (cam.name == "BaseOpticCamera(Clone)")
                 {
-                    cam.fieldOfView = Plugin.BaseScopeFOV.Value / Mathf.Pow(currentZoom, Plugin.MagPowerFactor.Value);
+                    cam.fieldOfView = BaseScopeFOV.Value / Mathf.Pow(currentZoom, MagPowerFactor.Value);
                 }
             }
 
@@ -289,70 +293,70 @@ namespace FOVFix
 
             if (Utils.IsReady && Utils.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
             {
-                Plugin.haveResetDict = false;
+                haveResetDict = false;
 
-                if (Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+                if (EnableVariableZoom.Value && !IsFixedMag && IsOptic && (!CanToggle || CanToggleButNotFixed) && IsAiming)
                 {
-                    if (Plugin.UseSmoothZoom.Value)
+                    if (UseSmoothZoom.Value)
                     {
                         if (Input.GetKey(VariableZoomOut.Value.MainKey))
                         {
-                            Plugin.HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
+                            HandleZoomInput(-SmoothZoomSpeed.Value);
                         }
                         if (Input.GetKey(VariableZoomIn.Value.MainKey))
                         {
-                            Plugin.HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
+                            HandleZoomInput(SmoothZoomSpeed.Value);
                         }
                     }
                     else 
                     {
                         if (Input.GetKeyDown(VariableZoomOut.Value.MainKey))
                         {
-                            Plugin.HandleZoomInput(-Plugin.ZoomSteps.Value);
+                            HandleZoomInput(-ZoomSteps.Value);
                         }
                         if (Input.GetKeyDown(VariableZoomIn.Value.MainKey))
                         {
-                            Plugin.HandleZoomInput(Plugin.ZoomSteps.Value);
+                            HandleZoomInput(ZoomSteps.Value);
                         }
                     }
-                    if (Plugin.UseMouseWheel.Value) 
+                    if (UseMouseWheel.Value) 
                     {
-                        if (Input.GetKey(MouseWheelBind.Value.MainKey) || !Plugin.UseMouseWheelPlusKey.Value)
+                        if (Input.GetKey(MouseWheelBind.Value.MainKey) || !UseMouseWheelPlusKey.Value)
                         {
-                            float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomSteps.Value;
+                            float scrollDelta = Input.mouseScrollDelta.y * ZoomSteps.Value;
                             if (scrollDelta != 0f) 
                             {
-                                Plugin.HandleZoomInput(scrollDelta);
+                                HandleZoomInput(scrollDelta);
                             }
                         }
                     }
                 }
 
-                if ((((EnableExtraZoomOptic.Value && Plugin.IsOptic) || (EnableExtraZoomNonOptic.Value && !Plugin.IsOptic)) && Plugin.IsAiming) || (Plugin.EnableZoomOutsideADS.Value && !Plugin.IsAiming))
+                if ((((EnableExtraZoomOptic.Value && IsOptic) || (EnableExtraZoomNonOptic.Value && !IsOptic)) && IsAiming) || (EnableZoomOutsideADS.Value && !IsAiming))
                 {
-                    if (Plugin.HoldZoom.Value)
+                    if (HoldZoom.Value)
                     {
-                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && !Plugin.CalledZoom)
+                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && !CalledZoom)
                         {
-                            Plugin.ShouldDoZoom = true;
+                            ShouldDoZoom = true;
                             pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            Plugin.CalledZoom = true;
-                            Plugin.ShouldDoZoom = false;
+                            CalledZoom = true;
+                            ShouldDoZoom = false;
 
                         }
-                        if (!Input.GetKey(ZoomKeybind.Value.MainKey) && Plugin.CalledZoom)
+                        if (!Input.GetKey(ZoomKeybind.Value.MainKey) && CalledZoom)
                         {
                             pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            Plugin.CalledZoom = false;
+                            CalledZoom = false;
                         }
                     }
                     else
                     {
                         if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
                         {
-                            Plugin.ShouldDoZoom = !Plugin.ShouldDoZoom;
+                            ShouldDoZoom = !ShouldDoZoom;
                             pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            Plugin.CalledZoom = !Plugin.CalledZoom;
+                            CalledZoom = !CalledZoom;
                         }
                     }
                 }

@@ -2,6 +2,7 @@
 using Comfort.Common;
 using EFT;
 using EFT.Animations;
+using EFT.InputSystem;
 using EFT.InventoryLogic;
 using HarmonyLib;
 using System;
@@ -10,14 +11,41 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using FCSubClass = EFT.Player.FirearmController.GClass1581;
-using IWeapon = GInterface320;
-using ScopeStatesStruct = GStruct163;
-using SightComptInterface = GInterface301;
-using WeaponState = GClass1665;
+using FCSubClass = EFT.Player.FirearmController.GClass1584;
+using IWeapon = GInterface322;
+using ScopeStatesStruct = GStruct164;
+using SightComptInterface = GInterface303;
+using WeaponState = GClass1668;
+using InputClass = Class1451;
+
 
 namespace FOVFix
 {
+
+    public class KeyInputPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(InputClass).GetMethod("TranslateCommand", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPrefix]
+        private static bool PatchPrefix(InputClass __instance, ECommand command)
+        {
+            if (command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+            {
+                Plugin.ToggledMagnification = !Plugin.ToggledMagnification;
+                float zoom = 
+                    Plugin.CurrentZoom >= Plugin.MinZoom && Plugin.CurrentZoom <= Plugin.MaxZoom / 2 ? Plugin.MaxZoom :
+                    Plugin.CurrentZoom <= Plugin.MaxZoom && Plugin.CurrentZoom > Plugin.MaxZoom / 2 ? Plugin.MinZoom :
+                    Plugin.CurrentZoom;
+                Plugin.HandleZoomInput(zoom, true);
+            }
+
+            return true;
+        }
+    }
+
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -41,7 +69,7 @@ namespace FOVFix
         protected override MethodBase GetTargetMethod()
         {
             fAnimatorField = AccessTools.Field(typeof(FCSubClass), "firearmsAnimator_0");
-            weaponStateField = AccessTools.Field(typeof(FCSubClass), "gclass1665_0");
+            weaponStateField = AccessTools.Field(typeof(FCSubClass), "gclass1668_0");
 
             return typeof(FCSubClass).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
