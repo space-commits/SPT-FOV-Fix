@@ -33,19 +33,27 @@ class Mod implements IPostDBLoadMod {
                     if (fileItem.ItemID === serverItem._id) {
 
                         if (serverItem._id === "6478641c19d732620e045e17" || serverItem._id === "63fc44e2429a8a166c7f61e6") {
-                            if (config.thermal_bundles_mod_compatibility == true) {
-                                fileItem.IsFixed = false;
-                                serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
+                            // if (config.thermal_bundles_mod_compatibility == true) {
+                            //     fileItem.IsFixed = false;
+                            //     serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
+                            // }
+                            // else {
+                            //     if(serverItem._id === "6478641c19d732620e045e17"){
+                            //         fileItem.IsFixed = true;
+                            //         serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom, fileItem.MinZoom, fileItem.MaxZoom]];
+                            //     }
+                            //     else {
+                            //         fileItem.IsFixed = false;
+                            //         serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
+                            //     }
+                            // }
+                            if(serverItem._id === "6478641c19d732620e045e17"){
+                                fileItem.IsFixed = true;
+                                serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom, fileItem.MinZoom, fileItem.MaxZoom]];
                             }
                             else {
-                                if(serverItem._id === "6478641c19d732620e045e17"){
-                                    fileItem.IsFixed = true;
-                                    serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom, fileItem.MinZoom, fileItem.MaxZoom]];
-                                }
-                                else {
-                                    fileItem.IsFixed = false;
-                                    serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
-                                }
+                                fileItem.IsFixed = false;
+                                serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
                             }
                         }
                         else if (serverItem._id === "5d0a3a58d7ad1a669c15ca14" || serverItem._id === "5d0a3e8cd7ad1a6f6a3d35bd" || serverItem._id === "6478641c19d732620e045e17" || serverItem._id === "63fc44e2429a8a166c7f61e6") {
