@@ -32,7 +32,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(InputClass __instance, ECommand command)
         {
-            if (command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
             {
                 Plugin.ToggledMagnification = !Plugin.ToggledMagnification;
                 float zoom = 
@@ -650,7 +650,7 @@ namespace FOVFix
                             }
                             bool isOptic = __instance.CurrentScope.IsOptic;
                             Plugin.IsOptic = isOptic;
-                            float zoomMulti = !isOptic ? Utils.GetADSFoVMulti(1f) : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
+                            float zoomMulti = !isOptic ? Plugin.NonOpticFOVMulti.Value : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
                             float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
                             float fov = __instance.IsAiming ? sightFOV : baseFOV;
                             if (Plugin.ShouldDoZoom)
