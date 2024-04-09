@@ -466,6 +466,8 @@ namespace FOVFix
         [PatchPrefix]
         private static bool Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
         {
+            Player.FirearmController fc = __instance.HandsController as Player.FirearmController;
+            if (fc == null) return true;
 
             bool _resetLook = (bool)resetLookField.GetValue(__instance);
             bool mouseLookControl = (bool)mouseLookControlField.GetValue(__instance);
@@ -478,20 +480,20 @@ namespace FOVFix
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 vector = new Vector2(-60f, 60f);
+            Vector2 horizontalLimit = new Vector2(-50f, 50f);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
             if (isAiming)
             {
-                vector *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
+                horizontalLimit *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
             }
             Vector3 eulerAngles = __instance.ProceduralWeaponAnimation.HandsContainer.CameraTransform.eulerAngles;
             if (eulerAngles.x >= 50f && eulerAngles.x <= 90f && __instance.MovementContext.IsSprintEnabled)
             {
                 mouse_LOOK_VERTICAL_LIMIT.y = 0f;
             }
-            horizontalField.SetValue(__instance, Mathf.Clamp(_horizontal - deltaLookY, vector.x, vector.y));
+            horizontalField.SetValue(__instance, Mathf.Clamp(_horizontal - deltaLookY, horizontalLimit.x, horizontalLimit.y));
             verticalField.SetValue(__instance, Mathf.Clamp(_vertical + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
-            float x2 = (_vertical > 0f) ? (_vertical * (1f - _horizontal / vector.y * (_horizontal / vector.y))) : _vertical;
+            float x2 = (_vertical > 0f) ? (_vertical * (1f - _horizontal / horizontalLimit.y * (_horizontal / horizontalLimit.y))) : _vertical;
             if (_setResetedLookNextFrame)
             {
                 isResettingLookField.SetValue(__instance, false);
@@ -563,21 +565,18 @@ namespace FOVFix
         private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier, float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload, Quaternion ____cameraIdenity, Quaternion ____rotationOffset)
         {
             FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
-            if (firearmController == null)
-            {
-                return false;
-            }
+            if (firearmController == null) return true;
             Player player = (Player)playerField.GetValue(firearmController);
             if (player != null && firearmController.Weapon != null)
             {
                 float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 float camZ = __instance.IsAiming && !Plugin.IsOptic && firearmController.Weapon.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
-                Vector3 currentLocalPosition = __instance.HandsContainer.CameraTransform.localPosition;
-                Vector2 a = new Vector2(currentLocalPosition.x, currentLocalPosition.y);
+                Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
+                Vector2 a = new Vector2(localPosition.x, localPosition.y);
                 Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
                 float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.CameraSmoothOut.Value;
                 Vector2 targetPosition = Vector2.Lerp(a, b, dt * aimFactor);
-                float zPos = currentLocalPosition.z;
+                float zPos = localPosition.z;
                 float smoothTime = Plugin.IsOptic ? Plugin.OpticSmoothTime.Value * dt : firearmController.Weapon.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
                 float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
                 zPos = Mathf.Lerp(zPos, camZ, smoothTime * yPos);
