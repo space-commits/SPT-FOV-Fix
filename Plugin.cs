@@ -23,8 +23,6 @@ namespace FOVFix
         private static FieldInfo opticCrateFieldInfo;
         public static MethodInfo pwaParamsMethodInfo;
 
-        public static float AimingSens = 1f;
-
         public static Vector2 camPanRotation = Vector2.zero;
         public static bool isRotating = false;
         private Vector2 targetRotation = Vector2.zero;
@@ -299,7 +297,7 @@ namespace FOVFix
         {
             Utils.CheckIsReady();
 
-            if (Utils.IsReady && Utils.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
+            if (Utils.IsReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
             {
                 haveResetDict = false;
 
