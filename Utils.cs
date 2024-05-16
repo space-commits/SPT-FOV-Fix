@@ -23,6 +23,12 @@ namespace FOVFix
         public static bool IsReady = false;
         public static bool WeaponReady = false;
 
+        public static Player GetYourPlayer()
+        {
+            GameWorld gameWorld = Singleton<GameWorld>.Instance;
+            return gameWorld.MainPlayer;
+        }
+
         public static bool CheckIsReady()
         {
             GameWorld gameWorld = Singleton<GameWorld>.Instance;
