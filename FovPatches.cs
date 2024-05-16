@@ -33,7 +33,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(InputClass __instance, ECommand command)
         {
-            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && (Plugin.IsAiming || Plugin.ToggleZoomOutsideADS.Value))
             {
                 Plugin.ToggledMagnification = !Plugin.ToggledMagnification;
                 float zoom = 
