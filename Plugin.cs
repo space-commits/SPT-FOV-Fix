@@ -10,6 +10,7 @@ using HarmonyLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -22,8 +23,6 @@ namespace FOVFix
 
         private static FieldInfo opticCrateFieldInfo;
         public static MethodInfo pwaParamsMethodInfo;
-
-        public static float AimingSens = 1f;
 
         public static Vector2 camPanRotation = Vector2.zero;
         public static bool isRotating = false;
@@ -59,6 +58,7 @@ namespace FOVFix
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<bool> AllowReticleToggle { get; set; }
         public static ConfigEntry<bool> AllowToggleZoom { get; set; }
+        public static ConfigEntry<bool> ToggleZoomOutsideADS { get; set; }
 
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
@@ -156,7 +156,7 @@ namespace FOVFix
             UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Hold The Keybind To Smoothly Zoom In/Out.", null, new ConfigurationManagerAttributes { Order = 60 }));
             ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom Or Using Scroll Wheel, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
             SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
-            UseMouseWheel = Config.Bind<bool>(variable, "Use Mouse Wheel", false, new ConfigDescription("Mouse Scroll Changes Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
+            UseMouseWheel = Config.Bind<bool>(variable, "Use Mouse Wheel", true, new ConfigDescription("Mouse Scroll Changes Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
             UseMouseWheelPlusKey = Config.Bind<bool>(variable, "Need To Hold Key With Mouse Wheel", false, new ConfigDescription("Required To Hold The Mousewheel Keybind + Scroll To Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 35 }));
             VariableZoomIn = Config.Bind(variable, "Zoom In Keybind", new KeyboardShortcut(KeyCode.KeypadPlus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 30 }));
             VariableZoomOut = Config.Bind(variable, "Zoom Out Keybind", new KeyboardShortcut(KeyCode.KeypadMinus), new ConfigDescription("Hold To Zoom if Smooth Zoom Is Enabled, Otherwise Press.", null, new ConfigurationManagerAttributes { Order = 20 }));
@@ -206,12 +206,13 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Toggle Zoom With Variable Optics", true, new ConfigDescription("Using The Change Magnificaiton Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 4 }));
+            ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Zoom While Not Aiming", true, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 3 }));
+            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Toggle Zoom With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 4 }));            
             AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 5 }));
-            PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
-            OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
-            CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 8f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
-            CameraSmoothOut = Config.Bind<float>(misc, "Camera Smooth Out", 6f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(-10f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 10 }));
+            OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
+            CameraSmoothTime = Config.Bind<float>(misc, "Camera Smooth Time", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 30 }));
+            CameraSmoothOut = Config.Bind<float>(misc, "Camera Smooth Out", 3f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 50 }));
             EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 60 }));
 
@@ -299,7 +300,7 @@ namespace FOVFix
         {
             Utils.CheckIsReady();
 
-            if (Utils.IsReady && Utils.WeaponReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
+            if (Utils.IsReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
             {
                 haveResetDict = false;
 
@@ -307,29 +308,29 @@ namespace FOVFix
                 {
                     if (UseSmoothZoom.Value)
                     {
-                        if (Input.GetKey(VariableZoomOut.Value.MainKey))
+                        if (Input.GetKey(VariableZoomOut.Value.MainKey) && VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
                             HandleZoomInput(-SmoothZoomSpeed.Value);
                         }
-                        if (Input.GetKey(VariableZoomIn.Value.MainKey))
+                        if (Input.GetKey(VariableZoomIn.Value.MainKey) && VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
                             HandleZoomInput(SmoothZoomSpeed.Value);
                         }
                     }
                     else 
                     {
-                        if (Input.GetKeyDown(VariableZoomOut.Value.MainKey))
+                        if (Input.GetKeyDown(VariableZoomOut.Value.MainKey) && VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
                             HandleZoomInput(-ZoomSteps.Value);
                         }
-                        if (Input.GetKeyDown(VariableZoomIn.Value.MainKey))
+                        if (Input.GetKeyDown(VariableZoomIn.Value.MainKey) && VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
                             HandleZoomInput(ZoomSteps.Value);
                         }
                     }
                     if (UseMouseWheel.Value) 
                     {
-                        if (Input.GetKey(MouseWheelBind.Value.MainKey) || !UseMouseWheelPlusKey.Value)
+                        if ((Input.GetKey(MouseWheelBind.Value.MainKey) && UseMouseWheelPlusKey.Value) || (!Plugin.UseMouseWheelPlusKey.Value && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftAlt) && !Input.GetKey(KeyCode.R) && !Input.GetKey(KeyCode.C)))
                         {
                             float scrollDelta = Input.mouseScrollDelta.y * ZoomSteps.Value;
                             if (scrollDelta != 0f) 
@@ -344,7 +345,7 @@ namespace FOVFix
                 {
                     if (HoldZoom.Value)
                     {
-                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && !CalledZoom)
+                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && ZoomKeybind.Value.Modifiers.All(Input.GetKey) && !CalledZoom)
                         {
                             ShouldDoZoom = true;
                             pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
@@ -360,7 +361,7 @@ namespace FOVFix
                     }
                     else
                     {
-                        if (Input.GetKeyDown(ZoomKeybind.Value.MainKey))
+                        if (Input.GetKeyDown(ZoomKeybind.Value.MainKey) && ZoomKeybind.Value.Modifiers.All(Input.GetKey))
                         {
                             ShouldDoZoom = !ShouldDoZoom;
                             pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });

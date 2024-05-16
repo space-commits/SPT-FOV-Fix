@@ -17,7 +17,8 @@ using ScopeStatesStruct = GStruct164;
 using SightComptInterface = GInterface303;
 using WeaponState = GClass1668;
 using InputClass = Class1451;
-
+using EFT.UI.Settings;
+using UnityEngine.Rendering.PostProcessing;
 
 namespace FOVFix
 {
@@ -32,7 +33,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(InputClass __instance, ECommand command)
         {
-            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && Plugin.IsAiming)
+            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.IsFixedMag && Plugin.IsOptic && (!Plugin.CanToggle || Plugin.CanToggleButNotFixed) && (Plugin.IsAiming || Plugin.ToggleZoomOutsideADS.Value))
             {
                 Plugin.ToggledMagnification = !Plugin.ToggledMagnification;
                 float zoom = 
@@ -630,38 +631,33 @@ namespace FOVFix
             FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
             if (firearmController == null)
             {
+                float targetFOV = Plugin.ShouldDoZoom ? baseFOV * Plugin.NonOpticExtraZoom.Value : baseFOV;
+                CameraClass.Instance.SetFov(targetFOV, 1f, !isAiming);
                 return;
             }
 
             Player player = (Player)playerField.GetValue(firearmController);
-            if (player != null && firearmController.Weapon != null)
+            if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
-                if (player.MovementContext.CurrentState.Name != EPlayerState.Stationary && player.IsYourPlayer)
+                if (__instance.PointOfView == EPointOfView.FirstPerson)
                 {
-                    if (__instance.PointOfView == EPointOfView.FirstPerson)
+                    if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
                     {
-                        if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
+                        float zoom = 1;
+                        if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                         {
-                            float zoom = 1;
-                            if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
-                            {
-                                zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
-                                Plugin.CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
-                            }
-                            bool isOptic = __instance.CurrentScope.IsOptic;
-                            Plugin.IsOptic = isOptic;
-                            float zoomMulti = !isOptic ? Plugin.NonOpticFOVMulti.Value : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
-                            float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
-                            float fov = __instance.IsAiming ? sightFOV : baseFOV;
-                            if (Plugin.ShouldDoZoom)
-                            {
-                                float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
-                                float zoomedFOV = fov * zoomFactor;
-                                CameraClass.Instance.SetFov(zoomedFOV, 1f, true);
-                                return;
-                            }
-                            CameraClass.Instance.SetFov(fov, 1f, !isAiming);
+                            zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                            Plugin.CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
                         }
+                        bool isOptic = __instance.CurrentScope.IsOptic;
+                        Plugin.IsOptic = isOptic;
+                        float zoomMulti = !isOptic ? Plugin.NonOpticFOVMulti.Value : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
+                        float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
+                        float fov = __instance.IsAiming ? sightFOV : baseFOV;
+                        float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
+                        float zoomedFOV = fov * zoomFactor;
+                        float targetFOV = Plugin.ShouldDoZoom && !player.IsInventoryOpened ? zoomedFOV : fov;
+                        CameraClass.Instance.SetFov(targetFOV, 1f, !isAiming);
                     }
                 }
             }
