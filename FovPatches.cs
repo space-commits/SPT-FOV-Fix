@@ -19,6 +19,7 @@ using WeaponState = GClass1668;
 using InputClass = Class1451;
 using EFT.UI.Settings;
 using UnityEngine.Rendering.PostProcessing;
+using EFT.UI.Ragfair;
 
 namespace FOVFix
 {
@@ -468,7 +469,7 @@ namespace FOVFix
         private static bool Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
         {
             Player.FirearmController fc = __instance.HandsController as Player.FirearmController;
-            if (fc == null) return true;
+            if (fc == null || !__instance.IsYourPlayer) return true;
 
             bool _resetLook = (bool)resetLookField.GetValue(__instance);
             bool mouseLookControl = (bool)mouseLookControlField.GetValue(__instance);
@@ -568,7 +569,7 @@ namespace FOVFix
             FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
             if (firearmController == null) return true;
             Player player = (Player)playerField.GetValue(firearmController);
-            if (player != null && firearmController.Weapon != null)
+            if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 float camZ = __instance.IsAiming && !Plugin.IsOptic && firearmController.Weapon.WeapClass == "pistol" ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
@@ -639,40 +640,33 @@ namespace FOVFix
             Player player = (Player)playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
-                if (__instance.PointOfView == EPointOfView.FirstPerson)
+                if (__instance.PointOfView == EPointOfView.FirstPerson && !__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
                 {
-                    if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
+                    float zoom = 1;
+                    if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                     {
-                        float zoom = 1;
-                        if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
-                        {
-                            zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
-                            Plugin.CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
-                        }
-                        bool isOptic = __instance.CurrentScope.IsOptic;
-                        Plugin.IsOptic = isOptic;
-                        float zoomMulti = !isOptic ? Plugin.NonOpticFOVMulti.Value : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
-                        float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
-                        float fov = __instance.IsAiming ? sightFOV : baseFOV;
-                        float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
-                        float zoomedFOV = fov * zoomFactor;
-                        float targetFOV = Plugin.ShouldDoZoom && !player.IsInventoryOpened ? zoomedFOV : fov;
-                        CameraClass.Instance.SetFov(targetFOV, 1f, !isAiming);
+                        zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                        Plugin.CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
                     }
+                    bool isOptic = __instance.CurrentScope.IsOptic;
+                    Plugin.IsOptic = isOptic;
+                    float zoomMulti = !isOptic ? Plugin.NonOpticFOVMulti.Value : Plugin.EnableVariableZoom.Value ? Utils.GetADSFoVMulti(Plugin.CurrentZoom) : Utils.GetADSFoVMulti(zoom);
+                    float sightFOV = baseFOV * zoomMulti * Plugin.GlobalADSMulti.Value;
+                    float fov = __instance.IsAiming ? sightFOV : baseFOV;
+                    float zoomFactor = isOptic && isAiming ? Plugin.OpticExtraZoom.Value : Plugin.NonOpticExtraZoom.Value;
+                    float zoomedFOV = fov * zoomFactor;
+                    float targetFOV = Plugin.ShouldDoZoom && !player.IsInventoryOpened ? zoomedFOV : fov;
+                    CameraClass.Instance.SetFov(targetFOV, 1f, !isAiming);
                 }
             }
             else if (player.IsYourPlayer)
             {
-                if (__instance.PointOfView == EPointOfView.FirstPerson)
+                if (__instance.PointOfView == EPointOfView.FirstPerson && !__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
                 {
+                    float sightFOV = baseFOV * Plugin.RangeFinderADSMulti.Value * Plugin.GlobalADSMulti.Value;
+                    float fov = __instance.IsAiming ? sightFOV : baseFOV;
 
-                    if (!__instance.Sprint && aimIndex < __instance.ScopeAimTransforms.Count)
-                    {
-                        float sightFOV = baseFOV * Plugin.RangeFinderADSMulti.Value * Plugin.GlobalADSMulti.Value;
-                        float fov = __instance.IsAiming ? sightFOV : baseFOV;
-
-                        CameraClass.Instance.SetFov(fov, 1f, !isAiming);
-                    }
+                    CameraClass.Instance.SetFov(fov, 1f, !isAiming);
                 }
             }
         }
@@ -716,7 +710,7 @@ namespace FOVFix
         private static void PatchPostfix(ShotEffector __instance)
         {
             IWeapon _weapon = (IWeapon)weaponField.GetValue(__instance);
-            if (_weapon.Item.Owner.ID.StartsWith("pmc") || _weapon.Item.Owner.ID.StartsWith("scav"))
+            if (_weapon?.Item?.Owner.ID != null && _weapon.Item.Owner.ID == Singleton<GameWorld>.Instance?.MainPlayer?.ProfileId)
             {
                 Plugin.HasRAPTAR = false;
 
