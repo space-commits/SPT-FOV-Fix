@@ -42,6 +42,7 @@ namespace FOVFix
         public bool IsOptic;
         public bool HasRAPTAR = false;
         public bool CalledToggleZoom = false;
+        public bool CalledToggleZoomBreath = false;
         public bool IsToggleZoom = false;
         public bool IsAiming = false;
         public bool ChangeSight = false;
@@ -52,7 +53,6 @@ namespace FOVFix
         public bool ToggleZoomActive = false;
 
         public Player player = null;
-        public FirearmController fc = null;
 
         public FovController()
         {
@@ -107,8 +107,8 @@ namespace FOVFix
 
         public void SetToggleZoomMulti() 
         {
-            bool isOptic = fc != null && player?.ProceduralWeaponAnimation != null && player?.ProceduralWeaponAnimation?.CurrentScope != null && player.ProceduralWeaponAnimation.CurrentScope.IsOptic;
-            TargetToggleZoomMulti = !CalledToggleZoom ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
+            bool isOptic = player.HandsController as FirearmController != null && player?.ProceduralWeaponAnimation != null && player?.ProceduralWeaponAnimation?.CurrentScope != null && player.ProceduralWeaponAnimation.CurrentScope.IsOptic;
+            TargetToggleZoomMulti = !CalledToggleZoom && !Plugin.ToggleZoomOnHoldBreath.Value || !CalledToggleZoomBreath && Plugin.ToggleZoomOnHoldBreath.Value ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
         }
 
         public void DoFov()
@@ -209,6 +209,22 @@ namespace FOVFix
                     }
                 }
 
+                if (Plugin.ToggleZoomOnHoldBreath.Value)
+                {
+                    if (player.Physical.HoldingBreath && !CalledToggleZoomBreath)
+                    {
+                        CalledToggleZoomBreath = true;
+                        SetToggleZoomMulti();
+                        DoFov();
+                    }
+                    else if (!player.Physical.HoldingBreath && CalledToggleZoomBreath)
+                    {
+                        CalledToggleZoomBreath = false;
+                        SetToggleZoomMulti();
+                        DoFov();
+                    }
+                }
+
                 if (Plugin.HoldZoom.Value)
                 {
                     if (Input.GetKey(Plugin.ZoomKeybind.Value.MainKey) && Plugin.ZoomKeybind.Value.Modifiers.All(Input.GetKey) && !CalledToggleZoom)
@@ -222,7 +238,6 @@ namespace FOVFix
                         CalledToggleZoom = false;
                         SetToggleZoomMulti();
                         DoFov();
-                    
                     }
                 }
                 else
@@ -246,7 +261,6 @@ namespace FOVFix
                     SetToggleZoomMulti();
                     CalledADSZoom = false;
                 }
-
             }
 
             if (!Utils.IsReady && !haveResetDict)
