@@ -22,11 +22,11 @@ namespace FOVFix
         public static void PatchPrefix(Player.FirearmController __instance, ref float ____aimingSens)
         {
             float newSens = 1f;
-            float toggleZoomMulti = Plugin.CalledZoom && Plugin.IsAiming && Plugin.IsOptic ? Plugin.ToggleZoomOpticSensMulti.Value : Plugin.CalledZoom ? Plugin.ToggleZoomSensMulti.Value : 1f;
+            float toggleZoomMulti = Plugin.FovController.CalledToggleZoom && Plugin.FovController.IsAiming && Plugin.FovController.IsOptic ? Plugin.ToggleZoomOpticSensMulti.Value : Plugin.FovController.CalledToggleZoom && Plugin.FovController.IsAiming ? Plugin.ToggleZoomAimSensMulti.Value : Plugin.FovController.CalledToggleZoom ? Plugin.ToggleZoomMulti.Value : 1f;
 
             if (Plugin.UseBasicSensCalc.Value)
             {
-                float magnificationMulti = Plugin.IsOptic && Plugin.IsAiming ? Utils.GetZoomSensValue(Plugin.CurrentZoom) : Plugin.NonOpticSensMulti.Value;
+                float magnificationMulti = Plugin.FovController.IsOptic && Plugin.FovController.IsAiming ? Utils.GetZoomSensValue(Plugin.FovController.CurrentZoom) : Plugin.NonOpticSensMulti.Value;
                 newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * magnificationMulti;
             }
             else
@@ -47,7 +47,7 @@ namespace FOVFix
                     }
                 }
 
-                float aimedFOV = !Plugin.IsOptic || scopeCamera == null ? Plugin.BaseScopeFOV.Value : scopeCamera.fieldOfView;
+                float aimedFOV = !Plugin.FovController.IsOptic || scopeCamera == null ? Plugin.BaseScopeFOV.Value : scopeCamera.fieldOfView;
                 float hipFOV = Mathf.Deg2Rad * Camera.VerticalToHorizontalFieldOfView(mainCamera.fieldOfView, mainCamera.aspect);
                 float realAimedFOV = Mathf.Deg2Rad * Camera.VerticalToHorizontalFieldOfView(aimedFOV, mainCamera.aspect);
                 float exponent = 100f / Plugin.MouseSensFactor.Value;
