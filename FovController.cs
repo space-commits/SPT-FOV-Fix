@@ -108,7 +108,8 @@ namespace FOVFix
         public void SetToggleZoomMulti() 
         {
             bool isOptic = player.HandsController as FirearmController != null && player?.ProceduralWeaponAnimation != null && player?.ProceduralWeaponAnimation?.CurrentScope != null && player.ProceduralWeaponAnimation.CurrentScope.IsOptic;
-            TargetToggleZoomMulti = !CalledToggleZoom && !Plugin.ToggleZoomOnHoldBreath.Value || !CalledToggleZoomBreath && Plugin.ToggleZoomOnHoldBreath.Value ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
+            bool cancelledZoom = (!CalledToggleZoom && !Plugin.ToggleZoomOnHoldBreath.Value) || (!CalledToggleZoomBreath && Plugin.ToggleZoomOnHoldBreath.Value);
+            TargetToggleZoomMulti = cancelledZoom || player.IsInventoryOpened ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
         }
 
         public void DoFov()
@@ -227,7 +228,7 @@ namespace FOVFix
 
                 if (Plugin.HoldZoom.Value)
                 {
-                    if (Input.GetKey(Plugin.ZoomKeybind.Value.MainKey) && Plugin.ZoomKeybind.Value.Modifiers.All(Input.GetKey) && !CalledToggleZoom)
+                    if (Input.GetKey(Plugin.ZoomKeybind.Value.MainKey) && Plugin.ZoomKeybind.Value.Modifiers.All(Input.GetKey) && !CalledToggleZoom && !(!IsAiming && Plugin.UnaimedToggleZoomMulti.Value == 1f))
                     {
                         CalledToggleZoom = true;
                         SetToggleZoomMulti();
@@ -248,6 +249,13 @@ namespace FOVFix
                         SetToggleZoomMulti();
                         DoFov();
                     }
+                }
+
+                if (!IsAiming && Plugin.UnaimedToggleZoomMulti.Value == 1f && CalledToggleZoom) 
+                {
+                    CalledToggleZoom = false;
+                    SetToggleZoomMulti();
+                    DoFov();
                 }
 
                 if (IsAiming && !CalledADSZoom)

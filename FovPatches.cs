@@ -281,6 +281,7 @@ namespace FOVFix
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
             List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
             int aimIndex = weapon.AimIndex.Value;
+
             foreach (SightComponent sightComponent in sightEnumerable)
             {
                 if (hasScopeAimBone(sightComponent, player))
@@ -288,13 +289,13 @@ namespace FOVFix
                     for (int i = 0; i < sightComponent.ScopesCount; i++)
                     {
                         int index = Plugin.FovController.CurrentZoom == 1f ? (int)Plugin.FovController.CurrentZoom - 1 : Plugin.FovController.CurrentZoom == 1.5f ? 1 : (int)Plugin.FovController.CurrentZoom;
-
+                        int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
                         sightStructList.Add(new ScopeStatesStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = 0,
                             ScopeMode = index,
-                            ScopeCalibrationIndex = index
+                            ScopeCalibrationIndex = scopeCalibrationIndex
                         });
                     }
                 }
