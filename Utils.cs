@@ -1,4 +1,5 @@
-﻿using Comfort.Common;
+﻿using BepInEx.Logging;
+using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
 using System;
@@ -10,7 +11,9 @@ using UnityEngine;
 namespace FOVFix
 {
   public static class Utils
-  {
+    {
+        public static ManualLogSource Logger;
+
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
         public static string Collimator = "55818ad54bdc2ddc698b4569";
         public static string AssaultScope = "55818add4bdc2d5b648b456f";
