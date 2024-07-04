@@ -1,17 +1,6 @@
 ﻿using BepInEx;
-using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using Comfort.Common;
-using EFT;
-using EFT.Animations;
-using EFT.UI;
-using HarmonyLib;
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 
 namespace FOVFix
@@ -19,45 +8,14 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        public static Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
-
-        private static FieldInfo opticCrateFieldInfo;
-        public static MethodInfo pwaParamsMethodInfo;
-
-        public static Vector2 camPanRotation = Vector2.zero;
-        public static bool isRotating = false;
-        private Vector2 targetRotation = Vector2.zero;
-
-        public static bool DidToggleForFirstPlane = false;
-
-        private static bool haveResetDict = false;
-
-        public static bool IsFixedMag = false;
-        public static bool CanToggle = false;
-        public static bool CanToggleButNotFixed = false;
-        public static bool IsFucky = false;
-        public static float MinZoom = 1f;
-        public static float MaxZoom = 1f;
-        public static float CurrentZoom = 1f;
-
-        public static string CurrentWeapInstanceID = "";
-        public static string CurrentScopeInstanceID = "";
-        public static string CurrentScopeTempID = "";
-
-        public static bool IsOptic;
-        public static bool HasRAPTAR = false;
-        public static bool CalledZoom = false;
-        public static bool ZoomReset = false;
-        public static bool ShouldDoZoom = false;
-        public static bool IsAiming = false;
-        public static bool ChangeSight = false;
-        public static bool ToggledMagnification = false;
+        private const string pluginVersion = "1.2.0";
 
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<bool> AllowReticleToggle { get; set; }
         public static ConfigEntry<bool> AllowToggleZoom { get; set; }
+        public static ConfigEntry<bool> ToggleZoomOnHoldBreath { get; set; }
         public static ConfigEntry<bool> ToggleZoomOutsideADS { get; set; }
 
         public static ConfigEntry<float> OpticPosOffset { get; set; }
@@ -83,14 +41,13 @@ namespace FOVFix
         public static ConfigEntry<float> OpticSmoothTime { get; set; }
         public static ConfigEntry<float> CameraSmoothOut { get; set; }
         public static ConfigEntry<bool> HoldZoom { get; set; }
-        public static ConfigEntry<bool> EnableExtraZoomOptic { get; set; }
-        public static ConfigEntry<bool> EnableExtraZoomNonOptic { get; set; }
-        public static ConfigEntry<bool> EnableZoomOutsideADS { get; set; }
-        public static ConfigEntry<float> OpticExtraZoom { get; set; }
-        public static ConfigEntry<float> NonOpticExtraZoom { get; set; }
+        public static ConfigEntry<float> OpticToggleZoomMulti { get; set; }
+        public static ConfigEntry<float> NonOpticToggleZoomMulti { get; set; }
+        public static ConfigEntry<float> UnaimedToggleZoomMulti { get; set; }
         public static ConfigEntry<KeyboardShortcut> ZoomKeybind { get; set; }
         public static ConfigEntry<float> ToggleZoomOpticSensMulti { get; set; }
-        public static ConfigEntry<float> ToggleZoomSensMulti { get; set; }
+        public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
+        public static ConfigEntry<float> ToggleZoomMulti { get; set; }
         public static ConfigEntry<bool> SamSwatVudu { get; set; }
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
@@ -130,12 +87,10 @@ namespace FOVFix
         public static ConfigEntry<float> test3 { get; set; }
         public static ConfigEntry<float> test4 { get; set; }
 
+        public static FovController FovController { get; set; } 
 
         private void Awake()
         {
-            opticCrateFieldInfo = AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel");
-            pwaParamsMethodInfo = AccessTools.Method(typeof(ProceduralWeaponAnimation), "method_23");
-
             string variable = "1. Variable Zoom.";
             string adsFOV = "2. Player Camera ADS FOV";
             string cameraPostiion = "3. ADS Player Camera Position";
@@ -183,12 +138,12 @@ namespace FOVFix
 
             ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
             HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", false, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
-            EnableExtraZoomOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming.", null, new ConfigurationManagerAttributes { Order = 40 }));
-            EnableExtraZoomNonOptic = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom For Non-Optics", false, new ConfigDescription("Using A Keybind, You Can Get Additional Zoom/Magnification When Aiming.", null, new ConfigurationManagerAttributes { Order = 35 }));
-            EnableZoomOutsideADS = Config.Bind<bool>(toggleZoom, "Enable Toggleable Zoom While Not Aiming", false, new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 30 }));
-            OpticExtraZoom = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi.", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
-            NonOpticExtraZoom = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi.", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
-            ToggleZoomSensMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
+            ToggleZoomOnHoldBreath = Config.Bind<bool>(toggleZoom, "Enable Toggle Zoom On Hold-Breath", true, new ConfigDescription("Toggle Zoom Will Activated When Holding Breath Only.", null, new ConfigurationManagerAttributes { Order = 30 }));
+            OpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
+            NonOpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
+            UnaimedToggleZoomMulti = Config.Bind<float>(toggleZoom, "Un-Aimed Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 9 }));
+            ToggleZoomAimSensMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 3 }));
+            ToggleZoomMulti = Config.Bind<float>(toggleZoom, "Un-Aimed Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             ToggleZoomOpticSensMulti = Config.Bind<float>(toggleZoom, "Optics Toggle Zoom Sens Multi", 0.8f, new ConfigDescription("Sens Modifier When Zoom Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
             ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
@@ -206,8 +161,8 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Zoom While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 3 }));
-            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Toggle Zoom With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 4 }));
+            ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 3 }));
+            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 4 }));
             AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 5 }));
             PistolSmoothTime = Config.Bind<float>(misc, "Pistol Camera Smooth Time", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 10 }));
             OpticSmoothTime = Config.Bind<float>(misc, "Optic Camera Smooth Time", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
@@ -219,6 +174,9 @@ namespace FOVFix
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi (Deprecated)", 0.75f, new ConfigDescription("Only Used If Variable Zoom Is Disabled. Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.01f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
             RangeFinderFOV = Config.Bind<float>(scopeFOV, "Range Finder Magnificaiton", 15f, new ConfigDescription("Set The Magnification For The Range Finder Seperately From The Global Multi. If The Magnification Is Too High, The Rang Finder Text Will Break. Lower Value = Lower FOV So More Zoom.", new AcceptableValueRange<float>(1f, 30f), new ConfigurationManagerAttributes { Order = 2 }));
+
+            Utils.Logger = Logger;  
+            FovController = new FovController();
 
             new PwaWeaponParamsPatch().Enable();
             new FreeLookPatch().Enable();
@@ -250,138 +208,9 @@ namespace FOVFix
             }
         }
 
-        public static void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
-        {
-            if (WeaponScopeValues.ContainsKey(CurrentWeapInstanceID))
-            {
-                List<Dictionary<string, float>> scopes = WeaponScopeValues[CurrentWeapInstanceID];
-                foreach (Dictionary<string, float> scopeDict in scopes)
-                {
-                    if (scopeDict.ContainsKey(CurrentScopeInstanceID))
-                    {
-                      scopeDict[CurrentScopeInstanceID] = currentZoom;
-                        break;
-                    }
-                }
-            }
-        }
-
-        public static void HandleZoomInput(float zoomIncrement, bool toggleZoom = false) 
-        {
-            float zoomBefore = CurrentZoom;
-            CurrentZoom = 
-                !toggleZoom ? Mathf.Clamp(CurrentZoom + zoomIncrement, MinZoom, MaxZoom) :
-                zoomIncrement;
-            UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
-            ZoomScope(CurrentZoom);
-            if (zoomBefore != CurrentZoom) 
-            {
-                DidToggleForFirstPlane = true;
-            }
-        }
-
-        public static void ZoomScope(float currentZoom)
-        {
-            OpticCratePanel panelUI = (OpticCratePanel)opticCrateFieldInfo.GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
-            panelUI.Show(Math.Round(currentZoom, 1) + "x");
-            Camera[] cams = Camera.allCameras;
-            foreach (Camera cam in cams)
-            {
-                if (cam.name == "BaseOpticCamera(Clone)")
-                {
-                    cam.fieldOfView = BaseScopeFOV.Value / Mathf.Pow(currentZoom, MagPowerFactor.Value);
-                }
-            }
-
-            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-        }
-
         void Update()
         {
-            Utils.CheckIsReady();
-
-            if (Utils.IsReady && Singleton<GameWorld>.Instance.MainPlayer != null && Singleton<GameWorld>.Instance.MainPlayer.HandsController != null)
-            {
-                haveResetDict = false;
-
-                if (EnableVariableZoom.Value && !IsFixedMag && IsOptic && (!CanToggle || CanToggleButNotFixed) && IsAiming)
-                {
-                    if (UseSmoothZoom.Value)
-                    {
-                        if (Input.GetKey(VariableZoomOut.Value.MainKey) && VariableZoomOut.Value.Modifiers.All(Input.GetKey))
-                        {
-                            HandleZoomInput(-SmoothZoomSpeed.Value);
-                        }
-                        if (Input.GetKey(VariableZoomIn.Value.MainKey) && VariableZoomIn.Value.Modifiers.All(Input.GetKey))
-                        {
-                            HandleZoomInput(SmoothZoomSpeed.Value);
-                        }
-                    }
-                    else 
-                    {
-                        if (Input.GetKeyDown(VariableZoomOut.Value.MainKey) && VariableZoomOut.Value.Modifiers.All(Input.GetKey))
-                        {
-                            HandleZoomInput(-ZoomSteps.Value);
-                        }
-                        if (Input.GetKeyDown(VariableZoomIn.Value.MainKey) && VariableZoomIn.Value.Modifiers.All(Input.GetKey))
-                        {
-                            HandleZoomInput(ZoomSteps.Value);
-                        }
-                    }
-                    if (UseMouseWheel.Value) 
-                    {
-                        if ((Input.GetKey(MouseWheelBind.Value.MainKey) && UseMouseWheelPlusKey.Value) || (!Plugin.UseMouseWheelPlusKey.Value && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftAlt) && !Input.GetKey(KeyCode.R) && !Input.GetKey(KeyCode.C)))
-                        {
-                            float scrollDelta = Input.mouseScrollDelta.y * ZoomSteps.Value;
-                            if (scrollDelta != 0f) 
-                            {
-                                HandleZoomInput(scrollDelta);
-                            }
-                        }
-                    }
-                }
-
-                if ((((EnableExtraZoomOptic.Value && IsOptic) || (EnableExtraZoomNonOptic.Value && !IsOptic)) && IsAiming) || (EnableZoomOutsideADS.Value && !IsAiming))
-                {
-                    if (HoldZoom.Value)
-                    {
-                        if (Input.GetKey(ZoomKeybind.Value.MainKey) && ZoomKeybind.Value.Modifiers.All(Input.GetKey) && !CalledZoom)
-                        {
-                            ShouldDoZoom = true;
-                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            CalledZoom = true;
-                            ShouldDoZoom = false;
-
-                        }
-                        if (!Input.GetKey(ZoomKeybind.Value.MainKey) && CalledZoom)
-                        {
-                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            CalledZoom = false;
-                        }
-                    }
-                    else
-                    {
-                        if (Input.GetKeyDown(ZoomKeybind.Value.MainKey) && ZoomKeybind.Value.Modifiers.All(Input.GetKey))
-                        {
-                            ShouldDoZoom = !ShouldDoZoom;
-                            pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                            CalledZoom = !CalledZoom;
-                        }
-                    }
-                }
-                if (!Plugin.IsAiming && Plugin.CalledZoom && !Plugin.HoldZoom.Value && !Plugin.EnableZoomOutsideADS.Value)
-                {
-                    Plugin.ShouldDoZoom = false;
-                    pwaParamsMethodInfo.Invoke(Singleton<GameWorld>.Instance.MainPlayer.ProceduralWeaponAnimation, new object[] { false });
-                    Plugin.CalledZoom = false;
-                }
-            }
-
-            if (!Utils.IsReady && !Plugin.haveResetDict) 
-            {
-                Plugin.WeaponScopeValues.Clear();
-                Plugin.haveResetDict = true;
-            }
+            FovController.ControllerUpdate();
         }
     }
 }
