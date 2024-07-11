@@ -1,8 +1,8 @@
 import { DependencyContainer } from "tsyringe";
-import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
-import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
-import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
-import { PreAkiModLoader } from "@spt-aki/loaders/PreAkiModLoader";
+import { ILogger } from "@SPT/models/spt/utils/ILogger";
+import { DatabaseServer } from "@SPT/servers/DatabaseServer";
+import { IPostDBLoadMod } from "@SPT/models/external/IPostDBLoadMod";
+import { PreAkiModLoader } from "@SPT/loaders/PreSptModLoader";
 
 const scopeTemplates = require("../db/ScopeTemplates.json");
 const config = require("../config/config.json");
@@ -16,7 +16,7 @@ class Mod implements IPostDBLoadMod {
         const tables = container.resolve<DatabaseServer>("DatabaseServer").getTables();
         const itemDB = tables.templates.items;
 
-        const preAkiModLoader = container.resolve<PreAkiModLoader>("PreAkiModLoader");
+        const preAkiModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
         const activeMods = preAkiModLoader.getImportedModDetails();
         var geffModPresent = false;
         for (const modname in activeMods) {

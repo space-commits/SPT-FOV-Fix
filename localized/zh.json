@@ -1,0 +1,17 @@
+{
+    "EFTConfiguration": "塔科夫配置管理器",
+    "Main Settings": "主设置",
+    "Reset": "重置",
+    "EnterText": "输入设置名称",
+    "Advanced": "高级",
+    "Press": "输入",
+    "Clear": "清理",
+    "Configuration Shortcut": "配置管理器快捷键",
+    "Default Position": "默认位置",
+    "Description Position Offset": "描述位置偏移",
+    "Description position offset from Mouse position": "从鼠标位置获得的描述位置偏移",
+    "Language": "语言",
+    "Preferred language, if not available will tried English, if still not available than return original text": "首选语言, 如果语言不存在则尝试使用英语, 仍然不存在则使用原始文本",
+    "Search": "搜索",
+    "Sorting Order": "排序层"
+}

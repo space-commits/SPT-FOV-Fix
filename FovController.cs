@@ -54,9 +54,9 @@ namespace FOVFix
 
         public Player player = null;
 
-        public FovController()
+        public FovController() //Using the generic type 'BattleUIScreen<TController, TScreenType>' requires 2 type arguments
         {
-            opticCrateFieldInfo = AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel");
+            // opticCrateFieldInfo = AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel");
         }
 
         private void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
@@ -91,8 +91,9 @@ namespace FOVFix
 
         public void ZoomScope(float currentZoom)
         {
-            OpticCratePanel panelUI = (OpticCratePanel)opticCrateFieldInfo.GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
-            panelUI.Show(Math.Round(currentZoom, 1) + "x");
+            //Probably deprecated or refactored, I'm unable to understand what this is referencing.
+            // OpticCratePanel panelUI = (OpticCratePanel)opticCrateFieldInfo.GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
+            // panelUI.Show(Math.Round(currentZoom, 1) + "x");
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams)
             {

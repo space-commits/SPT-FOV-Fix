@@ -7,7 +7,7 @@ class Mod {
         const logger = container.resolve("WinstonLogger");
         const tables = container.resolve("DatabaseServer").getTables();
         const itemDB = tables.templates.items;
-        const preAkiModLoader = container.resolve("PreAkiModLoader");
+        const preAkiModLoader = container.resolve("PreSptModLoader");
         const activeMods = preAkiModLoader.getImportedModDetails();
         var geffModPresent = false;
         for (const modname in activeMods) {

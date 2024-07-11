@@ -1,10 +1,10 @@
 {
     "name": "Fontaine FOV Fix & Variable Optics",
-    "version": "1.10.0",
+    "version": "1.20.0",
     "main": "src/mod.js",
     "license": "CC BY-NC-SA",
     "author": "Fontaine",
-    "akiVersion": "3.8.0",
+    "akiVersion": "3.9.0",
     "loadBefore": [],
 	"loadAfter": [],
 	"incompatibilities": [],

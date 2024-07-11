@@ -1,0 +1,17 @@
+{
+    "EFTConfiguration": "EFT Configuration Manager",
+    "Main Settings": "Main Settings",
+    "Reset": "Reset",
+    "EnterText": "Enter Setting Name",
+    "Advanced": "Advanced",
+    "Press": "Press",
+    "Clear": "Clear",
+    "Configuration Shortcut": "Configuration Shortcut",
+    "Default Position": "Default Position",
+    "Description Position Offset": "Description Position Offset",
+    "Description position offset from Mouse position": "Description position offset from Mouse position",
+    "Language": "Language",
+    "Preferred language, if not available will tried English, if still not available than return original text": "Preferred language, if not available will tried English, if still not available than return original text",
+    "Search": "Search",
+    "Sorting Order": "Sorting Order"
+}

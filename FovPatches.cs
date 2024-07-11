@@ -1,4 +1,4 @@
-﻿using Aki.Reflection.Patching;
+﻿using SPT.Reflection.Patching;
 using Comfort.Common;
 using EFT;
 using EFT.Animations;
@@ -11,12 +11,12 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using FCSubClass = EFT.Player.FirearmController.GClass1584;
-using IWeapon = GInterface322;
-using ScopeStatesStruct = GStruct164;
-using SightComptInterface = GInterface303;
-using WeaponState = GClass1668;
-using InputClass = Class1451;
+using FCSubClass = EFT.Player.FirearmController.GClass1595;
+using IWeapon0 = IWeapon;
+using ScopeStatesStruct = FirearmScopeStateStruct;
+using SightComptInterface = GInterface318;
+using WeaponState = WeaponManagerClass;
+using InputClass = Class1463;
 using EFT.UI.Settings;
 using UnityEngine.Rendering.PostProcessing;
 using EFT.UI.Ragfair;
@@ -668,7 +668,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(ShotEffector __instance)
         {
-            IWeapon _weapon = (IWeapon)weaponField.GetValue(__instance);
+            IWeapon0 _weapon = (IWeapon0)weaponField.GetValue(__instance);
             if (_weapon?.Item?.Owner.ID != null && _weapon.Item.Owner.ID == Singleton<GameWorld>.Instance?.MainPlayer?.ProfileId)
             {
                 Plugin.FovController.HasRAPTAR = false;

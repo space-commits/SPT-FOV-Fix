@@ -4,13 +4,13 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>FOVFix</AssemblyName>
     <Description>Fixes EFT FOV (removes FOV decrease when ADS)</Description>
-    <Version>1.0.0</Version>
+    <Version>2.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Aki.Reflection" />
+    <Reference Include="spt-reflection" />
 	<Reference Include="ItemComponent.Types"/>
     <Reference Include="Comfort"/>
     <Reference Include="Assembly-CSharp" />
