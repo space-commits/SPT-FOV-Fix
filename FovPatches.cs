@@ -1,28 +1,37 @@
-﻿using Aki.Reflection.Patching;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
+using EFT.UI;
 using HarmonyLib;
+using SPT.Reflection.Patching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using FCSubClass = EFT.Player.FirearmController.GClass1584;
-using IWeapon = GInterface322;
-using ScopeStatesStruct = GStruct164;
-using SightComptInterface = GInterface303;
-using WeaponState = GClass1668;
-using InputClass = Class1451;
-using EFT.UI.Settings;
-using UnityEngine.Rendering.PostProcessing;
-using EFT.UI.Ragfair;
+using FCSubClass = EFT.Player.FirearmController.GClass1595;
+using InputClass = Class1477;
+using SightComptInterface = GInterface318;
 
 namespace FOVFix
 {
+
+    public class OpticPanelPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(OpticCratePanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(OpticCratePanel __instance)
+        {
+            Plugin.FovController.OpticPanel = __instance;   
+        }
+    }
 
     public class KeyInputPatch : ModulePatch
     {
@@ -71,13 +80,13 @@ namespace FOVFix
         protected override MethodBase GetTargetMethod()
         {
             fAnimatorField = AccessTools.Field(typeof(FCSubClass), "firearmsAnimator_0");
-            weaponStateField = AccessTools.Field(typeof(FCSubClass), "gclass1668_0");
+            weaponStateField = AccessTools.Field(typeof(FCSubClass), "weaponManagerClass");
 
             return typeof(FCSubClass).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(FCSubClass __instance, ScopeStatesStruct[] scopeStates)
+        private static bool PatchPrefix(FCSubClass __instance, FirearmScopeStateStruct[] scopeStates)
         {
             if (__instance.CanChangeScopeStates(scopeStates))
             {
@@ -86,7 +95,7 @@ namespace FOVFix
                     FirearmsAnimator fAnimator = (FirearmsAnimator)fAnimatorField.GetValue(__instance);
                     fAnimator.ModToggleTrigger();
                 }
-                WeaponState weaponState = (WeaponState)weaponStateField.GetValue(__instance);
+                WeaponManagerClass weaponState = (WeaponManagerClass)weaponStateField.GetValue(__instance);
                 weaponState.UpdateScopesMode();
             }
             return false;
@@ -246,11 +255,11 @@ namespace FOVFix
             return false;
         }
 
-        private static ScopeStatesStruct[] getScopeModeFullList(Weapon weapon, Player player)
+        private static FirearmScopeStateStruct[] getScopeModeFullList(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
+            List<FirearmScopeStateStruct> sightStructList = new List<FirearmScopeStateStruct>();
             int aimIndex = weapon.AimIndex.Value;
             int index = 0;
             foreach (SightComponent sightComponent in sightEnumerable) 
@@ -261,7 +270,7 @@ namespace FOVFix
                     {
                         int sightMode = (sightComponent.ScopesSelectedModes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesSelectedModes[i];
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new ScopeStatesStruct
+                        sightStructList.Add(new FirearmScopeStateStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = i,
@@ -275,11 +284,11 @@ namespace FOVFix
             return sightStructList.ToArray();
         }
 
-        private static ScopeStatesStruct[] doVuduZoom(Weapon weapon, Player player)
+        private static FirearmScopeStateStruct[] doVuduZoom(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
+            List<FirearmScopeStateStruct> sightStructList = new List<FirearmScopeStateStruct>();
             int aimIndex = weapon.AimIndex.Value;
 
             foreach (SightComponent sightComponent in sightEnumerable)
@@ -290,7 +299,7 @@ namespace FOVFix
                     {
                         int index = Plugin.FovController.CurrentZoom == 1f ? (int)Plugin.FovController.CurrentZoom - 1 : Plugin.FovController.CurrentZoom == 1.5f ? 1 : (int)Plugin.FovController.CurrentZoom;
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new ScopeStatesStruct
+                        sightStructList.Add(new FirearmScopeStateStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = 0,
@@ -554,22 +563,22 @@ namespace FOVFix
 
     public class LerpCameraPatch : ModulePatch
     {
-        private static FieldInfo playerField;
-        private static FieldInfo fcField;
+        private static FieldInfo _playerField;
+        private static FieldInfo _fcField;
 
         protected override MethodBase GetTargetMethod()
         {
-            playerField = AccessTools.Field(typeof(FirearmController), "_player");
-            fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
+            _playerField = AccessTools.Field(typeof(FirearmController), "_player");
+            _fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
         private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier, float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload, Quaternion ____cameraIdenity, Quaternion ____rotationOffset)
         {
-            FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
+            FirearmController firearmController = (FirearmController)_fcField.GetValue(__instance);
             if (firearmController == null) return true;
-            Player player = (Player)playerField.GetValue(firearmController);
+            Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
@@ -577,11 +586,11 @@ namespace FOVFix
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 Vector2 a = new Vector2(localPosition.x, localPosition.y);
                 Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
-                float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.CameraSmoothOut.Value;
+                float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.UnAimSpeed.Value; 
                 Vector2 targetPosition = Vector2.Lerp(a, b, dt * aimFactor);
                 float zPos = localPosition.z;
-                float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticSmoothTime.Value * dt : firearmController.Weapon.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
-                float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
+                float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : firearmController.Weapon.WeapClass == "pistol" ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
+                float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.UnAimSpeedY.Value; 
                 zPos = Mathf.Lerp(zPos, camZ, smoothTime * yPos);
                 Vector3 newLocalPosition = new Vector3(targetPosition.x, targetPosition.y, zPos) + __instance.HandsContainer.CameraPosition.GetRelative();
                 if (____aimSwayStrength > 0f)
@@ -592,11 +601,16 @@ namespace FOVFix
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
                 }
+
                 __instance.HandsContainer.CameraTransform.localPosition = newLocalPosition;
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
                 __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, Single_1 * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
                 __instance.method_19(dt);
                 __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
+
+                //hud fov
+                __instance.HandsContainer.CameraOffset = new Vector3(0.04f, 0.04f, Plugin.HudFOV.Value);
+
 
                 return false;
             }
