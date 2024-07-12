@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="Aki.Reflection" />
+    <Reference Include="spt-reflection" />
 	<Reference Include="ItemComponent.Types"/>
     <Reference Include="Comfort"/>
     <Reference Include="Assembly-CSharp" />

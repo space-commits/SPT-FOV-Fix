@@ -1,13 +1,8 @@
-﻿using Aki.Reflection.Patching;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
-using HarmonyLib;
-using System;
-using System.Collections.Generic;
+using SPT.Reflection.Patching;
 using System.Reflection;
-using System.Text;
 using UnityEngine;
-using static MonoMod.Cil.RuntimeILReferenceBag.FastDelegateInvokers;
 
 namespace FOVFix
 {

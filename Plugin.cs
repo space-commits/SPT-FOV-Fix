@@ -8,7 +8,7 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string pluginVersion = "1.2.0";
+        private const string pluginVersion = "2.1.0";
 
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }

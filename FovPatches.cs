@@ -1,25 +1,19 @@
-﻿using Aki.Reflection.Patching;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
 using HarmonyLib;
+using SPT.Reflection.Patching;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using FCSubClass = EFT.Player.FirearmController.GClass1584;
-using IWeapon = GInterface322;
-using ScopeStatesStruct = GStruct164;
-using SightComptInterface = GInterface303;
-using WeaponState = GClass1668;
-using InputClass = Class1451;
-using EFT.UI.Settings;
-using UnityEngine.Rendering.PostProcessing;
-using EFT.UI.Ragfair;
+using FCSubClass = EFT.Player.FirearmController.GClass1595;
+using InputClass = Class1477;
+using SightComptInterface = GInterface318;
 
 namespace FOVFix
 {
@@ -71,13 +65,13 @@ namespace FOVFix
         protected override MethodBase GetTargetMethod()
         {
             fAnimatorField = AccessTools.Field(typeof(FCSubClass), "firearmsAnimator_0");
-            weaponStateField = AccessTools.Field(typeof(FCSubClass), "gclass1668_0");
+            weaponStateField = AccessTools.Field(typeof(FCSubClass), "weaponManagerClass");
 
             return typeof(FCSubClass).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool PatchPrefix(FCSubClass __instance, ScopeStatesStruct[] scopeStates)
+        private static bool PatchPrefix(FCSubClass __instance, FirearmScopeStateStruct[] scopeStates)
         {
             if (__instance.CanChangeScopeStates(scopeStates))
             {
@@ -86,7 +80,7 @@ namespace FOVFix
                     FirearmsAnimator fAnimator = (FirearmsAnimator)fAnimatorField.GetValue(__instance);
                     fAnimator.ModToggleTrigger();
                 }
-                WeaponState weaponState = (WeaponState)weaponStateField.GetValue(__instance);
+                WeaponManagerClass weaponState = (WeaponManagerClass)weaponStateField.GetValue(__instance);
                 weaponState.UpdateScopesMode();
             }
             return false;
@@ -246,11 +240,11 @@ namespace FOVFix
             return false;
         }
 
-        private static ScopeStatesStruct[] getScopeModeFullList(Weapon weapon, Player player)
+        private static FirearmScopeStateStruct[] getScopeModeFullList(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
+            List<FirearmScopeStateStruct> sightStructList = new List<FirearmScopeStateStruct>();
             int aimIndex = weapon.AimIndex.Value;
             int index = 0;
             foreach (SightComponent sightComponent in sightEnumerable) 
@@ -261,7 +255,7 @@ namespace FOVFix
                     {
                         int sightMode = (sightComponent.ScopesSelectedModes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesSelectedModes[i];
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new ScopeStatesStruct
+                        sightStructList.Add(new FirearmScopeStateStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = i,
@@ -275,11 +269,11 @@ namespace FOVFix
             return sightStructList.ToArray();
         }
 
-        private static ScopeStatesStruct[] doVuduZoom(Weapon weapon, Player player)
+        private static FirearmScopeStateStruct[] doVuduZoom(Weapon weapon, Player player)
         {
             //you can thank BSG for this monstrosity 
             IEnumerable<SightComponent> sightEnumerable = Enumerable.OrderBy<SightComponent, string>(Enumerable.Select<Slot, Item>(weapon.AllSlots, new Func<Slot, Item>(getContainedItem)).GetComponents<SightComponent>(), new Func<SightComponent, string>(getSightComp));
-            List<ScopeStatesStruct> sightStructList = new List<ScopeStatesStruct>();
+            List<FirearmScopeStateStruct> sightStructList = new List<FirearmScopeStateStruct>();
             int aimIndex = weapon.AimIndex.Value;
 
             foreach (SightComponent sightComponent in sightEnumerable)
@@ -290,7 +284,7 @@ namespace FOVFix
                     {
                         int index = Plugin.FovController.CurrentZoom == 1f ? (int)Plugin.FovController.CurrentZoom - 1 : Plugin.FovController.CurrentZoom == 1.5f ? 1 : (int)Plugin.FovController.CurrentZoom;
                         int scopeCalibrationIndex = (sightComponent.ScopesCurrentCalibPointIndexes.Length != sightComponent.ScopesCount) ? 0 : sightComponent.ScopesCurrentCalibPointIndexes[i];
-                        sightStructList.Add(new ScopeStatesStruct
+                        sightStructList.Add(new FirearmScopeStateStruct
                         {
                             Id = sightComponent.Item.Id,
                             ScopeIndexInsideSight = 0,

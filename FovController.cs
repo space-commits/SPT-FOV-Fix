@@ -17,15 +17,13 @@ namespace FOVFix
     {
         public Dictionary<string, List<Dictionary<string, float>>> WeaponScopeValues = new Dictionary<string, List<Dictionary<string, float>>>();
 
-        private FieldInfo opticCrateFieldInfo;
-
-        public Vector2 camPanRotation = Vector2.zero;
-        public bool isRotating = false;
-        private Vector2 targetRotation = Vector2.zero;
+        public Vector2 CamPanRotation = Vector2.zero;
+        public bool IsRotating = false;
+        private Vector2 _targetRotation = Vector2.zero;
 
         public bool DidToggleForFirstPlane = false;
 
-        private bool haveResetDict = false;
+        private bool _haveResetDict = false;
 
         public bool IsFixedMag = false;
         public bool CanToggle = false;
@@ -52,11 +50,11 @@ namespace FOVFix
         public float TargetToggleZoomMulti = 1f;
         public bool ToggleZoomActive = false;
 
-        public Player player = null;
+        private Player _player = null;
+        private OpticCratePanel _opticPanel = null;
 
         public FovController()
         {
-            opticCrateFieldInfo = AccessTools.Field(typeof(BattleUIScreen), "_opticCratePanel");
         }
 
         private void UpdateStoredMagnificaiton(string weapID, string scopeID, float currentZoom)
@@ -91,8 +89,7 @@ namespace FOVFix
 
         public void ZoomScope(float currentZoom)
         {
-            OpticCratePanel panelUI = (OpticCratePanel)opticCrateFieldInfo.GetValue(Singleton<GameUI>.Instance.BattleUiScreen);
-            panelUI.Show(Math.Round(currentZoom, 1) + "x");
+            if (_opticPanel != null) _opticPanel.Show(Math.Round(currentZoom, 1) + "x");
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams)
             {
@@ -107,19 +104,19 @@ namespace FOVFix
 
         public void SetToggleZoomMulti() 
         {
-            bool isOptic = player.HandsController as FirearmController != null && player?.ProceduralWeaponAnimation != null && player?.ProceduralWeaponAnimation?.CurrentScope != null && player.ProceduralWeaponAnimation.CurrentScope.IsOptic;
+            bool isOptic = _player.HandsController as FirearmController != null && _player?.ProceduralWeaponAnimation != null && _player?.ProceduralWeaponAnimation?.CurrentScope != null && _player.ProceduralWeaponAnimation.CurrentScope.IsOptic;
             bool cancelledZoom = (!CalledToggleZoom && !Plugin.ToggleZoomOnHoldBreath.Value) || (!CalledToggleZoomBreath && Plugin.ToggleZoomOnHoldBreath.Value);
-            TargetToggleZoomMulti = cancelledZoom || player.IsInventoryOpened ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
+            TargetToggleZoomMulti = cancelledZoom || _player.IsInventoryOpened ? 1f : isOptic && IsAiming ? Plugin.OpticToggleZoomMulti.Value : IsAiming ? Plugin.NonOpticToggleZoomMulti.Value : Plugin.UnaimedToggleZoomMulti.Value;
         }
 
         public void DoFov()
         {
-            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            ProceduralWeaponAnimation pwa = _player.ProceduralWeaponAnimation;
             if (pwa == null) return;
 
-            FirearmController fc = player.HandsController as FirearmController;
-            float baseFOV = player.ProceduralWeaponAnimation.Single_2;
-            int aimIndex = player.ProceduralWeaponAnimation.AimIndex;
+            FirearmController fc = _player.HandsController as FirearmController;
+            float baseFOV = _player.ProceduralWeaponAnimation.Single_2;
+            int aimIndex = _player.ProceduralWeaponAnimation.AimIndex;
 
             if (fc == null)
             {
@@ -128,15 +125,15 @@ namespace FOVFix
                 return;
             }
 
-            if (player != null && fc?.Weapon != null)
+            if (_player != null && fc?.Weapon != null)
             {
                 if (pwa.PointOfView == EPointOfView.FirstPerson && !pwa.Sprint && aimIndex < pwa.ScopeAimTransforms.Count)
                 {
                     float zoom = 1;
-                    if (player.ProceduralWeaponAnimation.CurrentAimingMod != null)
+                    if (_player.ProceduralWeaponAnimation.CurrentAimingMod != null)
                     {
-                        zoom = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
-                        CurrentScopeTempID = player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
+                        zoom = _player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
+                        CurrentScopeTempID = _player.ProceduralWeaponAnimation.CurrentAimingMod.Item.TemplateId;
                     }
                     bool isOptic = pwa.CurrentScope.IsOptic;
                     IsOptic = isOptic;
@@ -160,18 +157,24 @@ namespace FOVFix
         public void ControllerUpdate()
         {
             Utils.CheckIsReady();
-            if (Utils.IsReady && player == null)
+            if (Utils.IsReady)
             {
-                player = Singleton<GameWorld>.Instance.MainPlayer;
-            }
-            if (!Utils.IsReady)
-            {
-                player = null;
+                if (_opticPanel == null)
+                {
+                    GameObject opticObj = GameObject.Find("OpticCratePanel");
+                    if (opticObj != null)
+                    {
+                        OpticCratePanel opticCrate;
+                        if (opticObj.TryGetComponent<OpticCratePanel>(out opticCrate)) _opticPanel = opticCrate;
+                    }
+      
+                }
+                if(_player == null) _player = Singleton<GameWorld>.Instance.MainPlayer;
             }
 
-            if (Utils.IsReady && player != null)
+            if (Utils.IsReady && _player != null)
             {
-                haveResetDict = false;
+                _haveResetDict = false;
 
                 if (Plugin.EnableVariableZoom.Value && !IsFixedMag && IsOptic && (!CanToggle || CanToggleButNotFixed) && IsAiming)
                 {
@@ -212,13 +215,13 @@ namespace FOVFix
 
                 if (Plugin.ToggleZoomOnHoldBreath.Value)
                 {
-                    if (player.Physical.HoldingBreath && !CalledToggleZoomBreath)
+                    if (_player.Physical.HoldingBreath && !CalledToggleZoomBreath)
                     {
                         CalledToggleZoomBreath = true;
                         SetToggleZoomMulti();
                         DoFov();
                     }
-                    else if (!player.Physical.HoldingBreath && CalledToggleZoomBreath)
+                    else if (!_player.Physical.HoldingBreath && CalledToggleZoomBreath)
                     {
                         CalledToggleZoomBreath = false;
                         SetToggleZoomMulti();
@@ -271,10 +274,10 @@ namespace FOVFix
                 }
             }
 
-            if (!Utils.IsReady && !haveResetDict)
+            if (!Utils.IsReady && !_haveResetDict)
             {
                 WeaponScopeValues.Clear();
-                haveResetDict = true;
+                _haveResetDict = true;
             }
         }
 
