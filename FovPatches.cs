@@ -3,6 +3,7 @@ using EFT;
 using EFT.Animations;
 using EFT.InputSystem;
 using EFT.InventoryLogic;
+using EFT.UI;
 using HarmonyLib;
 using SPT.Reflection.Patching;
 using System;
@@ -17,6 +18,20 @@ using SightComptInterface = GInterface318;
 
 namespace FOVFix
 {
+
+    public class OpticPanelPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(OpticCratePanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(OpticCratePanel __instance)
+        {
+            Plugin.FovController.OpticPanel = __instance;   
+        }
+    }
 
     public class KeyInputPatch : ModulePatch
     {

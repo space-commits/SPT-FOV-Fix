@@ -169,7 +169,7 @@ namespace FOVFix
             ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
             AllowToggleZoom = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
             AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 30 }));
-            HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.05f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
+            HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
             EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 1, IsAdvanced = true }));
 
@@ -201,7 +201,8 @@ namespace FOVFix
                 new ChangeAimingModePatch().Enable();
                 new SetScopeModePatch().Enable();
                 new OperationSetScopeModePatch().Enable();
-                new KeyInputPatch().Enable();   
+                new KeyInputPatch().Enable();
+                new OpticPanelPatch().Enable();
 
                 if (Plugin.ChangeMouseSens.Value)
                 {

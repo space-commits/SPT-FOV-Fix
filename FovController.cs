@@ -51,7 +51,7 @@ namespace FOVFix
         public bool ToggleZoomActive = false;
 
         private Player _player = null;
-        private OpticCratePanel _opticPanel = null;
+        public OpticCratePanel OpticPanel = null;
 
         public FovController()
         {
@@ -89,7 +89,7 @@ namespace FOVFix
 
         public void ZoomScope(float currentZoom)
         {
-            if (_opticPanel != null) _opticPanel.Show(Math.Round(currentZoom, 1) + "x");
+            if (OpticPanel != null) OpticPanel.Show(Math.Round(currentZoom, 1) + "x");
             Camera[] cams = Camera.allCameras;
             foreach (Camera cam in cams)
             {
@@ -157,21 +157,8 @@ namespace FOVFix
         public void ControllerUpdate()
         {
             Utils.CheckIsReady();
-            if (Utils.IsReady)
-            {
-                if (_opticPanel == null)
-                {
-                    GameObject opticObj = GameObject.Find("OpticCratePanel");
-                    if (opticObj != null)
-                    {
-                        OpticCratePanel opticCrate;
-                        if (opticObj.TryGetComponent<OpticCratePanel>(out opticCrate)) _opticPanel = opticCrate;
-                    }
-      
-                }
-                if(_player == null) _player = Singleton<GameWorld>.Instance.MainPlayer;
-            }
-
+            if (Utils.IsReady && _player == null) _player = Singleton<GameWorld>.Instance.MainPlayer;
+ 
             if (Utils.IsReady && _player != null)
             {
                 _haveResetDict = false;
