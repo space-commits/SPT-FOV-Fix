@@ -548,22 +548,22 @@ namespace FOVFix
 
     public class LerpCameraPatch : ModulePatch
     {
-        private static FieldInfo playerField;
-        private static FieldInfo fcField;
+        private static FieldInfo _playerField;
+        private static FieldInfo _fcField;
 
         protected override MethodBase GetTargetMethod()
         {
-            playerField = AccessTools.Field(typeof(FirearmController), "_player");
-            fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
+            _playerField = AccessTools.Field(typeof(FirearmController), "_player");
+            _fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
         private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier, float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload, Quaternion ____cameraIdenity, Quaternion ____rotationOffset)
         {
-            FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
+            FirearmController firearmController = (FirearmController)_fcField.GetValue(__instance);
             if (firearmController == null) return true;
-            Player player = (Player)playerField.GetValue(firearmController);
+            Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
@@ -571,11 +571,11 @@ namespace FOVFix
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 Vector2 a = new Vector2(localPosition.x, localPosition.y);
                 Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
-                float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.CameraSmoothOut.Value;
+                float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.UnAimSpeed.Value; 
                 Vector2 targetPosition = Vector2.Lerp(a, b, dt * aimFactor);
                 float zPos = localPosition.z;
-                float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticSmoothTime.Value * dt : firearmController.Weapon.WeapClass == "pistol" ? Plugin.PistolSmoothTime.Value * dt : Plugin.CameraSmoothTime.Value * dt;
-                float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.CameraSmoothOut.Value;
+                float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : firearmController.Weapon.WeapClass == "pistol" ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
+                float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.UnAimSpeedY.Value; 
                 zPos = Mathf.Lerp(zPos, camZ, smoothTime * yPos);
                 Vector3 newLocalPosition = new Vector3(targetPosition.x, targetPosition.y, zPos) + __instance.HandsContainer.CameraPosition.GetRelative();
                 if (____aimSwayStrength > 0f)
@@ -586,11 +586,16 @@ namespace FOVFix
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
                 }
+
                 __instance.HandsContainer.CameraTransform.localPosition = newLocalPosition;
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
                 __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, Single_1 * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
                 __instance.method_19(dt);
                 __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
+
+                //hud fov
+                __instance.HandsContainer.CameraOffset = new Vector3(0.04f, 0.04f, Plugin.HudFOV.Value);
+
 
                 return false;
             }
