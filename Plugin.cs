@@ -18,9 +18,9 @@ namespace FOVFix
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<bool> AllowReticleToggle { get; set; }
-        public static ConfigEntry<bool> AllowToggleZoom { get; set; }
+        public static ConfigEntry<bool> AllowToggleMag { get; set; }
         public static ConfigEntry<bool> ToggleZoomOnHoldBreath { get; set; }
-        public static ConfigEntry<bool> ToggleZoomOutsideADS { get; set; }
+        public static ConfigEntry<bool> ToggleMagOutsideADS { get; set; }
 
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
@@ -61,6 +61,7 @@ namespace FOVFix
         public static ConfigEntry<float> ToggleZoomMulti { get; set; }
         public static ConfigEntry<bool> SamSwatVudu { get; set; }
         public static ConfigEntry<bool> RealismAltRifle { get; set; }
+        public static ConfigEntry<bool> RealismAltPistol { get; set; }
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
@@ -151,7 +152,7 @@ namespace FOVFix
             PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
 
             ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", false, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", true, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
             ToggleZoomOnHoldBreath = Config.Bind<bool>(toggleZoom, "Enable Toggle Zoom On Hold-Breath", false, new ConfigDescription("Toggle Zoom Will Activated When Holding Breath Only.", null, new ConfigurationManagerAttributes { Order = 30 }));
             OpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
@@ -175,10 +176,11 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            RealismAltRifle = Config.Bind<bool>(misc, "Realism Mod Alt Rifle Support (WIP)", false, new ConfigDescription("Use If 'Alt Rfile Position' Is Enabled In Realism Mod's Config. Makes ADS and Stance ADS Smoother, Recommended Lowering Y and Z Axis Camera Aim Speed", null, new ConfigurationManagerAttributes { Order = 70 }));
+            RealismAltPistol = Config.Bind<bool>(misc, "Realism Mod Alt Pistol Support", true, new ConfigDescription("Enable If 'Alt Pistol Position' Is Enabled In Realism Mod's Config. Makes ADS Smoother. Disable If Not Using Alt Pistol, Otherwise You Can't ADS", null, new ConfigurationManagerAttributes { Order = 80 }));
+            RealismAltRifle = Config.Bind<bool>(misc, "Realism Mod Alt Rifle Support (WIP)", false, new ConfigDescription("Enable If 'Alt Rfile Position' Is Enabled In Realism Mod's Config. Makes ADS and Stance ADS Smoother, Recommended Lowering Y and Z Axis Camera Aim Speed", null, new ConfigurationManagerAttributes { Order = 70 }));
             SamSwatVudu = Config.Bind<bool>(misc, "SamSwat Vudu Compatibility", false, new ConfigDescription("Makes Variable Zoom Work With SamSwat's Vudu For True Variable Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
-            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
+            ToggleMagOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            AllowToggleMag = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
             AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 30 }));
             HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
             EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));

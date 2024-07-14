@@ -43,7 +43,7 @@ namespace FOVFix
         [PatchPrefix]
         private static bool PatchPrefix(InputClass __instance, ECommand command)
         {
-            if (Plugin.AllowToggleZoom.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.FovController.IsFixedMag && Plugin.FovController.IsOptic && (!Plugin.FovController.CanToggle || Plugin.FovController.CanToggleButNotFixed) && (Plugin.FovController.IsAiming || Plugin.ToggleZoomOutsideADS.Value))
+            if (Plugin.AllowToggleMag.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.FovController.IsFixedMag && Plugin.FovController.IsOptic && (!Plugin.FovController.CanToggle || Plugin.FovController.CanToggleButNotFixed) && (Plugin.FovController.IsAiming || Plugin.ToggleMagOutsideADS.Value))
             {
                 Plugin.FovController.ToggledMagnification = !Plugin.FovController.ToggledMagnification;
                 float zoom = 
@@ -607,14 +607,14 @@ namespace FOVFix
                 
                 if (____aimSwayStrength > 0f)
                 {
-                    float blendValue = ____aimSwayBlender.Value;
+                    float blendValue = ____aimSwayBlender.Value; 
                     if (__instance.IsAiming && blendValue > 0f)
                     {
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
                 }
 
-                if (Plugin.RealismIsPresent && Plugin.IsPistol) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                if (Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealismAltPistol.Value) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
                 else if (Plugin.RealismIsPresent && Plugin.RealismAltRifle.Value) 
                 {
        /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
