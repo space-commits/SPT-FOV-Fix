@@ -615,7 +615,12 @@ namespace FOVFix
                 }
 
                 if (Plugin.RealismIsPresent && Plugin.IsPistol) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-                else if (Plugin.RealismIsPresent && Plugin.RealismAltRifle.Value) _yPos = Mathf.Max(newLocalPosition.y, -0.015f);
+                else if (Plugin.RealismIsPresent && Plugin.RealismAltRifle.Value) 
+                {
+       /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
+                    float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 
+                    _yPos = target;
+                }
                 else _yPos = newLocalPosition.y;
 
                 __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, _yPos, newLocalPosition.z);
@@ -627,9 +632,6 @@ namespace FOVFix
                 //hud fov
                 __instance.HandsContainer.CameraOffset = new Vector3(0.04f, 0.04f, Plugin.HudFOV.Value);
 
-/*                Logger.LogWarning("x " + __instance.HandsContainer.CameraTransform.localPosition.x);
-                Logger.LogWarning("y " + __instance.HandsContainer.CameraTransform.localPosition.y);
-                Logger.LogWarning("z " + __instance.HandsContainer.CameraTransform.localPosition.z);*/
                 return false;
             }
             return true;
