@@ -583,18 +583,28 @@ namespace FOVFix
             Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
-                float Single_1 = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
-                float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && Plugin.IsPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+                float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
-                Vector2 a = new Vector2(localPosition.x, localPosition.y);
-                Vector2 b = new Vector2(____vCameraTarget.x, ____vCameraTarget.y);
-                float aimFactor = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) : Plugin.UnAimSpeed.Value; 
-                Vector2 targetPosition = Vector2.Lerp(a, b, dt * aimFactor);
-                float zPos = localPosition.z;
+                float localX = localPosition.x;
+                float localY = localPosition.y;
+                float localZ = localPosition.z;
+
+                float camX = ____vCameraTarget.x;
+                float camY = ____vCameraTarget.y;
+                float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && Plugin.IsPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+
                 float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
-                float yPos = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) : Plugin.UnAimSpeedY.Value; 
-                zPos = Mathf.Lerp(zPos, camZ, smoothTime * yPos);
-                Vector3 newLocalPosition = new Vector3(targetPosition.x, targetPosition.y, zPos) + __instance.HandsContainer.CameraPosition.GetRelative();
+
+                float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedX.Value : Plugin.UnAimSpeedX.Value;
+                float aimFactorY = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedY.Value : Plugin.UnAimSpeedY.Value;
+                float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * Plugin.AimSpeedZ.Value : Plugin.UnAimSpeedZ.Value;
+
+                float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX);
+                float targetY = Mathf.Lerp(localY, camY, smoothTime * aimFactorY);
+                float targetZ = Mathf.Lerp(localZ, camZ, smoothTime * aimFactorZ);
+
+                Vector3 newLocalPosition = new Vector3(targetX, targetY, targetZ) + __instance.HandsContainer.CameraPosition.GetRelative();
+                
                 if (____aimSwayStrength > 0f)
                 {
                     float blendValue = ____aimSwayBlender.Value;
@@ -604,13 +614,13 @@ namespace FOVFix
                     }
                 }
 
-                if (Plugin.RealismIsPresent && Plugin.IsPistol) yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-        /*        else if(Plugin.RealismIsPresent) yPos = Mathf.Max(newLocalPosition.y, Plugin.test1.Value);*/
-                else yPos = newLocalPosition.y;
+                if (Plugin.RealismIsPresent && Plugin.IsPistol) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                else if (Plugin.RealismIsPresent && Plugin.RealismAltRifle.Value) _yPos = Mathf.Max(newLocalPosition.y, -0.015f);
+                else _yPos = newLocalPosition.y;
 
-                __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, yPos, newLocalPosition.z);
+                __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, _yPos, newLocalPosition.z);
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
-                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, Single_1 * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
+                __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, headBob * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
                 __instance.method_19(dt);
                 __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
 
