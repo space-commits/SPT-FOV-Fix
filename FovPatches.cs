@@ -454,109 +454,16 @@ namespace FOVFix
 
     public class FreeLookPatch : ModulePatch
     {
-        private static FieldInfo resetLookField;
-        private static FieldInfo mouseLookControlField;
-        private static FieldInfo isResettingLookField;
-        private static FieldInfo setResetedLookNextFrameField;
-        private static FieldInfo isLookingField;
-        private static FieldInfo horizontalField;
-        private static FieldInfo verticalField;
-
         protected override MethodBase GetTargetMethod()
         {
-            resetLookField = AccessTools.Field(typeof(Player), "_resetLook");
-            mouseLookControlField = AccessTools.Field(typeof(Player), "_mouseLookControl");
-            isResettingLookField = AccessTools.Field(typeof(Player), "_isResettingLook");
-            setResetedLookNextFrameField = AccessTools.Field(typeof(Player), "_setResetedLookNextFrame");
-            isLookingField = AccessTools.Field(typeof(Player), "_isLooking");
-            horizontalField = AccessTools.Field(typeof(Player), "_horizontal");
-            verticalField = AccessTools.Field(typeof(Player), "_vertical");
-
             return typeof(Player).GetMethod("Look", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPrefix]
-        private static bool Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
+        private static void Prefix(Player __instance, float deltaLookY, float deltaLookX, bool withReturn = true)
         {
-            Player.FirearmController fc = __instance.HandsController as Player.FirearmController;
-            if (fc == null || !__instance.IsYourPlayer) return true;
-
-            bool _resetLook = (bool)resetLookField.GetValue(__instance);
-            bool mouseLookControl = (bool)mouseLookControlField.GetValue(__instance);
-            bool isResettingLook = (bool)isResettingLookField.GetValue(__instance);
-            bool _setResetedLookNextFrame = (bool)setResetedLookNextFrameField.GetValue(__instance);
-            bool isLooking = (bool)isLookingField.GetValue(__instance);
-
-            float _horizontal = (float)horizontalField.GetValue(__instance);
-            float _vertical = (float)verticalField.GetValue(__instance);
-
-            bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
-            EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 horizontalLimit = new Vector2(-50f, 50f);
-            Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
-            if (isAiming)
-            {
-                horizontalLimit *= instance.MOUSE_LOOK_LIMIT_IN_AIMING_COEF;
-            }
-            Vector3 eulerAngles = __instance.ProceduralWeaponAnimation.HandsContainer.CameraTransform.eulerAngles;
-            if (eulerAngles.x >= 50f && eulerAngles.x <= 90f && __instance.MovementContext.IsSprintEnabled)
-            {
-                mouse_LOOK_VERTICAL_LIMIT.y = 0f;
-            }
-            horizontalField.SetValue(__instance, Mathf.Clamp(_horizontal - deltaLookY, horizontalLimit.x, horizontalLimit.y));
-            verticalField.SetValue(__instance, Mathf.Clamp(_vertical + deltaLookX, mouse_LOOK_VERTICAL_LIMIT.x, mouse_LOOK_VERTICAL_LIMIT.y));
-            float x2 = (_vertical > 0f) ? (_vertical * (1f - _horizontal / horizontalLimit.y * (_horizontal / horizontalLimit.y))) : _vertical;
-            if (_setResetedLookNextFrame)
-            {
-                isResettingLookField.SetValue(__instance, false);
-                setResetedLookNextFrameField.SetValue(__instance, false);
-            }
-            if (_resetLook)
-            {
-                mouseLookControlField.SetValue(__instance, false);
-                resetLookField.SetValue(__instance, false);
-                isResettingLookField.SetValue(__instance, true);
-                deltaLookY = 0f;
-                deltaLookX = 0f;
-            }
-            if (Math.Abs(deltaLookY) >= 1E-45f && Math.Abs(deltaLookX) >= 1E-45f)
-            {
-                mouseLookControlField.SetValue(__instance, true);
-            }
-            if (!mouseLookControl && withReturn)
-            {
-                if (Mathf.Abs(_horizontal) > 0.01f)
-                {
-                    horizontalField.SetValue(__instance, Mathf.Lerp(_horizontal, 0f, Time.deltaTime * 15f));
-                }
-                else
-                {
-                    horizontalField.SetValue(__instance, 0f);
-                }
-                if (Mathf.Abs(_vertical) > 0.01f)
-                {
-                    verticalField.SetValue(__instance, Mathf.Lerp(_vertical, 0f, Time.deltaTime * 15f));
-                }
-                else
-                {
-                    verticalField.SetValue(__instance, 0f);
-                }
-            }
-            if (!isResettingLook && _horizontal != 0f && _vertical != 0f)
-            {
-                isLookingField.SetValue(__instance, true);
-            }
-            else
-            {
-                isLookingField.SetValue(__instance, false);
-            }
-            if (_horizontal == 0f && _vertical == 0f)
-            {
-                setResetedLookNextFrameField.SetValue(__instance, true);
-            }
-            __instance.HeadRotation = new Vector3(x2, _horizontal, 0f);
-            __instance.ProceduralWeaponAnimation.SetHeadRotation(__instance.HeadRotation);
-            return false;
+            //credit to CJ for making me realize I didn't have to write this giant ass patch like an idiot        
+            EFTHardSettings.Instance.MOUSE_LOOK_HORIZONTAL_LIMIT = new Vector2(-50f, 50f); 
         }
     }
 
