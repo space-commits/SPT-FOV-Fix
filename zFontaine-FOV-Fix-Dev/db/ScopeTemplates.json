@@ -439,6 +439,69 @@
         "MaxZoom": 6,
         "IsFixed": false,
         "CanToggle": false,
+        "Weight": 0.626
+    },
+    "01010_RAZOR": {
+        "ItemID": "01010_RAZOR",
+        "Name": "scope_30mm_razor_hd_gen_2_1_6x24",
+        "MinZoom": 2,
+        "MaxZoom": 6,
+        "IsFixed": false,
+        "CanToggle": false,
+        "Unfuck": true
+    },
+    "CCG_SCOPE_TANGO": {
+        "ItemID": "CCG_SCOPE_TANGO",
+        "Name": "CCG_SCOPE_TANGO",
+        "MinZoom": 2,
+        "MaxZoom": 6,
+        "IsFixed": false,
+        "CanToggle": false,
+        "Unfuck": true
+    },
+    "t1_hhsscope": {
+        "ItemID": "t1_hhsscope",
+        "Name": "scope_all_eotech_hhs_1",
+        "MinZoom": 3,
+        "MaxZoom": 3,
+        "IsFixed": true,
+        "CanToggle": true,
+        "Unfuck": false
+    },
+    "0afaf0c97b1d068d242df1dc": {
+        "ItemID": "0afaf0c97b1d068d242df1dc",
+        "Name": "nf4-16f1",
+        "MinZoom": 4,
+        "MaxZoom": 16,
+        "IsFixed": false,
+        "CanToggle": true,
+        "Unfuck": false
+    },
+    "797e1ab4422217d7cfe3d299": {
+        "ItemID": "797e1ab4422217d7cfe3d299",
+        "Name": "elcan_1_5-6",
+        "MinZoom": 1.5,
+        "MaxZoom": 6,
+        "IsFixed": true,
+        "CanToggle": true,
+        "Unfuck": false
+    },
+    "c5042b1c75088ddfc6c196f4": {
+        "ItemID": "c5042b1c75088ddfc6c196f4",
+        "Name": "vortex_golden_eagle",
+        "MinZoom": 10,
+        "MaxZoom": 60,
+        "IsFixed": false,
+        "CanToggle": true,
+        "Unfuck": false
+    },
+    "750bcfb1b1f84f27a8f4f282": {
+        "ItemID": "750bcfb1b1f84f27a8f4f282",
+        "Name": "atacr_f1_1-8",
+        "MinZoom": 1.5,
+        "MaxZoom": 8,
+        "IsFixed": false,
+        "CanToggle": true,
         "Unfuck": false
     }
 }
