@@ -2,7 +2,7 @@ import { DependencyContainer } from "tsyringe";
 import { ILogger } from "@spt-aki/models/spt/utils/ILogger";
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer";
 import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod";
-import { PreAkiModLoader } from "@spt-aki/loaders/PreAkiModLoader";
+import { PreSptModLoader } from "@spt-aki/loaders/PreSptModLoader";
 
 const scopeTemplates = require("../db/ScopeTemplates.json");
 const config = require("../config/config.json");
@@ -16,11 +16,11 @@ class Mod implements IPostDBLoadMod {
         const tables = container.resolve<DatabaseServer>("DatabaseServer").getTables();
         const itemDB = tables.templates.items;
 
-        const preAkiModLoader = container.resolve<PreAkiModLoader>("PreAkiModLoader");
-        const activeMods = preAkiModLoader.getImportedModDetails();
-        var geffModPresent = false;
+        const preSptModLoader = container.resolve<PreSptModLoader>("PreSptModLoader");
+        const activeMods = preSptModLoader.getImportedModDetails();
+        let geffModPresent = false;
         for (const modname in activeMods) {
-            if (modname.includes("ACOG4Life-OpticRework")) {
+            if (modname.includes("ACOG4Life")) {
                 geffModPresent = true;
             }
         }
@@ -31,7 +31,6 @@ class Mod implements IPostDBLoadMod {
                 for (let j in scopeTemplates) {
                     let fileItem = scopeTemplates[j];
                     if (fileItem.ItemID === serverItem._id) {
-
                         if (serverItem._id === "6478641c19d732620e045e17" || serverItem._id === "63fc44e2429a8a166c7f61e6") {
                             // if (config.thermal_bundles_mod_compatibility == true) {
                             //     fileItem.IsFixed = false;
@@ -47,7 +46,7 @@ class Mod implements IPostDBLoadMod {
                             //         serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MinZoom, fileItem.MaxZoom, fileItem.MaxZoom]];
                             //     }
                             // }
-                            if(serverItem._id === "6478641c19d732620e045e17"){
+                            if (serverItem._id === "6478641c19d732620e045e17") {
                                 fileItem.IsFixed = true;
                                 serverItem._props.Zooms = [[fileItem.MinZoom, fileItem.MaxZoom, fileItem.MinZoom, fileItem.MaxZoom]];
                             }

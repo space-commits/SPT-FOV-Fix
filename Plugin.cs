@@ -1,22 +1,26 @@
 ﻿using BepInEx;
+using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using UnityEngine;
 
 namespace FOVFix
 {
-    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, pluginVersion)]
+    [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string pluginVersion = "2.1.0";
+        private const string _pluginVersion = "2.1.0";
+        private bool _detectedMods = false;
+        public static bool RealismIsPresent = false;
+        public static bool IsPistol = false;
 
         public static ConfigEntry<bool> TrueOneX { get; set; }
         public static ConfigEntry<float> GlobalOpticFOVMulti { get; set; }
         public static ConfigEntry<float> RangeFinderFOV { get; set; }
         public static ConfigEntry<bool> AllowReticleToggle { get; set; }
-        public static ConfigEntry<bool> AllowToggleZoom { get; set; }
+        public static ConfigEntry<bool> AllowToggleMag { get; set; }
         public static ConfigEntry<bool> ToggleZoomOnHoldBreath { get; set; }
-        public static ConfigEntry<bool> ToggleZoomOutsideADS { get; set; }
+        public static ConfigEntry<bool> ToggleMagOutsideADS { get; set; }
 
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
@@ -36,8 +40,13 @@ namespace FOVFix
         public static ConfigEntry<float> HighADSMulti { get; set; }
         public static ConfigEntry<float> RangeFinderADSMulti { get; set; }
 
-        public static ConfigEntry<float> UnAimSpeed { get; set; }
+        public static ConfigEntry<float> AimSpeedX { get; set; }
+        public static ConfigEntry<float> UnAimSpeedX { get; set; }
+        public static ConfigEntry<float> AimSpeedY { get; set; }
         public static ConfigEntry<float> UnAimSpeedY { get; set; }
+        public static ConfigEntry<float> AimSpeedZ { get; set; }
+        public static ConfigEntry<float> UnAimSpeedZ { get; set; }
+
         public static ConfigEntry<float> CameraAimSpeed { get; set; }
         public static ConfigEntry<float> PistolAimSpeed { get; set; }
         public static ConfigEntry<float> OpticAimSpeed { get; set; }
@@ -51,6 +60,8 @@ namespace FOVFix
         public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomMulti { get; set; }
         public static ConfigEntry<bool> SamSwatVudu { get; set; }
+        public static ConfigEntry<bool> RealismAltRifle { get; set; }
+        public static ConfigEntry<bool> RealismAltPistol { get; set; }
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
@@ -91,7 +102,7 @@ namespace FOVFix
         public static ConfigEntry<float> test3 { get; set; }
         public static ConfigEntry<float> test4 { get; set; }
 
-        public static FovController FovController { get; set; } 
+        public static FovController FovController { get; set; }
 
         private void Awake()
         {
@@ -137,12 +148,12 @@ namespace FOVFix
             RangeFinderADSMulti = Config.Bind<float>(adsFOV, "Range Finder ADS FOV Multi", 1f, new ConfigDescription("Multiplier For The FOV Change When ADSing. Lower Multi = Lower FOV So More Zoom.", new AcceptableValueRange<float>(0.4f, 1.3f), new ConfigurationManagerAttributes { Order = 1 }));
 
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
-            NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
-            PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
+            NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
+            PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
 
             ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", false, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
-            ToggleZoomOnHoldBreath = Config.Bind<bool>(toggleZoom, "Enable Toggle Zoom On Hold-Breath", true, new ConfigDescription("Toggle Zoom Will Activated When Holding Breath Only.", null, new ConfigurationManagerAttributes { Order = 30 }));
+            HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", true, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            ToggleZoomOnHoldBreath = Config.Bind<bool>(toggleZoom, "Enable Toggle Zoom On Hold-Breath", false, new ConfigDescription("Toggle Zoom Will Activated When Holding Breath Only.", null, new ConfigurationManagerAttributes { Order = 30 }));
             OpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
             UnaimedToggleZoomMulti = Config.Bind<float>(toggleZoom, "Un-Aimed Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 9 }));
@@ -165,19 +176,26 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
+            RealismAltPistol = Config.Bind<bool>(misc, "Realism Mod Alt Pistol Support", true, new ConfigDescription("Enable If 'Alt Pistol Position' Is Enabled In Realism Mod's Config. Makes ADS Smoother. Disable If Not Using Alt Pistol, Otherwise You Can't ADS", null, new ConfigurationManagerAttributes { Order = 80 }));
+            RealismAltRifle = Config.Bind<bool>(misc, "Realism Mod Alt Rifle Support (WIP)", false, new ConfigDescription("Enable If 'Alt Rfile Position' Is Enabled In Realism Mod's Config. Makes ADS and Stance ADS Smoother, Recommended Lowering Y and Z Axis Camera Aim Speed", null, new ConfigurationManagerAttributes { Order = 70 }));
             SamSwatVudu = Config.Bind<bool>(misc, "SamSwat Vudu Compatibility", false, new ConfigDescription("Makes Variable Zoom Work With SamSwat's Vudu For True Variable Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            ToggleZoomOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
-            AllowToggleZoom = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
+            ToggleMagOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            AllowToggleMag = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
             AllowReticleToggle = Config.Bind<bool>(misc, "Force Use Zoomed Reticle", false, new ConfigDescription("Variable Optics Will Use The Largest Reticle By Default", null, new ConfigurationManagerAttributes { Order = 30 }));
             HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
             EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 1, IsAdvanced = true }));
 
-            CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Camera Aim Speed", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
-            PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
-            OpticAimSpeed = Config.Bind<float>(cameraSpeed, "Optic Camera Aim Speed", 4.5f, new ConfigDescription("The Speed Of ADS Camera Transitions. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
-            UnAimSpeed = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 10 }));
-            UnAimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 1 }));
+            CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
+            OpticAimSpeed = Config.Bind<float>(cameraSpeed, "Optic Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifels With Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
+
+            AimSpeedX = Config.Bind<float>(cameraSpeed, "Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            UnAimSpeedX = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed X-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            AimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            UnAimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Y-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            AimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Aim Speed Z-Axis", 3f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            UnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Z-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
 
             GlobalOpticFOVMulti = Config.Bind<float>(scopeFOV, "Global Optic Magnificaiton Multi (Deprecated)", 0.75f, new ConfigDescription("Only Used If Variable Zoom Is Disabled. Increases/Decreases The FOV/Magnification Within Optics. Lower Multi = Lower FOV So More Zoom. Requires Restart Or Going Into A New Raid To Update Magnification. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", new AcceptableValueRange<float>(0.01f, 1.25f), new ConfigurationManagerAttributes { Order = 3 }));
             TrueOneX = Config.Bind<bool>(scopeFOV, "True 1x Magnification (Deprecated)", true, new ConfigDescription("Only Used If Variable Zoom Is Disabled. 1x Scopes Will Override 'Global Optic Magnificaiton Multi' And Stay At A True 1x Magnification. Requires Restart Or Going Into A New Raid To Update FOV. If In Hideout, Load Into A Raid But Cancel Out Of Loading Immediately, This Will Update The FOV.", null, new ConfigurationManagerAttributes { Order = 1 }));
@@ -217,8 +235,22 @@ namespace FOVFix
             }
         }
 
+        private void CheckForMods()
+        {
+            if (!_detectedMods && (int)Time.time % 5 == 0)
+            {
+                _detectedMods = true;
+                if (Chainloader.PluginInfos.ContainsKey("RealismMod"))
+                {
+                    Logger.LogWarning("============================= Fov Fix: Realism Mod is loaded =============================== ");
+                    RealismIsPresent = true;
+                }
+            }
+        }
+
         void Update()
         {
+            CheckForMods();
             FovController.ControllerUpdate();
         }
     }
