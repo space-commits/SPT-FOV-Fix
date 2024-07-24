@@ -220,6 +220,7 @@ namespace FOVFix
                 new SetScopeModePatch().Enable();
                 new OperationSetScopeModePatch().Enable();
                 new KeyInputPatch1().Enable();
+                new KeyInputPatch2().Enable();
                 new OpticPanelPatch().Enable();
 
                 if (Plugin.ChangeMouseSens.Value)
