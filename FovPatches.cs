@@ -616,7 +616,7 @@ namespace FOVFix
 
                 float camX = ____vCameraTarget.x;
                 float camY = ____vCameraTarget.y;
-                float leftShoulderModi = __instance.LeftStance ? 0.06f : 0f;
+                float leftShoulderModi = __instance.LeftStance ? Plugin.LeftShoulderOffset.Value : 0f;
                 float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && Plugin.IsPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
 

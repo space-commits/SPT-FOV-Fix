@@ -9,7 +9,7 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "2.1.1";
+        private const string _pluginVersion = "2.1.3";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
         public static bool IsPistol = false;
@@ -25,6 +25,7 @@ namespace FOVFix
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
         public static ConfigEntry<float> PistolOffset { get; set; }
+        public static ConfigEntry<float> LeftShoulderOffset { get; set; }
 
         public static ConfigEntry<float> GlobalADSMulti { get; set; }
         public static ConfigEntry<float> NonOpticFOVMulti { get; set; }
@@ -150,6 +151,7 @@ namespace FOVFix
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
             PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
+            LeftShoulderOffset = Config.Bind<float>(cameraPostiion, "Left Shoulder Offset", 0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic. Set Till Left Shoulder Offset Matches Right Shoulder, Will Depend On Your Set Up. Does Not Apply If Realism Stances Are Enabled.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 4 }));
 
             ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
             HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", true, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
