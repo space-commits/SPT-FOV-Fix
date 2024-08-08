@@ -52,7 +52,7 @@ namespace FOVFix
                     Plugin.FovController.CurrentZoom >= Plugin.FovController.MinZoom && Plugin.FovController.CurrentZoom <= Plugin.FovController.MaxZoom / 2 ? Plugin.FovController.MaxZoom :
                     Plugin.FovController.CurrentZoom <= Plugin.FovController.MaxZoom && Plugin.FovController.CurrentZoom > Plugin.FovController.MaxZoom / 2 ? Plugin.FovController.MinZoom :
                     Plugin.FovController.CurrentZoom;
-                Plugin.FovController.HandleZoomInput(zoom, true);
+                Plugin.FovController.HandleLinearZoomInput(zoom, true);
             }
 
             return true;

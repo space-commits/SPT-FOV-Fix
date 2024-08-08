@@ -67,8 +67,9 @@ namespace FOVFix
         public static ConfigEntry<float> MagPowerFactor { get; set; }
         public static ConfigEntry<bool> EnableVariableZoom { get; set; }
         public static ConfigEntry<bool> UseSmoothZoom { get; set; }
-        public static ConfigEntry<float> ZoomSteps { get; set; }
         public static ConfigEntry<float> SmoothZoomSpeed { get; set; }
+        public static ConfigEntry<bool> UseLinearZoomStepSize { get; set; }
+        public static ConfigEntry<float> ZoomStepSize { get; set; }
         public static ConfigEntry<bool> UseMouseWheel { get; set; }
         public static ConfigEntry<bool> UseMouseWheelPlusKey { get; set; }
 
@@ -124,8 +125,9 @@ namespace FOVFix
             EnableVariableZoom = Config.Bind<bool>(variable, "Enable Variable Zoom", true, new ConfigDescription("Allows Scopes That Should Have Variable Zoom To Have It.", null, new ConfigurationManagerAttributes { Order = 100 }));
             BaseScopeFOV = Config.Bind<float>(variable, "Base Scope FOV", 25f, new ConfigDescription("Set This So That 1x Looks Like 1x, Unless You Want More Zoom. Base FOV Value Which Magnification Modifies (Non-Linearly).", new AcceptableValueRange<float>(1f, 100f), new ConfigurationManagerAttributes { Order = 80 }));
             MagPowerFactor = Config.Bind<float>(variable, "Magnificaiton Power Factor", 1.1f, new ConfigDescription("FOV Is Determined By Base FOV / Magnification Raised To This Power Factor. Changes The Curve With Which Scope FOV Is Calculated. Higher Factor Means Steeper Curve, More Zoom At Higher Magnification", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 70 }));
-            UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Allows Holding The Keybind To Smoothly Zoom In/Out. Not Used By Mouse Wheel Keybind.", null, new ConfigurationManagerAttributes { Order = 60 }));
-            ZoomSteps = Config.Bind<float>(variable, "Magnificaiton Steps", 1.0f, new ConfigDescription("If Not Using Smooth Zoom Or Using Scroll Wheel, By How Much Magnification Changes Per Key Press Or Scroll. 1 = 1x Change Per Press/Scroll.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
+            UseSmoothZoom = Config.Bind<bool>(variable, "Use Smooth Zoom", true, new ConfigDescription("Allows Holding The Keybind To Smoothly Zoom In/Out. Not Used By Mouse Wheel Keybind.", null, new ConfigurationManagerAttributes { Order = 65 }));
+            UseLinearZoomStepSize = Config.Bind<bool>(variable, "Use Linear Zoom Step Size", true, new ConfigDescription("Use Linear Or Non-Linear Distributed Zoom Step Sizes. (Non-Linear Feels More Natural: Smaller Zoom Steps At Low Zoom-Range - Bigger Zoom Steps At High Zoom-Range)", null, new ConfigurationManagerAttributes { Order = 60 }));
+            ZoomStepSize = Config.Bind<float>(variable, "Magnification Stepsize", 1f, new ConfigDescription("If Not Using Smooth Zoom, By How Much Magnification Changes Per Key Press. 1 = 1x Change Per Press. When Using Non-Linear Zoom Step Size The Same Number Of Zoom Steps According To Chosen Step Size Will Be Distributed Non-Linearly.", new AcceptableValueRange<float>(0.01f, 5f), new ConfigurationManagerAttributes { Order = 50 }));
             SmoothZoomSpeed = Config.Bind<float>(variable, "Smooth Zoom Speed", 0.1f, new ConfigDescription("If Using Smooth Zoom, Determines How Fast The Zoom Is. Lower = Slower. Not Used By Mouse Wheel Keybind.", new AcceptableValueRange<float>(0.01f, 2f), new ConfigurationManagerAttributes { Order = 40 }));
             UseMouseWheel = Config.Bind<bool>(variable, "Use Mouse Wheel", true, new ConfigDescription("Mouse Scroll Changes Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 30 }));
             UseMouseWheelPlusKey = Config.Bind<bool>(variable, "Need To Hold Key With Mouse Wheel", true, new ConfigDescription("Required To Hold The Mousewheel Keybind + Scroll To Zoom. Must Change The Movement Speed Keybind.", null, new ConfigurationManagerAttributes { Order = 20 }));

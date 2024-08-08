@@ -32,6 +32,8 @@ namespace FOVFix
         public float MinZoom = 1f;
         public float MaxZoom = 1f;
         public float CurrentZoom = 1f;
+        public float CurrentZoomStep = 1f;
+        public bool UseLinearZoomStepSizeBefore = Plugin.UseLinearZoomStepSize.Value;
 
         public string CurrentWeapInstanceID = "";
         public string CurrentScopeInstanceID = "";
@@ -73,8 +75,13 @@ namespace FOVFix
             }
         }
 
-        public void HandleZoomInput(float zoomIncrement, bool toggleZoom = false)
+        public void HandleLinearZoomInput(float zoomIncrement, bool toggleZoom = false)
         {
+            if (!UseLinearZoomStepSizeBefore)
+            {
+                UseLinearZoomStepSizeBefore = true;
+                CurrentZoom = ((float)Math.Round((decimal)CurrentZoom * 1000, (int)(Plugin.ZoomStepSize.Value * 1000))) / 1000 * Plugin.ZoomStepSize.Value;
+            }
             float zoomBefore = CurrentZoom;
             CurrentZoom =
                 !toggleZoom ? Mathf.Clamp(CurrentZoom + zoomIncrement, MinZoom, MaxZoom) :
@@ -82,6 +89,28 @@ namespace FOVFix
             UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
             ZoomScope(CurrentZoom);
             if (zoomBefore != CurrentZoom)
+            {
+                DidToggleForFirstPlane = true;
+            }
+        }
+
+        public void HandleNonLinearZoomInput(float zoomStep, bool toggleZoom = false)
+        {
+            float MaxZoomStepCount = (float)Math.Round((double)( (MaxZoom - MinZoom) * 0.2 + 4 )); // Calculated Values to achieve: Specter 1x/4x - 5Steps; Razor/Vudu 1x/6x - 5Steps; Schm.&Be.1x/8x - 5Steps; Schm.&Be.3x/12x - 6Steps; Schm.&Be.5x/25x - 8Steps; ATACR 7x/35x - 10Steps... => Also thought about (chooseable) fixed Stepnumber, but doesn't make sense for such big Ranges from 1x/4x to 7x/35x
+            if (UseLinearZoomStepSizeBefore) // Only for conversion from CurrentZoom to CurrentZoomStep (non-linear), when switching from linear to non-linear - it usually occurs super rarely
+            {
+                UseLinearZoomStepSizeBefore = false;
+                CurrentZoomStep = MaxZoomStepCount * Mathf.Log(CurrentZoom - MinZoom + 1) / Mathf.Log(MaxZoom - MinZoom + 1);
+            }
+            float zoomStepBefore = CurrentZoomStep;
+            float zoomBefore = CurrentZoom;
+            CurrentZoomStep =
+                !toggleZoom ? Mathf.Clamp(CurrentZoomStep + zoomStep, 0, MaxZoomStepCount) :
+                zoomStep;
+            CurrentZoom = Mathf.Pow(MaxZoom - MinZoom + 1, CurrentZoomStep / MaxZoomStepCount) + MinZoom - 1;
+            UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
+            ZoomScope(CurrentZoom);
+            if (zoomStepBefore != CurrentZoomStep)
             {
                 DidToggleForFirstPlane = true;
             }
@@ -169,32 +198,57 @@ namespace FOVFix
                     {
                         if (Input.GetKey(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
+                            HandleLinearZoomInput(-Plugin.SmoothZoomSpeed.Value);
                         }
                         if (Input.GetKey(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
+                            HandleLinearZoomInput(Plugin.SmoothZoomSpeed.Value);
                         }
                     }
                     else
                     {
-                        if (Input.GetKeyDown(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
+                        if (Plugin.UseLinearZoomStepSize.Value)
                         {
-                            HandleZoomInput(-Plugin.ZoomSteps.Value);
+                            if (Input.GetKeyDown(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
+                            {
+                                HandleLinearZoomInput(-Plugin.ZoomStepSize.Value);
+                            }
+                            if (Input.GetKeyDown(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
+                            {
+                                HandleLinearZoomInput(Plugin.ZoomStepSize.Value);
+                            }
                         }
-                        if (Input.GetKeyDown(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
+                        else
                         {
-                            HandleZoomInput(Plugin.ZoomSteps.Value);
+                            if (Input.GetKeyDown(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
+                            {
+                                HandleNonLinearZoomInput(-1);
+                            }
+                            if (Input.GetKeyDown(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
+                            {
+                                HandleNonLinearZoomInput(1);
+                            }
                         }
                     }
                     if (Plugin.UseMouseWheel.Value)
                     {
                         if ((Input.GetKey(Plugin.MouseWheelBind.Value.MainKey) && Plugin.UseMouseWheelPlusKey.Value) || (!Plugin.UseMouseWheelPlusKey.Value && !Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftAlt) && !Input.GetKey(KeyCode.R) && !Input.GetKey(KeyCode.C)))
                         {
-                            float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomSteps.Value;
-                            if (scrollDelta != 0f)
+                            if (Plugin.UseLinearZoomStepSize.Value)
                             {
-                                HandleZoomInput(scrollDelta);
+                                float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomStepSize.Value;
+                                if (scrollDelta != 0f)
+                                {
+                                    HandleLinearZoomInput(scrollDelta);
+                                }
+                            }
+                            else
+                            {
+                                float scrollDelta = Input.mouseScrollDelta.y;
+                                if (scrollDelta != 0f) // can this HERE even occur with the mousewheel not multiplied Plugin.ZoomStepSize.Value? (since the Key-Event probaby should only be triggered if Input.mouseScrollDelta.y != 0) Else the if-loop could be removed
+                                {
+                                    HandleNonLinearZoomInput(scrollDelta);
+                                }
                             }
                         }
                     }
