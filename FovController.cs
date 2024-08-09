@@ -169,22 +169,22 @@ namespace FOVFix
                     {
                         if (Input.GetKey(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
+                            HandleZoomInput(-Plugin.SmoothZoomSpeed.Value * CurrentZoom);
                         }
                         if (Input.GetKey(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
+                            HandleZoomInput(Plugin.SmoothZoomSpeed.Value * CurrentZoom);
                         }
                     }
                     else
                     {
                         if (Input.GetKeyDown(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(-Plugin.ZoomSteps.Value);
+                            HandleZoomInput(-Plugin.ZoomSteps.Value * CurrentZoom);
                         }
                         if (Input.GetKeyDown(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(Plugin.ZoomSteps.Value);
+                            HandleZoomInput(Plugin.ZoomSteps.Value * CurrentZoom);
                         }
                     }
                     if (Plugin.UseMouseWheel.Value)
@@ -194,7 +194,7 @@ namespace FOVFix
                             float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomSteps.Value;
                             if (scrollDelta != 0f)
                             {
-                                HandleZoomInput(scrollDelta);
+                                HandleZoomInput(scrollDelta * CurrentZoom);
                             }
                         }
                     }
