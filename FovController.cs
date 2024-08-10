@@ -76,10 +76,19 @@ namespace FOVFix
         public void HandleZoomInput(float zoomIncrement, bool toggleZoom = false)
         {
             float zoomBefore = CurrentZoom;
-            CurrentZoom =
-                !toggleZoom ? Mathf.Clamp(CurrentZoom + zoomIncrement, MinZoom, MaxZoom) :
-                zoomIncrement;
-            UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
+            if (zoomIncrement > 0)
+            {
+                CurrentZoom =
+                    !toggleZoom ? Mathf.Clamp(CurrentZoom * zoomIncrement, MinZoom, MaxZoom) :
+                    zoomIncrement;
+            }
+            else if (zoomIncrement < 0)
+            {
+                CurrentZoom =
+                    !toggleZoom ? Mathf.Clamp(CurrentZoom / -zoomIncrement, MinZoom, MaxZoom) :
+                    zoomIncrement;
+            }
+                UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
             ZoomScope(CurrentZoom);
             if (zoomBefore != CurrentZoom)
             {
@@ -169,22 +178,22 @@ namespace FOVFix
                     {
                         if (Input.GetKey(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(-Plugin.SmoothZoomSpeed.Value * CurrentZoom);
+                            HandleZoomInput(-Plugin.SmoothZoomSpeed.Value);
                         }
                         if (Input.GetKey(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(Plugin.SmoothZoomSpeed.Value * CurrentZoom);
+                            HandleZoomInput(Plugin.SmoothZoomSpeed.Value);
                         }
                     }
                     else
                     {
                         if (Input.GetKeyDown(Plugin.VariableZoomOut.Value.MainKey) && Plugin.VariableZoomOut.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(-Plugin.ZoomSteps.Value * CurrentZoom);
+                            HandleZoomInput(-Plugin.ZoomSteps.Value);
                         }
                         if (Input.GetKeyDown(Plugin.VariableZoomIn.Value.MainKey) && Plugin.VariableZoomIn.Value.Modifiers.All(Input.GetKey))
                         {
-                            HandleZoomInput(Plugin.ZoomSteps.Value * CurrentZoom);
+                            HandleZoomInput(Plugin.ZoomSteps.Value);
                         }
                     }
                     if (Plugin.UseMouseWheel.Value)
@@ -194,7 +203,7 @@ namespace FOVFix
                             float scrollDelta = Input.mouseScrollDelta.y * Plugin.ZoomSteps.Value;
                             if (scrollDelta != 0f)
                             {
-                                HandleZoomInput(scrollDelta * CurrentZoom);
+                                HandleZoomInput(scrollDelta);
                             }
                         }
                     }
