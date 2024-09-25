@@ -642,7 +642,7 @@ namespace FOVFix
                     }
                 }
 
-                if (Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                if (Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
                 else if (Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
                 {
        /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
