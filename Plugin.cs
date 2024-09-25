@@ -3,13 +3,16 @@ using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using UnityEngine;
+using System;
+using System.Reflection;
+using RealismMod;
 
 namespace FOVFix
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "2.1.1";
+        private const string _pluginVersion = "2.1.3";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
         public static bool IsPistol = false;
@@ -25,6 +28,7 @@ namespace FOVFix
         public static ConfigEntry<float> OpticPosOffset { get; set; }
         public static ConfigEntry<float> NonOpticOffset { get; set; }
         public static ConfigEntry<float> PistolOffset { get; set; }
+        public static ConfigEntry<float> LeftShoulderOffset { get; set; }
 
         public static ConfigEntry<float> GlobalADSMulti { get; set; }
         public static ConfigEntry<float> NonOpticFOVMulti { get; set; }
@@ -60,8 +64,6 @@ namespace FOVFix
         public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomMulti { get; set; }
         public static ConfigEntry<bool> SamSwatVudu { get; set; }
-        public static ConfigEntry<bool> RealismAltRifle { get; set; }
-        public static ConfigEntry<bool> RealismAltPistol { get; set; }
 
         public static ConfigEntry<float> BaseScopeFOV { get; set; }
         public static ConfigEntry<float> MagPowerFactor { get; set; }
@@ -103,6 +105,7 @@ namespace FOVFix
         public static ConfigEntry<float> test4 { get; set; }
 
         public static FovController FovController { get; set; }
+        public static RealismCompat RealCompat { get; set; } 
 
         private void Awake()
         {
@@ -149,7 +152,8 @@ namespace FOVFix
 
             OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", 0.0f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 2 }));
-            PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.02f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
+            PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0.01f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 3 }));
+            LeftShoulderOffset = Config.Bind<float>(cameraPostiion, "Left Shoulder Offset", 0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic. Set Till Left Shoulder Offset Matches Right Shoulder, Will Depend On Your Set Up. Does Not Apply If Realism Stances Are Enabled.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 4 }));
 
             ZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
             HoldZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", true, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
@@ -176,8 +180,6 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            RealismAltPistol = Config.Bind<bool>(misc, "Realism Mod Alt Pistol Support", true, new ConfigDescription("Enable If 'Alt Pistol Position' Is Enabled In Realism Mod's Config. Makes ADS Smoother. Disable If Not Using Alt Pistol, Otherwise You Can't ADS", null, new ConfigurationManagerAttributes { Order = 80 }));
-            RealismAltRifle = Config.Bind<bool>(misc, "Realism Mod Alt Rifle Support (WIP)", false, new ConfigDescription("Enable If 'Alt Rfile Position' Is Enabled In Realism Mod's Config. Makes ADS and Stance ADS Smoother, Recommended Lowering Y and Z Axis Camera Aim Speed", null, new ConfigurationManagerAttributes { Order = 70 }));
             SamSwatVudu = Config.Bind<bool>(misc, "SamSwat Vudu Compatibility", false, new ConfigDescription("Makes Variable Zoom Work With SamSwat's Vudu For True Variable Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
             ToggleMagOutsideADS = Config.Bind<bool>(misc, "Allow Toggle Scope Magnifcation While Not Aiming", false, new ConfigDescription("Allows Using The Change Magnification Keybind While Not Aiming.", null, new ConfigurationManagerAttributes { Order = 50 }));
             AllowToggleMag = Config.Bind<bool>(misc, "Enable Magnifcation Toggle With Variable Optics", true, new ConfigDescription("Using The Change Magnification Keybind Changes The Magnification Of Variable Optics To Min Or Max Zoom.", null, new ConfigurationManagerAttributes { Order = 40 }));
@@ -245,12 +247,33 @@ namespace FOVFix
                 {
                     Logger.LogWarning("============================= Fov Fix: Realism Mod is loaded =============================== ");
                     RealismIsPresent = true;
+                    Plugin.RealCompat = new RealismCompat();
+
+                    /*
+                                        var pluginInfo = BepInEx.Bootstrap.Chainloader.PluginInfos["Realism"];
+                                        var realismAssembly = pluginInfo.Instance.GetType().Assembly;
+                                        Type staticClassType = realismAssembly.GetType("RealismMod.WeaponStats");
+                                        if (staticClassType != null)
+                                        {
+
+                                            FieldInfo shoulderContactField = staticClassType.GetField("HasShoulderContact", BindingFlags.Public | BindingFlags.Static);
+                                            if (shoulderContactField != null)
+                                            {
+                                                var hasShoulderContact = shoulderContactField.GetValue(null);
+                                                Logger.LogInfo($"HasShoulderContact : {hasShoulderContact}");
+                                            }
+                                        }
+                                        else
+                                        {
+                                            Logger.LogError("Failed to find static class");
+                                        }*/
                 }
             }
         }
 
         void Update()
         {
+            if (RealismIsPresent) Plugin.RealCompat.Update();
             CheckForMods();
             FovController.ControllerUpdate();
         }

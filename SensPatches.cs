@@ -17,7 +17,11 @@ namespace FOVFix
         public static void PatchPrefix(Player.FirearmController __instance, ref float ____aimingSens)
         {
             float newSens = 1f;
-            float toggleZoomMulti = Plugin.FovController.CalledToggleZoom && Plugin.FovController.IsAiming && Plugin.FovController.IsOptic ? Plugin.ToggleZoomOpticSensMulti.Value : Plugin.FovController.CalledToggleZoom && Plugin.FovController.IsAiming ? Plugin.ToggleZoomAimSensMulti.Value : Plugin.FovController.CalledToggleZoom ? Plugin.ToggleZoomMulti.Value : 1f;
+            bool calledToggleZoom = Plugin.FovController.CalledToggleZoomBreath || Plugin.FovController.CalledToggleZoom;
+            float toggleZoomMulti =
+                calledToggleZoom && Plugin.FovController.IsAiming && Plugin.FovController.IsOptic ? Plugin.ToggleZoomOpticSensMulti.Value :
+                calledToggleZoom && Plugin.FovController.IsAiming ? Plugin.ToggleZoomAimSensMulti.Value :
+                calledToggleZoom ? Plugin.ToggleZoomMulti.Value : 1f;
 
             if (Plugin.UseBasicSensCalc.Value)
             {
