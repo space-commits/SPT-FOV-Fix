@@ -619,7 +619,7 @@ namespace FOVFix
                 float leftShoulderModi = __instance.LeftStance ? Plugin.LeftShoulderOffset.Value : 0f;
                 float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && (Plugin.IsPistol || Plugin.RealCompat.IsMachinePistol) ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
-                camZ = __instance.IsAiming && Plugin.RealCompat.IsMachinePistol ? camZ + Plugin.test1.Value : camZ;
+                camZ = __instance.IsAiming && Plugin.RealCompat != null && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
 
                 float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
 
@@ -642,8 +642,8 @@ namespace FOVFix
                     }
                 }
 
-                if (Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-                else if (Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
+                if (Plugin.RealCompat != null && Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                else if (Plugin.RealCompat != null && Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
                 {
        /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
                     float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 

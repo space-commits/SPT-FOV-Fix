@@ -76,12 +76,8 @@ namespace FOVFix
         public void HandleZoomInput(float zoomIncrement, bool toggleZoom = false)
         {
             float zoomBefore = CurrentZoom;
-            if (zoomIncrement < 0)
-            {
-                zoomIncrement = (1 / zoomIncrement);
-            }
             CurrentZoom =
-                !toggleZoom ? Mathf.Clamp(CurrentZoom * Math.Abs(zoomIncrement), MinZoom, MaxZoom) :
+                !toggleZoom ? Mathf.Clamp(CurrentZoom + zoomIncrement, MinZoom, MaxZoom) :
                 zoomIncrement;
             UpdateStoredMagnificaiton(CurrentWeapInstanceID, CurrentScopeInstanceID, CurrentZoom);
             ZoomScope(CurrentZoom);
