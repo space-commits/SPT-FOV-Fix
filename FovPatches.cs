@@ -608,6 +608,7 @@ namespace FOVFix
             Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
+                bool realismIsNull = Plugin.RealCompat == null;
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 float localX = localPosition.x;
@@ -617,9 +618,9 @@ namespace FOVFix
                 float camX = ____vCameraTarget.x;
                 float camY = ____vCameraTarget.y;
                 float leftShoulderModi = __instance.LeftStance ? Plugin.LeftShoulderOffset.Value : 0f;
-                float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && (Plugin.IsPistol || Plugin.RealCompat.IsMachinePistol) ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+                float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && (Plugin.IsPistol || !realismIsNull && Plugin.RealCompat.IsMachinePistol) ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
-                camZ = __instance.IsAiming && Plugin.RealCompat != null && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
+                camZ = __instance.IsAiming && !realismIsNull && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
 
                 float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
 
@@ -642,8 +643,8 @@ namespace FOVFix
                     }
                 }
 
-                if (Plugin.RealCompat != null && Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-                else if (Plugin.RealCompat != null && Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
+                if (!realismIsNull && Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                else if (!realismIsNull && Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
                 {
        /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
                     float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 
