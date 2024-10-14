@@ -604,6 +604,28 @@ namespace FOVFix
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
+        private static void DoStanceSmoothing() 
+        {
+            if (Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f)
+            {
+                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.5f, 1f);
+                _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 0.75f, 1f);
+                _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 0.85f, 1f);
+            }
+            else
+            {
+                _stanceTimer += Time.deltaTime;
+            }
+
+            if (_stanceTimer >= 0.85f)
+            {
+                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 1f, 0.05f);
+                _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 1f, 0.1f);
+                _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 1f, 0.15f);
+                _stanceTimer = 0f;
+            }
+        }
+
         [PatchPrefix]
         private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier, float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload, Quaternion ____cameraIdenity, Quaternion ____rotationOffset)
         {
@@ -613,25 +635,8 @@ namespace FOVFix
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 bool realismIsNull = Plugin.RealCompat == null;
-                if (!realismIsNull && Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f)
-                {
-                    _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.5f, 1f);
-                    _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 0.75f, 1f);
-                    _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 0.85f, 1f);
-                }
-                else
-                {
-                    _stanceTimer += Time.deltaTime;
-                }
+                if(!realismIsNull) DoStanceSmoothing();
 
-                if(_stanceTimer >= 0.85f)
-                {
-                    _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 1f, 0.05f);
-                    _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 1f, 0.1f);
-                    _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 1f, 0.15f);
-                    _stanceTimer = 0f;
-                }
-           
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 float localX = localPosition.x;
