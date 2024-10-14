@@ -592,12 +592,38 @@ namespace FOVFix
         private static FieldInfo _fcField;
 
         private static float _yPos = 0f;
+        private static float _xStanceCameraSpeedFactor = 1f;
+        private static float _yStanceCameraSpeedFactor = 1f;
+        private static float _zStanceCameraSpeedFactor = 1f;
+        private static float _stanceTimer = 0f;
 
         protected override MethodBase GetTargetMethod()
         {
             _playerField = AccessTools.Field(typeof(FirearmController), "_player");
             _fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
+        }
+
+        private static void DoStanceSmoothing() 
+        {
+            if (Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f)
+            {
+                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.5f, 1f);
+                _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 0.75f, 1f);
+                _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 0.85f, 1f);
+            }
+            else
+            {
+                _stanceTimer += Time.deltaTime;
+            }
+
+            if (_stanceTimer >= 0.85f)
+            {
+                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 1f, 0.05f);
+                _yStanceCameraSpeedFactor = Mathf.MoveTowards(_yStanceCameraSpeedFactor, 1f, 0.1f);
+                _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 1f, 0.15f);
+                _stanceTimer = 0f;
+            }
         }
 
         [PatchPrefix]
@@ -609,6 +635,8 @@ namespace FOVFix
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 bool realismIsNull = Plugin.RealCompat == null;
+                if(!realismIsNull) DoStanceSmoothing();
+
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 float localX = localPosition.x;
@@ -622,11 +650,14 @@ namespace FOVFix
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
                 camZ = __instance.IsAiming && !realismIsNull && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
 
-                float smoothTime = Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
+                float smoothTime =  Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
 
                 float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedX.Value : Plugin.UnAimSpeedX.Value;
+                aimFactorX *= _xStanceCameraSpeedFactor;
                 float aimFactorY = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedY.Value : Plugin.UnAimSpeedY.Value;
+                aimFactorY *= _yStanceCameraSpeedFactor;
                 float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * Plugin.AimSpeedZ.Value : Plugin.UnAimSpeedZ.Value;
+                aimFactorZ *= _zStanceCameraSpeedFactor;
 
                 float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX);
                 float targetY = Mathf.Lerp(localY, camY, smoothTime * aimFactorY);
