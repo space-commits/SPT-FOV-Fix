@@ -634,8 +634,8 @@ namespace FOVFix
             Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
-                bool realismIsNull = Plugin.RealCompat == null;
-                if(!realismIsNull) DoStanceSmoothing();
+                bool realismIsNull = Plugin.RealCompat == null || !Plugin.RealCompat.StancesAreEnabled;
+                if (!realismIsNull) DoStanceSmoothing();
 
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
