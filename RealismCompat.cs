@@ -13,6 +13,8 @@ namespace FOVFix
         public bool RealismAltPistol { get; private set; } = false;
         public float StanceBlenderValue { get; private set; } = 0f;
         public float StanceBlenderTarget { get; private set; } = 0f;
+        public bool StancesAreEnabled { get; private set; } = false;
+        public bool DoPatrolStanceAdsSmoothing { get; private set; } = false;
 
         public void Update() 
         {
@@ -22,6 +24,8 @@ namespace FOVFix
             RealismAltPistol = RealismMod.PluginConfig.EnableAltPistol.Value;
             StanceBlenderTarget = RealismMod.StanceController.StanceBlender.Target;
             StanceBlenderValue = RealismMod.StanceController.StanceBlender.Value;
+            StancesAreEnabled = RealismMod.Plugin.ServerConfig.enable_stances;
+            DoPatrolStanceAdsSmoothing = !RealismMod.StanceController.FinishedUnPatrolStancing;
         }
 
     }
