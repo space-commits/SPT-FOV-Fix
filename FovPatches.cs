@@ -5,6 +5,7 @@ using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI;
 using HarmonyLib;
+using RealismMod;
 using SPT.Reflection.Patching;
 using System;
 using System.Collections.Generic;
@@ -635,6 +636,7 @@ namespace FOVFix
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
                 bool realismIsNull = Plugin.RealCompat == null || !Plugin.RealCompat.StancesAreEnabled;
+                bool smoothPatrolStanceADS = !realismIsNull && Plugin.RealCompat.DoPatrolStanceAdsSmoothing;
                 if (!realismIsNull) DoStanceSmoothing();
 
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
@@ -650,7 +652,8 @@ namespace FOVFix
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
                 camZ = __instance.IsAiming && !realismIsNull && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
 
-                float smoothTime =  Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : Plugin.CameraAimSpeed.Value * dt;
+                float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
+                float smoothTime =  Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
 
                 float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedX.Value : Plugin.UnAimSpeedX.Value;
                 aimFactorX *= _xStanceCameraSpeedFactor;
