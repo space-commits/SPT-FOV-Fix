@@ -597,6 +597,7 @@ namespace FOVFix
         private static float _yStanceCameraSpeedFactor = 1f;
         private static float _zStanceCameraSpeedFactor = 1f;
         private static float _stanceTimer = 0f;
+        private static float _collsionCameraSpeed = 0f;
 
         protected override MethodBase GetTargetMethod()
         {
@@ -635,8 +636,10 @@ namespace FOVFix
             Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer && firearmController.Weapon != null)
             {
-                bool realismIsNull = Plugin.RealCompat == null || !Plugin.RealCompat.StancesAreEnabled;
+                bool realismIsNull = Plugin.RealCompat == null || !Plugin.RealCompat.StancesAreEnabled || !Plugin.RealismIsPresent;
                 bool smoothPatrolStanceADS = !realismIsNull && Plugin.RealCompat.DoPatrolStanceAdsSmoothing;
+                bool isColliding = !realismIsNull && Plugin.RealCompat.StopCameraMovmentForCollision;
+                _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, 0.01f);
                 if (!realismIsNull) DoStanceSmoothing();
 
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
@@ -662,9 +665,9 @@ namespace FOVFix
                 float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * Plugin.AimSpeedZ.Value : Plugin.UnAimSpeedZ.Value;
                 aimFactorZ *= _zStanceCameraSpeedFactor;
 
-                float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX);
-                float targetY = Mathf.Lerp(localY, camY, smoothTime * aimFactorY);
-                float targetZ = Mathf.Lerp(localZ, camZ, smoothTime * aimFactorZ);
+                float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX * _collsionCameraSpeed);
+                float targetY = Mathf.Lerp(localY, camY, smoothTime * aimFactorY * _collsionCameraSpeed);
+                float targetZ = Mathf.Lerp(localZ, camZ, smoothTime * aimFactorZ * _collsionCameraSpeed);
 
                 Vector3 newLocalPosition = new Vector3(targetX, targetY, targetZ) + __instance.HandsContainer.CameraPosition.GetRelative();
                 
@@ -677,8 +680,8 @@ namespace FOVFix
                     }
                 }
 
-                if (!realismIsNull && Plugin.RealismIsPresent && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-                else if (!realismIsNull && Plugin.RealismIsPresent && Plugin.RealCompat.RealismAltRifle) 
+                if (!realismIsNull && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                else if (!realismIsNull && Plugin.RealCompat.RealismAltRifle) 
                 {
        /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
                     float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 

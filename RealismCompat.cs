@@ -15,6 +15,8 @@ namespace FOVFix
         public float StanceBlenderTarget { get; private set; } = 0f;
         public bool StancesAreEnabled { get; private set; } = false;
         public bool DoPatrolStanceAdsSmoothing { get; private set; } = false;
+        public bool StopCameraMovmentForCollision { get; private set; } = false;
+        public bool IsColliding { get; private set; } = false;
 
         public void Update() 
         {
@@ -26,6 +28,9 @@ namespace FOVFix
             StanceBlenderValue = RealismMod.StanceController.StanceBlender.Value;
             StancesAreEnabled = RealismMod.Plugin.ServerConfig.enable_stances;
             DoPatrolStanceAdsSmoothing = !RealismMod.StanceController.FinishedUnPatrolStancing;
+            DoPatrolStanceAdsSmoothing = !RealismMod.StanceController.FinishedUnPatrolStancing;
+            StopCameraMovmentForCollision = RealismMod.StanceController.StopCameraMovement;
+            IsColliding = RealismMod.StanceController.IsColliding;
         }
 
     }
