@@ -64,7 +64,7 @@ namespace FOVFix
             return isScope;
         }
 
-        public static float GetADSFoVMulti(float zoom) 
+       /* public static float GetADSFoVMulti(float zoom) 
         {
             switch (zoom)
             {
@@ -120,7 +120,7 @@ namespace FOVFix
                 default:
                     return 1;
             }
-        }
+        }*/
 
     }
 }

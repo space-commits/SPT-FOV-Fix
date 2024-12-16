@@ -13,15 +13,15 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using FCSubClass = EFT.Player.FirearmController.GClass1595;
-using InputClass1 = Class1477;
-using InputClass2 = Class1475;
-using SightComptInterface = GInterface318;
+using FCSubClass = EFT.Player.FirearmController.GClass1748;
+using InputClass1 = Class1581;
+using InputClass2 = Class1579;
+using SightComptInterface = GInterface365;
 
 namespace FOVFix
 {
 
-
+/*
     public class OpticPanelPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -32,7 +32,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PatchPostfix(OpticCratePanel __instance)
         {
-            Plugin.FovController.OpticPanel = __instance;   
+            Plugin.FovController.OpticPanel = __instance;
         }
     }
 
@@ -49,7 +49,7 @@ namespace FOVFix
             if (Plugin.AllowToggleMag.Value && command == ECommand.ChangeScopeMagnification && Plugin.EnableVariableZoom.Value && !Plugin.FovController.IsFixedMag && Plugin.FovController.IsOptic && (!Plugin.FovController.CanToggle || Plugin.FovController.CanToggleButNotFixed) && (Plugin.FovController.IsAiming || Plugin.ToggleMagOutsideADS.Value))
             {
                 Plugin.FovController.ToggledMagnification = !Plugin.FovController.ToggledMagnification;
-                float zoom = 
+                float zoom =
                     Plugin.FovController.CurrentZoom >= Plugin.FovController.MinZoom && Plugin.FovController.CurrentZoom <= Plugin.FovController.MaxZoom / 2 ? Plugin.FovController.MaxZoom :
                     Plugin.FovController.CurrentZoom <= Plugin.FovController.MaxZoom && Plugin.FovController.CurrentZoom > Plugin.FovController.MaxZoom / 2 ? Plugin.FovController.MinZoom :
                     Plugin.FovController.CurrentZoom;
@@ -75,21 +75,6 @@ namespace FOVFix
                 return false;
             }
             return true;
-        }
-    }
-
-    public class CalculateScaleValueByFovPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(Player).GetMethod("CalculateScaleValueByFov");
-        }
-
-        [PatchPrefix]
-        public static bool Prefix(ref float ____ribcageScaleCompensated)
-        {
-            ____ribcageScaleCompensated = Plugin.FovScale.Value;
-            return false;
         }
     }
 
@@ -140,103 +125,6 @@ namespace FOVFix
         }
     }
 
-    public class SetScopeModePatch : ModulePatch
-    {
-        private static FieldInfo playerField;
-        private static FieldInfo sighCompField;
-
-        private static bool canToggle = false;
-        private static bool isFixedMag = false;
-        private static bool isOptic = false; 
-/*        private static bool isCurrentlyFucky = false;*/
-        private static bool canToggleButNotFixed = false;
-
-        protected override MethodBase GetTargetMethod()
-        {
-            playerField = AccessTools.Field(typeof(EFT.Player.FirearmController), "_player");
-            sighCompField = AccessTools.Field(typeof(EFT.InventoryLogic.SightComponent), "_template");
-
-            return typeof(Player.FirearmController).GetMethod("SetScopeMode", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPrefix]
-        private static bool PatchPrefix(Player.FirearmController __instance)
-        {
-            Player player = (Player)playerField.GetValue(__instance);
-            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
-
-            if (Plugin.FovController.IsOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d") 
-            {
-                Plugin.FovController.ChangeSight = true;
-
-
-                isOptic = pwa.CurrentScope.IsOptic;
-                SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
-                SightModClass sightModClass = currentAimingMod as SightModClass;
-                SightComptInterface zooms = (SightComptInterface)sighCompField.GetValue(sightModClass.Sight);
-
-                canToggle = currentAimingMod.Template.ToolModdable;
-                isFixedMag = currentAimingMod.Template.HasShoulderContact;
-                canToggleButNotFixed = canToggle && !isFixedMag;
-
-                float minZoom = 1f;
-                float maxZoom = 1f;
-
-                if (isFixedMag)
-                {
-                    minZoom = zooms.Zooms[0][0];
-                    maxZoom = minZoom;
-                }
-                else if (canToggleButNotFixed && zooms.Zooms[0].Length > 2)
-                {
-                    minZoom = zooms.Zooms[0][0];
-                    maxZoom = zooms.Zooms[0][2];
-                }
-                else
-                {
-                    minZoom = zooms.Zooms[0][0];
-                    maxZoom = zooms.Zooms[0][1];
-                }
-
-                /*                isCurrentlyFucky = (minZoom < 2 && sightComp.SelectedScopeIndex == 0 && sightComp.SelectedScopeMode == 0 && !isFixedMag && !canToggle);
-                */
-
-                bool isSamVudu = currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value;
-                if ((!canToggle && !Plugin.FovController.IsFucky && !isSamVudu) || (isSamVudu && !Plugin.FovController.DidToggleForFirstPlane))
-                {
-                    return false;
-                }
-                return true;
-            }
-            return true;
-        }
-
-        [PatchPostfix]
-        private static void PatchPostfix(Player.FirearmController __instance)
-        {
-            Player player = (Player)playerField.GetValue(__instance);
-            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-            Mod currentAimingMod = (player.ProceduralWeaponAnimation.CurrentAimingMod != null) ? player.ProceduralWeaponAnimation.CurrentAimingMod.Item as Mod : null;
-            if (isOptic || currentAimingMod.TemplateId == "5c07dd120db834001c39092d" || currentAimingMod.TemplateId == "5c0a2cec0db834001b7ce47d")
-            {
-                if (!canToggle)
-                {
-                    return;
-                }
-
-                if (isFixedMag)
-                {
-                    float currentToggle = player.ProceduralWeaponAnimation.CurrentAimingMod.GetCurrentOpticZoom();
-                    Plugin.FovController.CurrentZoom = currentToggle;
-                    Plugin.FovController.ZoomScope(currentToggle);
-                }
-            }
-        }
-    }
-
-
-
     public class IsAimingPatch : ModulePatch
     {
         private static FieldInfo playerField;
@@ -253,7 +141,7 @@ namespace FOVFix
             return typeof(Player.FirearmController).GetMethod("get_IsAiming", BindingFlags.Instance | BindingFlags.Public);
         }
 
-        private static Item getContainedItem (Slot x)
+        private static Item getContainedItem(Slot x)
         {
             return x.ContainedItem;
         }
@@ -283,9 +171,9 @@ namespace FOVFix
             List<FirearmScopeStateStruct> sightStructList = new List<FirearmScopeStateStruct>();
             int aimIndex = weapon.AimIndex.Value;
             int index = 0;
-            foreach (SightComponent sightComponent in sightEnumerable) 
+            foreach (SightComponent sightComponent in sightEnumerable)
             {
-                if (hasScopeAimBone(sightComponent, player)) 
+                if (hasScopeAimBone(sightComponent, player))
                 {
                     for (int i = 0; i < sightComponent.ScopesCount; i++)
                     {
@@ -353,11 +241,11 @@ namespace FOVFix
                         {
                             hasSetFov = true;
                             Mod currentAimingMod = (pwa.CurrentAimingMod != null) ? pwa.CurrentAimingMod.Item as Mod : null;
-                            SightModClass sightModClass = currentAimingMod as SightModClass;
+                            SightsItemClass sightModClass = currentAimingMod as SightsItemClass;
                             SightComponent sightComp = player.ProceduralWeaponAnimation.CurrentAimingMod;
                             SightComptInterface sightCompInter = (SightComptInterface)sightComptField.GetValue(sightModClass.Sight);
                             Plugin.FovController.IsFixedMag = currentAimingMod.Template.HasShoulderContact;
-                            Plugin.FovController.CanToggle = Plugin.AllowReticleToggle.Value ? true :  currentAimingMod.Template.ToolModdable;
+                            Plugin.FovController.CanToggle = Plugin.AllowReticleToggle.Value ? true : currentAimingMod.Template.ToolModdable;
                             Plugin.FovController.CanToggleButNotFixed = Plugin.FovController.CanToggle && !Plugin.FovController.IsFixedMag;
                             float minZoom = 1f;
                             float maxZoom = 1f;
@@ -367,7 +255,7 @@ namespace FOVFix
                                 minZoom = sightCompInter.Zooms[0][0];
                                 maxZoom = minZoom;
                             }
-                            else if (currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value) 
+                            else if (currentAimingMod.TemplateId == "5b3b99475acfc432ff4dcbee" && Plugin.SamSwatVudu.Value)
                             {
                                 minZoom = sightCompInter.Zooms[0][0];
                                 maxZoom = sightCompInter.Zooms[0][6];
@@ -471,7 +359,7 @@ namespace FOVFix
             }
         }
     }
-
+*/
 
     public class FreeLookPatch : ModulePatch
     {
@@ -578,11 +466,6 @@ namespace FOVFix
             __instance.HeadRotation = new Vector3(x2, _horizontal, 0f);
             __instance.ProceduralWeaponAnimation.SetHeadRotation(__instance.HeadRotation);
             return false;
-
-            //not doing the above causes camera FOV to decrease when using freelook
-            /*
-                        //credit to CJ for making me realize I didn't have to write this giant ass patch like an idiot        
-                        EFTHardSettings.Instance.MOUSE_LOOK_HORIZONTAL_LIMIT = new Vector2(-50f, 50f); */
         }
     }
 
@@ -606,7 +489,7 @@ namespace FOVFix
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
-        private static void DoStanceSmoothing() 
+        private static void DoStanceSmoothing()
         {
             if (Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f)
             {
@@ -639,6 +522,10 @@ namespace FOVFix
                 bool realismIsNull = Plugin.RealCompat == null || !Plugin.RealCompat.StancesAreEnabled || !Plugin.RealismIsPresent;
                 bool smoothPatrolStanceADS = !realismIsNull && Plugin.RealCompat.DoPatrolStanceAdsSmoothing;
                 bool isColliding = !realismIsNull && Plugin.RealCompat.StopCameraMovmentForCollision;
+                bool isMachinePistol = (!realismIsNull && Plugin.RealCompat.IsMachinePistol);
+                bool isPistol = isMachinePistol || Plugin.FovController.IsPistol;
+                bool isOptic = __instance.CurrentScope.IsOptic;
+
                 _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, 0.01f);
                 if (!realismIsNull) DoStanceSmoothing();
 
@@ -651,12 +538,12 @@ namespace FOVFix
                 float camX = ____vCameraTarget.x;
                 float camY = ____vCameraTarget.y;
                 float leftShoulderModi = __instance.LeftStance ? Plugin.LeftShoulderOffset.Value : 0f;
-                float camZ = __instance.IsAiming && !Plugin.FovController.IsOptic && (Plugin.IsPistol || !realismIsNull && Plugin.RealCompat.IsMachinePistol) ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && Plugin.FovController.IsOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
+                float camZ = __instance.IsAiming && !isOptic && isPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !isOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && isOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
-                camZ = __instance.IsAiming && !realismIsNull && Plugin.RealCompat.IsMachinePistol ? camZ + (-0.1f) : camZ;
+                camZ = __instance.IsAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
 
                 float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
-                float smoothTime =  Plugin.FovController.IsOptic ? Plugin.OpticAimSpeed.Value * dt : Plugin.IsPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
+                float smoothTime = isOptic ? Plugin.OpticAimSpeed.Value * dt : isPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
 
                 float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedX.Value : Plugin.UnAimSpeedX.Value;
                 aimFactorX *= _xStanceCameraSpeedFactor;
@@ -670,20 +557,20 @@ namespace FOVFix
                 float targetZ = Mathf.Lerp(localZ, camZ, smoothTime * aimFactorZ * _collsionCameraSpeed);
 
                 Vector3 newLocalPosition = new Vector3(targetX, targetY, targetZ) + __instance.HandsContainer.CameraPosition.GetRelative();
-                
+
                 if (____aimSwayStrength > 0f)
                 {
-                    float blendValue = ____aimSwayBlender.Value; 
+                    float blendValue = ____aimSwayBlender.Value;
                     if (__instance.IsAiming && blendValue > 0f)
                     {
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
                 }
 
-                if (!realismIsNull && Plugin.IsPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
-                else if (!realismIsNull && Plugin.RealCompat.RealismAltRifle) 
+                if (!realismIsNull && isPistol && Plugin.RealCompat.RealismAltPistol && !Plugin.RealCompat.HasShoulderContact) _yPos = Mathf.Max(newLocalPosition.y, 0.035f);
+                else if (!realismIsNull && Plugin.RealCompat.RealismAltRifle)
                 {
-       /*             float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);*/
+                    float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * Plugin.test1.Value : Mathf.Max(newLocalPosition.y, -0.015f);
                     float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 
                     _yPos = target;
                 }
@@ -724,123 +611,26 @@ namespace FOVFix
             Player player = (Player)playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer)
             {
-                Plugin.IsPistol = firearmController.Weapon.WeapClass == "pistol"; 
-                Plugin.FovController.SetToggleZoomMulti();
-                Plugin.FovController.DoFov();          
-                
+                Plugin.FovController.IsPistol = firearmController.Weapon.WeapClass == "pistol";
+                Plugin.FovController.ChangeMainCamFOV();
+
             }
         }
     }
 
-    public class OpticSightAwakePatch : ModulePatch
+    public class CalculateScaleValueByFovPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(EFT.CameraControl.OpticSight).GetMethod("Awake", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(Player).GetMethod("CalculateScaleValueByFov");
         }
 
         [PatchPrefix]
-        private static bool Prefix(EFT.CameraControl.OpticSight __instance)
+        public static bool Prefix(ref float ____ribcageScaleCompensated)
         {
-
-            __instance.TemplateCamera.gameObject.SetActive(false);
-            if (__instance.name != "DONE")
-            {
-                if (Plugin.TrueOneX.Value == true && __instance.TemplateCamera.fieldOfView >= 24)
-                {
-                    return false;
-                }
-                __instance.TemplateCamera.fieldOfView *= Plugin.GlobalOpticFOVMulti.Value;
-                __instance.name = "DONE";
-            }
+            ____ribcageScaleCompensated = Plugin.FovScale.Value;
             return false;
         }
     }
-
-    public class OnWeaponParametersChangedPatch : ModulePatch
-    {
-        private static FieldInfo weaponField;
-
-        protected override MethodBase GetTargetMethod()
-        {
-            weaponField = AccessTools.Field(typeof(ShotEffector), "_weapon");
-            return typeof(ShotEffector).GetMethod("OnWeaponParametersChanged", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPostfix]
-        private static void PatchPostfix(ShotEffector __instance)
-        {
-            IWeapon _weapon = (IWeapon)weaponField.GetValue(__instance);
-            if (_weapon?.Item?.Owner.ID != null && _weapon.Item.Owner.ID == Singleton<GameWorld>.Instance?.MainPlayer?.ProfileId)
-            {
-                Plugin.FovController.HasRAPTAR = false;
-
-                if (!_weapon.IsUnderbarrelWeapon)
-                {
-                    Weapon weap = _weapon.Item as Weapon;
-                    IEnumerable<Mod> weapMods = weap.Mods;
-                    foreach (Mod mod in weapMods)
-                    {
-                        if (mod.TemplateId == "61605d88ffa6e502ac5e7eeb")
-                        {
-                            Plugin.FovController.HasRAPTAR = true;
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
-
-    public class TacticalRangeFinderControllerPatch : ModulePatch
-    {
-        protected override MethodBase GetTargetMethod()
-        {
-            return typeof(TacticalRangeFinderController).GetMethod("OnEnable", BindingFlags.Instance | BindingFlags.Public);
-        }
-
-        [PatchPostfix]
-        private static void PatchPostfix()
-        {
-
-            if (Plugin.FovController.HasRAPTAR == false)
-            {
-                CameraClass.Instance.OpticCameraManager.Camera.fieldOfView = Plugin.RangeFinderFOV.Value;
-            }
-
-        }
-    }
-
-
-    //better to do it in method_17Patch, as this method also sets FOV in general.
-    /*    public class SetFovPatch : ModulePatch
-        {
-            protected override MethodBase GetTargetMethod()
-            {
-                return typeof(CameraClass).GetMethod("SetFov", BindingFlags.Instance | BindingFlags.Public);
-            }
-
-            [PatchPrefix]
-            private static bool Prefix(CameraClass __instance, ref float x, float time, Coroutine ___coroutine_0, bool applyFovOnCamera = true)
-            {
-
-                var _method_4 = AccessTools.Method(typeof(CameraClass), "method_4");
-                float fov = x * Plugin.globalADSMulti.Value;
-
-                if (___coroutine_0 != null)
-                {
-                    StaticManager.KillCoroutine(___coroutine_0);
-                }
-                if (__instance.Camera == null)
-                {
-                    return false;
-                }
-                IEnumerator meth4Enumer = (IEnumerator)_method_4.Invoke(__instance, new object[] { fov, time });
-                AccessTools.Property(typeof(CameraClass), "ApplyDovFovOnCamera").SetValue(__instance, applyFovOnCamera);
-                ___coroutine_0 = StaticManager.BeginCoroutine(meth4Enumer);
-                return false;
-            }
-        }*/
 
 }
