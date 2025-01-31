@@ -64,7 +64,7 @@ namespace FOVFix
             return isScope;
         }
 
-       /* public static float GetADSFoVMulti(float zoom) 
+/*        public static float GetADSFoVMulti(float zoom)
         {
             switch (zoom)
             {
@@ -91,36 +91,35 @@ namespace FOVFix
                 default:
                     return 1;
             }
-        }
+        }*/
 
         public static float GetZoomSensValue(float magnificaiton)
         {
             switch (magnificaiton)
             {
-                case <= 1.5f:
+                case >= 24f:
                     return Plugin.OneSensMulti.Value;
-                case <= 2:
+                case >= 14f:
                     return Plugin.TwoSensMulti.Value;
-                case <= 3:
+                case >= 11.5f:
                     return Plugin.ThreeSensMulti.Value;
-                case <= 4:
+                case >= 6f:
                     return Plugin.FourSensMulti.Value;
-                case <= 5:
+                case >= 5f:
                     return Plugin.FiveSensMulti.Value;
-                case <= 6:
+                case >= 3.2f:
                     return Plugin.SixSensMulti.Value;
-                case <= 8:
+                case >= 2.5f:
                     return Plugin.EightSensMulti.Value;
-                case <= 10:
+                case >= 1.9f:
                     return Plugin.TenSensMulti.Value;
-                case <= 12:
+                case >= 1.3f:
                     return Plugin.TwelveSensMulti.Value;
-                case > 12:
+                case >= 0f:
                     return Plugin.HighSensMulti.Value;
                 default:
-                    return 1;
+                    return 1f;
             }
-        }*/
-
+        }
     }
 }

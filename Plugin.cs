@@ -64,15 +64,16 @@ namespace FOVFix
         public static ConfigEntry<float> NonOpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> UnaimedToggleZoomMulti { get; set; }
 
-/*        public static ConfigEntry<float> ToggleZoomOpticSensMulti { get; set; }
+        public static ConfigEntry<int> MaxBaseFOV { get; set; }
+        public static ConfigEntry<int> MinBaseFOV { get; set; }
+
+        public static ConfigEntry<float> ToggleZoomOpticSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
-        public static ConfigEntry<float> ToggleZoomUnAimSensMulti { get; set; }*/
+        public static ConfigEntry<float> ToggleZoomUnAimSensMulti { get; set; }
 
-/*        public static ConfigEntry<float> MouseSensFactor { get; set; }
         public static ConfigEntry<bool> ChangeMouseSens { get; set; }
-        public static ConfigEntry<bool> UseBasicSensCalc { get; set; }*/
 
-/*        public static ConfigEntry<float> NonOpticSensMulti { get; set; }
+        public static ConfigEntry<float> NonOpticSensMulti { get; set; }
         public static ConfigEntry<float> OneSensMulti { get; set; }
         public static ConfigEntry<float> TwoSensMulti { get; set; }
         public static ConfigEntry<float> ThreeSensMulti { get; set; }
@@ -83,7 +84,7 @@ namespace FOVFix
         public static ConfigEntry<float> TenSensMulti { get; set; }
         public static ConfigEntry<float> TwelveSensMulti { get; set; }
         public static ConfigEntry<float> HighSensMulti { get; set; }
-*/
+
         public static ConfigEntry<float> FovScale { get; set; }
         public static ConfigEntry<bool> EnableFovScaleFix { get; set; }
 
@@ -132,15 +133,13 @@ namespace FOVFix
             OpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.5f, 1.25f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.51f, 1.25f), new ConfigurationManagerAttributes { Order = 10 }));
             UnaimedToggleZoomMulti = Config.Bind<float>(toggleZoom, "Un-Aimed Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.5f, 1.25f), new ConfigurationManagerAttributes { Order = 9 }));
-/*            ToggleZoomAimSensMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 3 }));
+            ToggleZoomAimSensMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 3 }));
             ToggleZoomUnAimSensMulti = Config.Bind<float>(toggleZoom, "Un-Aimed Toggle Zoom Sens Multi", 0.7f, new ConfigDescription("Sens Modifier When Zoom Is Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             ToggleZoomOpticSensMulti = Config.Bind<float>(toggleZoom, "Optics Toggle Zoom Sens Multi", 0.8f, new ConfigDescription("Sens Modifier When Zoom Toggled.", new AcceptableValueRange<float>(0.1f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
-*/
-/*            ChangeMouseSens = Config.Bind<bool>(sens, "Correct Mouse Sensitivity", true, new ConfigDescription("If Using Variable Zoom, Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
-            MouseSensFactor = Config.Bind<float>(sens, "Mouse Sensitivity Reduction Factor", 90f, new ConfigDescription("Lower = More Sensitivity Reduction Per Magnification Level.", new AcceptableValueRange<float>(1f, 200f), new ConfigurationManagerAttributes { Order = 60 }));
-            UseBasicSensCalc = Config.Bind<bool>(sens, "Use Preset Sensitivity Reduction.", true, new ConfigDescription("Will Use The Values Below Instead Of Calculating Sensitivity Automatically. Mouse Sens Reduction Factor Will Be Ignored.", null, new ConfigurationManagerAttributes { Order = 20 }));*/
-/*            NonOpticSensMulti = Config.Bind<float>(sens, "Unmagnified Sight Sens Multi", 1f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 11 }));
-            OneSensMulti = Config.Bind<float>(sens, "1x Sens Multi", 1f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
+
+            ChangeMouseSens = Config.Bind<bool>(sens, "Change Mouse Sensitivity", true, new ConfigDescription("Sets Mouse Sensitivity Based On The Scope's Current Magnificaiton. Non-Optical Sights Are Treated The Same As 1x.", null, new ConfigurationManagerAttributes { Order = 100 }));
+            NonOpticSensMulti = Config.Bind<float>(sens, "Unmagnified Sight Sens Multi", 1f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 11 }));
+            OneSensMulti = Config.Bind<float>(sens, "1x Sens Multi", 0.75f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 10 }));
             TwoSensMulti = Config.Bind<float>(sens, "2x Sens Multi", 0.45f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 9 }));
             ThreeSensMulti = Config.Bind<float>(sens, "3x Sens Multi", 0.3f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 8 }));
             FourSensMulti = Config.Bind<float>(sens, "4x Sens Multi", 0.2f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 7 }));
@@ -149,11 +148,13 @@ namespace FOVFix
             EightSensMulti = Config.Bind<float>(sens, "8x Sens Multi", 0.08f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 4 }));
             TenSensMulti = Config.Bind<float>(sens, "10x Sens Multi", 0.04f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 3 }));
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
-            HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));*/
+            HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
             HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
             EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
-            FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 1, IsAdvanced = true }));
+            FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
+            MaxBaseFOV = Config.Bind<int>(misc, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
+            MinBaseFOV = Config.Bind<int>(misc, "Min Base FOV", 30, new ConfigDescription("Min Selectable Main Camera FOVIn Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 1 }));
 
             CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -172,10 +173,13 @@ namespace FOVFix
             new PwaWeaponParamsPatch().Enable();
             new FreeLookPatch().Enable();
             new LerpCameraPatch().Enable();
-            if (Plugin.EnableFovScaleFix.Value)
-            {
-                new CalculateScaleValueByFovPatch().Enable();
-            }
+            new FovRangePatch().Enable();
+            new FovValuePatch().Enable();
+            new AimingSensitivityPatch().Enable();
+            if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
+            //new ScopeZoomPatch().Enable();
+            //new OpticPanelPatch().Enable();
+            //new CameraUpdatePatch().Enable();
         }
 
         private void CheckForMods()
