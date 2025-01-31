@@ -176,6 +176,7 @@ namespace FOVFix
             new FovRangePatch().Enable();
             new FovValuePatch().Enable();
             new AimingSensitivityPatch().Enable();
+            new ScopeSensitivityPatch().Enable();
             if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
             //new ScopeZoomPatch().Enable();
             //new OpticPanelPatch().Enable();

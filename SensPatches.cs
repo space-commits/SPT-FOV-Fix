@@ -1,5 +1,6 @@
 ﻿using Comfort.Common;
 using EFT;
+using EFT.InventoryLogic;
 using RealismMod;
 using SPT.Reflection.Patching;
 using System.Reflection;
@@ -32,6 +33,25 @@ namespace FOVFix
                 newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * scopeFOVMulti;
                 ____aimingSens = newSens;
             }
+        }
+    }
+
+    public class ScopeSensitivityPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(SightComponent).GetMethod("get_GetCurrentSensitivity");
+        }
+
+        [PatchPrefix]
+        public static bool PatchPrefix(SightComponent __instance, ref float __result)
+        {
+            if (Plugin.ChangeMouseSens.Value)
+            {
+                __result = 1f;
+                return false;
+            }
+            return true;
         }
     }
 }
