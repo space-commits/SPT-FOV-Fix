@@ -101,7 +101,7 @@ namespace FOVFix
                     return Plugin.OneSensMulti.Value;
                 case >= 14f:
                     return Plugin.TwoSensMulti.Value;
-                case >= 11.5f:
+                case >= 7.6f:
                     return Plugin.ThreeSensMulti.Value;
                 case >= 6f:
                     return Plugin.FourSensMulti.Value;
