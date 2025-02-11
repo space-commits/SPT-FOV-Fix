@@ -101,7 +101,6 @@ namespace FOVFix
                 Plugin.MinBaseFOV.Value = 50;
                 Plugin.MaxBaseFOV.Value = 75;
             }
-            Utils.Logger.LogWarning($"min {Plugin.MinBaseFOV.Value}, max {Plugin.MaxBaseFOV.Value} ");
             SettingsTab.BindNumberSliderToSetting(____fov, ___gclass1040_0.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
         }
     }
