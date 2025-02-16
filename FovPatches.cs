@@ -306,6 +306,7 @@ namespace FOVFix
                 float camZ = __instance.IsAiming && !isOptic && isPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !isOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && isOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
                 camZ = __instance.IsAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
+                camZ = __instance.IsAiming ? camZ + Plugin.FovController.ScrollCameraOffset: camZ;
 
                 float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
                 float smoothTime = isOptic ? Plugin.OpticAimSpeed.Value * dt : isPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;

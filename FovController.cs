@@ -47,6 +47,18 @@ namespace FOVFix
         public float CurrentScopeFOV { get; set; } = 0f;
         public bool IsToggleZoom { get; set; } = false;
         public bool IsPistol { get; set; } = false;
+        private float _scrollCameraOffset;
+        public float ScrollCameraOffset 
+        {
+            get 
+            {
+                return _scrollCameraOffset;
+            }
+            set 
+            {
+                _scrollCameraOffset = Mathf.Clamp(value, -0.03f, 0.03f);
+            }
+        }
 
         public FovController()
         {
@@ -160,6 +172,19 @@ namespace FOVFix
             if (CameraClass.Instance?.OpticCameraManager?.Camera != null) CurrentScopeFOV = CameraClass.Instance.OpticCameraManager.Camera.fieldOfView;
         }
 
+
+        private void HandleCameraOffsetInput()
+        {
+            if (Input.GetKey(Plugin.CameraIncreaseOffset.Value.MainKey) && Plugin.CameraIncreaseOffset.Value.Modifiers.All(Input.GetKey))
+            {
+                ScrollCameraOffset += 0.0005f;
+            }
+            if (Input.GetKey(Plugin.CameraDecreaseOffset.Value.MainKey) && Plugin.CameraDecreaseOffset.Value.Modifiers.All(Input.GetKey))
+            {
+                ScrollCameraOffset -= 0.0005f;
+            }
+        }
+
         public void ControllerUpdate()
         {
             Utils.CheckIsReady();
@@ -168,6 +193,7 @@ namespace FOVFix
             if (_player == null) _player = Singleton<GameWorld>.Instance.MainPlayer;
             if (_player != null)
             {
+                HandleCameraOffsetInput();
                 UpateScopeFOV();
                 UpdateToggleZoom();
                 CheckAiming();
