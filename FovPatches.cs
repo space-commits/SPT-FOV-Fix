@@ -290,8 +290,9 @@ namespace FOVFix
                 bool isMachinePistol = (!realismIsNull && Plugin.RealCompat.IsMachinePistol);
                 bool isPistol = isMachinePistol || Plugin.FovController.IsPistol;
                 bool isOptic = __instance.CurrentScope.IsOptic;
-                
-                _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, Plugin.RealCompat.CameraMovmentForCollisionSpeed);
+                float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
+
+                _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing();
 
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
