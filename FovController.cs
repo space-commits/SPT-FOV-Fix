@@ -1,19 +1,39 @@
-﻿using Comfort.Common;
+﻿using BepInEx;
+using Comfort.Common;
 using EFT;
 using EFT.Animations;
+using EFT.InventoryLogic;
 using EFT.UI;
-using EFT.UI.Ragfair;
-using HarmonyLib;
-using RealismMod;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using static EFT.Player;
 
 namespace FOVFix
 {
+
+    public static class WeaponClassExtension
+    {
+        private static readonly ConditionalWeakTable<Item, StrongBox<string>> _customPropertyValues = new ConditionalWeakTable<Item, StrongBox<string>>();
+
+        public static string GetCustomProperty(this Item instance)
+        {
+            if (_customPropertyValues.TryGetValue(instance, out var box))
+                return box.Value;
+            return default;
+        }
+
+        public static void SetCustomProperty(this Item instance, string value)
+        {
+            if (_customPropertyValues.TryGetValue(instance, out var box))
+                box.Value = value;
+            else
+                _customPropertyValues.Add(instance, new StrongBox<string>(value));
+        }
+    }
+
 
     public class ValueWatcher<T>
     {
@@ -47,25 +67,41 @@ namespace FOVFix
 
         public Dictionary<string, float> WeaponOffsets = new Dictionary<string, float>();
 
+        public Weapon CurrentWeapon { get; set; }
         public string WeapId { get; set; }
         public float CurrentScopeFOV { get; set; } = 0f;
         public bool IsToggleZoom { get; set; } = false;
         public bool IsPistol { get; set; } = false;
+
         public float ScrollCameraOffset 
         {
             get 
             {
-                if (WeapId != null)
+                if (CurrentWeapon != null) 
                 {
-                   WeaponOffsets.TryGetValue(WeapId, out float offset);
-                   return offset;
+                    string id;
+                    if (Utils.IsInHideout)
+                    {
+                        id = WeaponClassExtension.GetCustomProperty(CurrentWeapon);
+                    }
+                    else id = WeapId;
+
+                    WeaponOffsets.TryGetValue(id, out float offset);
+                    return offset;
                 }
+   
                 return 0f;
             }
             set 
             {
                 float scrollCameraOffset = Mathf.Clamp(value, -0.04f, 0.04f);
-                if (WeapId != null) WeaponOffsets[WeapId] = scrollCameraOffset;
+                string id;
+                if (Utils.IsInHideout)
+                {
+                    id = WeaponClassExtension.GetCustomProperty(CurrentWeapon);
+                }
+                else id = WeapId;
+                if (!id.IsNullOrWhiteSpace()) WeaponOffsets[id] = scrollCameraOffset;
             }
         }
 
@@ -144,7 +180,7 @@ namespace FOVFix
 
         public void CheckScope()
         {
-            if (IsPWANull() || !Utils.WeaponReady) return;
+            if (IsPWANull() || !Utils.WeaponIsReady) return;
             var pwa = _player.ProceduralWeaponAnimation;
             if (pwa.AimIndex < pwa.ScopeAimTransforms.Count) OpticWatcher.WatchedValue = pwa.CurrentScope.IsOptic;
         }
@@ -197,7 +233,7 @@ namespace FOVFix
         public void ControllerUpdate()
         {
             Utils.CheckIsReady();
-            if (!Utils.IsReady) return;
+            if (!Utils.PlayerIsReady) return;
 
             if (_player == null) _player = Singleton<GameWorld>.Instance.MainPlayer;
             if (_player != null)

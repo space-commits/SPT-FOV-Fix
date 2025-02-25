@@ -179,10 +179,9 @@ namespace FOVFix
             new FovValuePatch().Enable();
             new AimingSensitivityPatch().Enable();
             new ScopeSensitivityPatch().Enable();
+            new CloneItemPatch().Enable();
             if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
-            //new ScopeZoomPatch().Enable();
-            //new OpticPanelPatch().Enable();
-            //new CameraUpdatePatch().Enable();
+
         }
 
         private void CheckForMods()
