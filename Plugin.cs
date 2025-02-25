@@ -60,6 +60,7 @@ namespace FOVFix
         public static ConfigEntry<KeyboardShortcut> ToggleZoomKeybind { get; set; }
         public static ConfigEntry<bool> ToggleZoomOnHoldBreath { get; set; }
         public static ConfigEntry<bool> HoldToggleZoom { get; set; }
+        public static ConfigEntry<bool> ZoomReset { get; set; }
         public static ConfigEntry<float> OpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> NonOpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> UnaimedToggleZoomMulti { get; set; }
@@ -131,6 +132,7 @@ namespace FOVFix
 
             ToggleZoomKeybind = Config.Bind(toggleZoom, "Zoom Toggle", new KeyboardShortcut(KeyCode.M), new ConfigDescription("Toggle To Zoom.", null, new ConfigurationManagerAttributes { Order = 60 }));
             HoldToggleZoom = Config.Bind<bool>(toggleZoom, "Hold To Zoom", true, new ConfigDescription("Change Zoom To A Hold Keybind.", null, new ConfigurationManagerAttributes { Order = 50 }));
+            ZoomReset = Config.Bind<bool>(toggleZoom, "Zoom-Reset On unADS", false, new ConfigDescription("Reset Zoom When Not Aiming.", null, new ConfigurationManagerAttributes { Order = 40 }));
             ToggleZoomOnHoldBreath = Config.Bind<bool>(toggleZoom, "Enable Toggle Zoom On Hold-Breath", false, new ConfigDescription("Toggle Zoom Will Activated When Holding Breath Only.", null, new ConfigurationManagerAttributes { Order = 30 }));
             OpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Optics Toggle FOV Multi", 0.9f, new ConfigDescription("FOV Multiplier When Aiming With Optic.", new AcceptableValueRange<float>(0.5f, 1.25f), new ConfigurationManagerAttributes { Order = 20 }));
             NonOpticToggleZoomMulti = Config.Bind<float>(toggleZoom, "Non-Optics Toggle FOV Multi", 0.8f, new ConfigDescription("FOV Multiplier When Aiming with Non-Optic Or Not Aiming.", new AcceptableValueRange<float>(0.51f, 1.25f), new ConfigurationManagerAttributes { Order = 10 }));
