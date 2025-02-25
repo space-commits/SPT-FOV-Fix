@@ -2,6 +2,7 @@
 using EFT;
 using EFT.Animations;
 using EFT.UI;
+using EFT.UI.Ragfair;
 using HarmonyLib;
 using RealismMod;
 using System;
@@ -44,19 +45,27 @@ namespace FOVFix
         ValueWatcher<bool> ToggleZoomWatcher = null;
         public ValueWatcher<bool> OpticWatcher = null;
 
+        public Dictionary<string, float> WeaponOffsets = new Dictionary<string, float>();
+
+        public string WeapId { get; set; }
         public float CurrentScopeFOV { get; set; } = 0f;
         public bool IsToggleZoom { get; set; } = false;
         public bool IsPistol { get; set; } = false;
-        private float _scrollCameraOffset;
         public float ScrollCameraOffset 
         {
             get 
             {
-                return _scrollCameraOffset;
+                if (WeapId != null)
+                {
+                   WeaponOffsets.TryGetValue(WeapId, out float offset);
+                   return offset;
+                }
+                return 0f;
             }
             set 
             {
-                _scrollCameraOffset = Mathf.Clamp(value, -0.03f, 0.03f);
+                float scrollCameraOffset = Mathf.Clamp(value, -0.04f, 0.04f);
+                if (WeapId != null) WeaponOffsets[WeapId] = scrollCameraOffset;
             }
         }
 

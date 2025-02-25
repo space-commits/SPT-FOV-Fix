@@ -378,9 +378,10 @@ namespace FOVFix
             Player player = (Player)playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer)
             {
-                Plugin.FovController.IsPistol = firearmController.Weapon.WeapClass == "pistol";
-                Plugin.FovController.ChangeMainCamFOV();
 
+                Plugin.FovController.IsPistol = firearmController.Weapon.WeapClass == "pistol";
+                Plugin.FovController.WeapId = firearmController.Item.Id;
+                Plugin.FovController.ChangeMainCamFOV();
             }
         }
     }
