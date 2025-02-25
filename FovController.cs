@@ -131,6 +131,10 @@ namespace FOVFix
 
             if (fc == null || !pwa.IsAiming)
             {
+                if (Plugin.ZoomReset.Value)
+                {
+    			    IsToggleZoom = false;
+                }
                 toggleZoomMulti = IsToggleZoom ? Plugin.UnaimedToggleZoomMulti.Value : 1f;
             }
 
