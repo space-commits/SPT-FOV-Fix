@@ -9,7 +9,7 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "3.0.0";
+        private const string _pluginVersion = "3.0.3";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
 
