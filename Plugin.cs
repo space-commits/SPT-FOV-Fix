@@ -1,17 +1,15 @@
 ﻿using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
-using BepInEx.Logging;
+using EFT;
 using UnityEngine;
-using System;
-using System.Reflection;
 
 namespace FOVFix
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "3.0.0";
+        private const string _pluginVersion = "3.0.3";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
 
@@ -181,10 +179,9 @@ namespace FOVFix
             new FovValuePatch().Enable();
             new AimingSensitivityPatch().Enable();
             new ScopeSensitivityPatch().Enable();
+            new CloneItemPatch().Enable();
             if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
-            //new ScopeZoomPatch().Enable();
-            //new OpticPanelPatch().Enable();
-            //new CameraUpdatePatch().Enable();
+
         }
 
         private void CheckForMods()

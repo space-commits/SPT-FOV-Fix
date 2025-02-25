@@ -25,6 +25,23 @@ using SightComptInterface = GInterface365;
 
 namespace FOVFix
 {
+    public class CloneItemPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return typeof(GClass3105).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+        }
+
+        [PatchPostfix]
+        private static void PatchPostfix(Item originalItem, ref Item __result)
+        {
+            if (Utils.PlayerIsReady && Utils.IsInHideout && originalItem is Weapon)
+            {
+                WeaponClassExtension.SetCustomProperty(__result, originalItem.Id);
+            }
+        }
+    }
+
     //can modifer Optic cam FOV here but doesnt' work for fixed optics, and causes bugs when swapping between variable and fixed optics on different guns
     public class CameraUpdatePatch : ModulePatch
     {
@@ -290,8 +307,9 @@ namespace FOVFix
                 bool isMachinePistol = (!realismIsNull && Plugin.RealCompat.IsMachinePistol);
                 bool isPistol = isMachinePistol || Plugin.FovController.IsPistol;
                 bool isOptic = __instance.CurrentScope.IsOptic;
-                
-                _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, Plugin.RealCompat.CameraMovmentForCollisionSpeed);
+                float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
+
+                _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing();
 
                 float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
@@ -377,9 +395,12 @@ namespace FOVFix
             Player player = (Player)playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer)
             {
-                Plugin.FovController.IsPistol = firearmController.Weapon.WeapClass == "pistol";
-                Plugin.FovController.ChangeMainCamFOV();
+                //cloned weapon appears here
 
+                Plugin.FovController.IsPistol = firearmController.Weapon.WeapClass == "pistol";
+                Plugin.FovController.WeapId = firearmController.Weapon.Id;
+                Plugin.FovController.CurrentWeapon = firearmController.Weapon;
+                Plugin.FovController.ChangeMainCamFOV();
             }
         }
     }

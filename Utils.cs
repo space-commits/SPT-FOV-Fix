@@ -23,8 +23,9 @@ namespace FOVFix
 
         public static string[] scopeTypes = new string[] { "55818acf4bdc2dde698b456b", "55818ad54bdc2ddc698b4569", "55818add4bdc2d5b648b456f", "55818ae44bdc2dde698b456c", "55818ac54bdc2d5b648b456e", "55818aeb4bdc2ddc698b456a" };
 
-        public static bool IsReady = false;
-        public static bool WeaponReady = false;
+        public static bool PlayerIsReady = false;
+        public static bool WeaponIsReady = false;
+        public static bool IsInHideout = false;
 
         public static Player GetYourPlayer()
         {
@@ -40,15 +41,23 @@ namespace FOVFix
             Player player = gameWorld?.MainPlayer;
             if (player != null)
             {
-                Utils.WeaponReady = player?.HandsController != null && player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon ? true : false;
+                Utils.WeaponIsReady = player?.HandsController != null && player?.HandsController?.Item != null && player?.HandsController?.Item is Weapon ? true : false;
+                Utils.IsInHideout = player is HideoutPlayer ? true : false;
+            }
+            else
+            {
+                Utils.WeaponIsReady = false;
+                Utils.IsInHideout = false;
             }
 
             if (gameWorld == null || gameWorld.AllAlivePlayersList == null || gameWorld.MainPlayer == null || sessionResultPanel != null)
             {
-                Utils.IsReady = false;
+                Utils.PlayerIsReady = false;
+                Utils.WeaponIsReady = false;
+                Utils.IsInHideout = false;
                 return false;
             }
-            Utils.IsReady = true;
+            Utils.PlayerIsReady = true;
             return true;
         }
 
