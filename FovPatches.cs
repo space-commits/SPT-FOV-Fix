@@ -1,31 +1,23 @@
-﻿using Bsg.GameSettings;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
-using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.Settings;
 using HarmonyLib;
-using RealismMod;
 using SPT.Reflection.Patching;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using static GClass1040;
+using static GClass1053;
 //using FCSubClass = EFT.Player.FirearmController.GClass1780;
 // System.String EFT.Player/FirearmController/GClass????::SHELLPORT_TRANSFORM_NAME
 //using InputClass1 = Class1604;
 // EFT.IFirearmHandsController Class????::ifirearmHandsController_0
 //using InputClass2 = Class1579;
-using SightComptInterface = GInterface365;
 using GameSettingsClass = GClass1053;
-using static GClass1053;
 
 namespace FOVFix
 {
