@@ -4,6 +4,7 @@ using EFT;
 using EFT.Animations;
 using EFT.InventoryLogic;
 using EFT.UI;
+using RealismMod;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -72,6 +73,7 @@ namespace FOVFix
         public float CurrentScopeFOV { get; set; } = 0f;
         public bool IsToggleZoom { get; set; } = false;
         public bool IsPistol { get; set; } = false;
+        private bool _wasAiming = false;
 
         public float ScrollCameraOffset 
         {
@@ -131,7 +133,8 @@ namespace FOVFix
 
             if (fc == null || !pwa.IsAiming)
             {
-                toggleZoomMulti = IsToggleZoom ? Plugin.UnaimedToggleZoomMulti.Value : 1f;
+                if (_wasAiming && Plugin.CancelToggleOnUnADS.Value) IsToggleZoom = false;
+                else toggleZoomMulti = IsToggleZoom ? Plugin.UnaimedToggleZoomMulti.Value : 1f;
             }
 
             bool fcIsNull = fc != null && fc?.Weapon != null;
@@ -143,6 +146,7 @@ namespace FOVFix
 
             float zoom = baseFOV * magnificationModifier * toggleZoomMulti;
             CameraClass.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
+            _wasAiming = pwa.IsAiming;
         }
 
         public bool IsPWANull()

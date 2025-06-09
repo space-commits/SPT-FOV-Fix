@@ -25,9 +25,9 @@ namespace FOVFix
                 bool isAiming = Plugin.FovController.ADSWatcher.WatchedValue;
                 bool calledToggleZoom = Plugin.FovController.IsToggleZoom;
                 float toggleZoomMulti =
-                    calledToggleZoom && isAiming && isOptic ? Plugin.ToggleZoomOpticSensMulti.Value :
-                    calledToggleZoom && isAiming ? Plugin.ToggleZoomAimSensMulti.Value :
-                    calledToggleZoom ? Plugin.ToggleZoomUnAimSensMulti.Value : 1f;
+                    calledToggleZoom && isAiming && isOptic && Plugin.OpticToggleZoomMulti.Value != 1f ? Plugin.ToggleZoomOpticSensMulti.Value :
+                    calledToggleZoom && isAiming && Plugin.NonOpticToggleZoomMulti.Value != 1f ? Plugin.ToggleZoomAimSensMulti.Value :
+                    calledToggleZoom && Plugin.UnaimedToggleZoomMulti.Value != 1f ? Plugin.ToggleZoomUnAimSensMulti.Value : 1f;
 
                 float scopeFOVMulti = isOptic && isAiming ? Utils.GetZoomSensValue(Plugin.FovController.CurrentScopeFOV) : Plugin.NonOpticSensMulti.Value;
                 newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * scopeFOVMulti;
