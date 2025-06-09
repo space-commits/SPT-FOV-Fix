@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>FOVFix</AssemblyName>
     <Description>Fixes EFT FOV (removes FOV decrease when ADS)</Description>
     <Version>1.0.0</Version>
@@ -10,17 +10,39 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Reference Include="spt-reflection" />
-	<Reference Include="ItemComponent.Types"/>
-    <Reference Include="Comfort"/>
-    <Reference Include="Assembly-CSharp" />
-	<Reference Include="UnityEngine" />
-    <Reference Include="UnityEngine.InputLegacyModule" />
-    <Reference Include="UnityEngine.CoreModule" />
-	<Reference Include="UnityEngine.UIModule" />
-	<Reference Include="Sirenix.Serialization" />
-	<Reference Include="RealismMod" />
-	<Reference Include="Unity.Postprocessing.Runtime" />
+    <Reference Include="spt-reflection">
+      <Private>false</Private>
+    </Reference>
+	<Reference Include="ItemComponent.Types">
+	  <Private>false</Private>
+	</Reference>
+    <Reference Include="Comfort">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <Private>false</Private>
+    </Reference>
+	<Reference Include="UnityEngine">
+	  <Private>false</Private>
+	</Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <Private>false</Private>
+    </Reference>
+	<Reference Include="UnityEngine.UIModule">
+	  <Private>false</Private>
+	</Reference>
+	<Reference Include="Sirenix.Serialization">
+	  <Private>false</Private>
+	</Reference>
+	<Reference Include="RealismMod">
+	  <Private>false</Private>
+	</Reference>
+	<Reference Include="Unity.Postprocessing.Runtime">
+	  <Private>false</Private>
+	</Reference>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
     <PackageReference Include="BepInEx.Core" Version="5.*" />
     <PackageReference Include="BepInEx.PluginInfoProps" Version="1.*" />

@@ -1,27 +1,23 @@
-﻿using Bsg.GameSettings;
-using Comfort.Common;
+﻿using Comfort.Common;
 using EFT;
 using EFT.Animations;
 using EFT.CameraControl;
-using EFT.InputSystem;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.Settings;
 using HarmonyLib;
-using RealismMod;
 using SPT.Reflection.Patching;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using static GClass1040;
-using FCSubClass = EFT.Player.FirearmController.GClass1748;
-using InputClass1 = Class1581;
-using InputClass2 = Class1579;
-using SightComptInterface = GInterface365;
+using static GClass1053;
+//using FCSubClass = EFT.Player.FirearmController.GClass1780;
+// System.String EFT.Player/FirearmController/GClass????::SHELLPORT_TRANSFORM_NAME
+//using InputClass1 = Class1604;
+// EFT.IFirearmHandsController Class????::ifirearmHandsController_0
+//using InputClass2 = Class1579;
+using GameSettingsClass = GClass1053;
 
 namespace FOVFix
 {
@@ -29,7 +25,9 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass3105).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+            return typeof(GClass3176).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+            // IEnumerable<EFT.InventoryLogic.Item> GClass????::GetAllItemsFromGridItemCollectionNonAlloc(GClass2924, List<EFT.InventoryLogic.Item>)
+            // very good distinct name to search for
         }
 
         [PatchPostfix]
@@ -111,14 +109,14 @@ namespace FOVFix
         }
 
         [PatchPostfix]
-        private static void PostFix(NumberSlider ____fov, GClass1040 ___gclass1040_0)
+        private static void PostFix(NumberSlider ____fov, GameSettingsClass gameSettings)
         {
             if (Plugin.MinBaseFOV.Value > Plugin.MaxBaseFOV.Value)
             {
                 Plugin.MinBaseFOV.Value = 50;
                 Plugin.MaxBaseFOV.Value = 75;
             }
-            SettingsTab.BindNumberSliderToSetting(____fov, ___gclass1040_0.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
+            SettingsTab.BindNumberSliderToSetting(____fov, gameSettings.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
         }
     }
 
@@ -127,7 +125,8 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Class1690).GetMethod("method_0");
+            return typeof(Class1718).GetMethod("method_0");
+            // subclass of this class: Bsg.GameSettings.GameSetting<Boolean> GClass????::StreamerModeEnabled
         }
 
         [PatchPostfix]
