@@ -58,7 +58,7 @@ namespace FOVFix
 
     //can use to display aproximate IRL magnificaiton
     public class OpticPanelPatch : ModulePatch
-    { 
+    {
         protected override MethodBase GetTargetMethod()
         {
             return typeof(AnimatedTextPanel).GetMethod("Show", BindingFlags.Instance | BindingFlags.Public);
@@ -83,18 +83,18 @@ namespace FOVFix
         [PatchPostfix]
         private static void Patch(ScopeZoomHandler __instance, SightComponent ___sightComponent_0, ref float ___float_1, ref float ___float_2)
         {
-/*
-            float scrollDelta = Input.mouseScrollDelta.y * Plugin.test4.Value;
-            if (scrollDelta != 0f)
-            {
-                HandleZoomInput(scrollDelta);
-            }
-            float zoom = Mathf.Clamp(Plugin.test1.Value, __instance.Single_1, __instance.Single_0); //
-            ___float_1 = zoom;
-            ___float_2 = zoom;
-            ___sightComponent_0.ScopeZoomValue = zoom;
-            __instance.method_9();
-*/
+            /*
+                        float scrollDelta = Input.mouseScrollDelta.y * Plugin.test4.Value;
+                        if (scrollDelta != 0f)
+                        {
+                            HandleZoomInput(scrollDelta);
+                        }
+                        float zoom = Mathf.Clamp(Plugin.test1.Value, __instance.Single_1, __instance.Single_0); //
+                        ___float_1 = zoom;
+                        ___float_2 = zoom;
+                        ___sightComponent_0.ScopeZoomValue = zoom;
+                        __instance.method_9();
+            */
 
             //Logger.LogWarning($"possible scope zoom: {Plugin.FovController.CurrentScopeFOV} , real scope zoom: {___sightComponent_0.ScopeZoomValue}");
         }
@@ -323,7 +323,7 @@ namespace FOVFix
                 float camZ = __instance.IsAiming && !isOptic && isPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !isOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && isOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
                 camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
                 camZ = __instance.IsAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
-                camZ = __instance.IsAiming ? camZ + Plugin.FovController.ScrollCameraOffset: camZ;
+                camZ = __instance.IsAiming ? camZ + Plugin.FovController.ScrollCameraOffset : camZ;
 
                 float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
                 float smoothTime = isOptic ? Plugin.OpticAimSpeed.Value * dt : isPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
@@ -417,6 +417,31 @@ namespace FOVFix
         {
             ____ribcageScaleCompensated = Plugin.FovScale.Value;
             return false;
+        }
+    }
+
+    //BSG changed the 3rd person ADS animation. It's enabled for 1st person too for some reason, making ADS camera movement janky.
+    public class SetPlayerAimingPatch : ModulePatch
+    {
+        protected override MethodBase GetTargetMethod()
+        {
+            return AccessTools.Method(typeof(Player.FirearmController), "SetAim", new[] { typeof(bool) });
+        }
+
+        [PatchPostfix]
+        public static void PatchPostfix(Player.FirearmController __instance, bool value)
+        {
+            if (__instance == null) return; // nre fix
+
+            Player player = __instance.GetComponent<Player>();
+            bool isYourPlayer = player.IsYourPlayer;
+            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
+            EPointOfView pov = pwa.PointOfView;
+
+            if (isYourPlayer && pov == EPointOfView.FirstPerson)
+            {
+                player.MovementContext.PlayerAnimator.SetAiming(false);
+            }
         }
     }
 
