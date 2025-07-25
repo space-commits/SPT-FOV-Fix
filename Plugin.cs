@@ -9,7 +9,7 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "3.0.3";
+        private const string _pluginVersion = "3.1.1";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
 
@@ -182,6 +182,7 @@ namespace FOVFix
             new AimingSensitivityPatch().Enable();
             new ScopeSensitivityPatch().Enable();
             new CloneItemPatch().Enable();
+            new SetPlayerAimingPatch().Enable();
             if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
 
         }
