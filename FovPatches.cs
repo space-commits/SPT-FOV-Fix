@@ -407,16 +407,45 @@ namespace FOVFix
     //changes "HUD FOV", or how the player model is rendered
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
+        private static Player player;
+        
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player).GetMethod("CalculateScaleValueByFov");
         }
 
-        [PatchPrefix]
-        public static bool Prefix(ref float ____ribcageScaleCompensated)
+        public static void UpdateRibcageScale(float newScale)
         {
-            ____ribcageScaleCompensated = Plugin.FovScale.Value;
-            return false;
+            if (player != null)
+            {
+                player.RibcageScaleCurrentTarget = newScale;
+            }
+        }
+
+        public static void RestoreScale()
+        {
+            if (player != null)
+            {
+                player.CalculateScaleValueByFov(CameraClass.Instance.Fov);
+                player.SetCompensationScale(true);
+            }
+        }
+
+        [PatchPrefix]
+        public static bool Prefix(Player __instance, ref float ____ribcageScaleCompensated)
+        {
+            float scale = Plugin.FovScale.Value;
+            player = __instance;
+
+            if (Plugin.EnableFovScaleFix.Value)
+            {
+                ____ribcageScaleCompensated = scale;
+                UpdateRibcageScale(scale);
+            
+                return false;
+            }
+
+            return true;
         }
     }
 
