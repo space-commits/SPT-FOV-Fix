@@ -407,8 +407,6 @@ namespace FOVFix
     //changes "HUD FOV", or how the player model is rendered
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
-        private static Player player;
-        
         protected override MethodBase GetTargetMethod()
         {
             return typeof(Player).GetMethod("CalculateScaleValueByFov");
@@ -416,6 +414,8 @@ namespace FOVFix
 
         public static void UpdateRibcageScale(float newScale)
         {
+            Player player = Singleton<GameWorld>.Instance.MainPlayer;
+            
             if (player != null)
             {
                 player.RibcageScaleCurrentTarget = newScale;
@@ -424,6 +424,8 @@ namespace FOVFix
 
         public static void RestoreScale()
         {
+            Player player = Singleton<GameWorld>.Instance.MainPlayer;
+            
             if (player != null)
             {
                 player.CalculateScaleValueByFov(CameraClass.Instance.Fov);
@@ -435,7 +437,6 @@ namespace FOVFix
         public static bool Prefix(Player __instance, ref float ____ribcageScaleCompensated)
         {
             float scale = Plugin.FovScale.Value;
-            player = __instance;
 
             if (Plugin.EnableFovScaleFix.Value)
             {
