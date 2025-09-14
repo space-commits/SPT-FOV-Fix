@@ -157,8 +157,8 @@ namespace FOVFix
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
             HudFOV = Config.Bind<float>(misc, "Hud FOV", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.1f, 0.1f), new ConfigurationManagerAttributes { Order = 20 }));
-            EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Requires Game Restart. Lower Value = More Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
-            FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Requires Game Restart. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
+            EnableFovScaleFix = Config.Bind<bool>(misc, "Enable FOV Scale Fix", false, new ConfigDescription("Lower Value = More Viewmodel Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
+            FovScale = Config.Bind<float>(misc, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
             MaxBaseFOV = Config.Bind<int>(misc, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
             MinBaseFOV = Config.Bind<int>(misc, "Min Base FOV", 30, new ConfigDescription("Min Selectable Main Camera FOVIn Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 1 }));
 
@@ -175,6 +175,26 @@ namespace FOVFix
             PistolAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Pistol Aim Speed Z-Axis", 0.1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             UnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Z-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
 
+            EnableFovScaleFix.SettingChanged += (obj, args) =>
+            {
+                if (EnableFovScaleFix.Value)
+                {
+                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                }
+                else
+                {
+                    CalculateScaleValueByFovPatch.RestoreScale();
+                }
+            };
+            
+            FovScale.SettingChanged += (obj, args) =>
+            {
+                if (EnableFovScaleFix.Value)
+                {
+                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                }
+            };
+            
             Utils.Logger = Logger;  
             FovController = new FovController();
 
@@ -187,7 +207,7 @@ namespace FOVFix
             new ScopeSensitivityPatch().Enable();
             new CloneItemPatch().Enable();
             new SetPlayerAimingPatch().Enable();
-            if (Plugin.EnableFovScaleFix.Value) new CalculateScaleValueByFovPatch().Enable();
+            new CalculateScaleValueByFovPatch().Enable();
 
         }
 

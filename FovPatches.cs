@@ -419,11 +419,41 @@ namespace FOVFix
             return typeof(Player).GetMethod("CalculateScaleValueByFov");
         }
 
-        [PatchPrefix]
-        public static bool Prefix(ref float ____ribcageScaleCompensated)
+        public static void UpdateRibcageScale(float newScale)
         {
-            ____ribcageScaleCompensated = Plugin.FovScale.Value;
-            return false;
+            Player player = Singleton<GameWorld>.Instance.MainPlayer;
+            
+            if (player != null)
+            {
+                player.RibcageScaleCurrentTarget = newScale;
+            }
+        }
+
+        public static void RestoreScale()
+        {
+            Player player = Singleton<GameWorld>.Instance.MainPlayer;
+            
+            if (player != null)
+            {
+                player.CalculateScaleValueByFov(CameraClass.Instance.Fov);
+                player.SetCompensationScale(true);
+            }
+        }
+
+        [PatchPrefix]
+        public static bool Prefix(Player __instance, ref float ____ribcageScaleCompensated)
+        {
+            float scale = Plugin.FovScale.Value;
+
+            if (Plugin.EnableFovScaleFix.Value)
+            {
+                ____ribcageScaleCompensated = scale;
+                UpdateRibcageScale(scale);
+            
+                return false;
+            }
+
+            return true;
         }
     }
 
