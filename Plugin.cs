@@ -47,10 +47,10 @@ namespace FOVFix
 
         public static ConfigEntry<float> AimSpeedX { get; set; }
         public static ConfigEntry<float> UnAimSpeedX { get; set; }
-        public static ConfigEntry<float> AimSpeedY { get; set; }
+        public static ConfigEntry<float> RifleAimSpeedY { get; set; }
         public static ConfigEntry<float> PistolAimSpeedY { get; set; }
         public static ConfigEntry<float> UnAimSpeedY { get; set; }
-        public static ConfigEntry<float> AimSpeedZ { get; set; }
+        public static ConfigEntry<float> RifleAimSpeedZ { get; set; }
         public static ConfigEntry<float> PistolAimSpeedZ { get; set; }
         public static ConfigEntry<float> UnAimSpeedZ { get; set; }
 
@@ -168,11 +168,11 @@ namespace FOVFix
 
             AimSpeedX = Config.Bind<float>(cameraSpeed, "Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             UnAimSpeedX = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed X-Axis", 5.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
-            AimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            PistolAimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Pistol Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            RifleAimSpeedY = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            PistolAimSpeedY = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             UnAimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Y-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
-            AimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Aim Speed Z-Axis", 3f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            PistolAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Pistol Aim Speed Z-Axis", 0.1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            RifleAimSpeedZ = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed Z-Axis", 3f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            PistolAimSpeedZ = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed Z-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             UnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Z-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
 
             EnableFovScaleFix.SettingChanged += (obj, args) =>
