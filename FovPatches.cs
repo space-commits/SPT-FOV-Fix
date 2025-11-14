@@ -12,13 +12,13 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using static GClass1053;
+using static GClass1085;
 //using FCSubClass = EFT.Player.FirearmController.GClass1780;
 // System.String EFT.Player/FirearmController/GClass????::SHELLPORT_TRANSFORM_NAME
 //using InputClass1 = Class1604;
 // EFT.IFirearmHandsController Class????::ifirearmHandsController_0
 //using InputClass2 = Class1579;
-using GameSettingsClass = GClass1053;
+using GameSettingsClass = GClass1085;
 
 namespace FOVFix
 {
@@ -26,7 +26,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass3176).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+            return typeof(GClass3380).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
             // IEnumerable<EFT.InventoryLogic.Item> GClass????::GetAllItemsFromGridItemCollectionNonAlloc(GClass2924, List<EFT.InventoryLogic.Item>)
             // very good distinct name to search for
         }
@@ -126,7 +126,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Class1718).GetMethod("method_0");
+            return typeof(Class1841).GetMethod("method_0");
             // subclass of this class: Bsg.GameSettings.GameSetting<Boolean> GClass????::StreamerModeEnabled
         }
 
