@@ -14,7 +14,7 @@ using static EFT.Player;
 
 namespace FOVFix
 {
-
+    //don't remember its purpose...
     public static class WeaponClassExtension
     {
         private static readonly ConditionalWeakTable<Item, StrongBox<string>> _customPropertyValues = new ConditionalWeakTable<Item, StrongBox<string>>();

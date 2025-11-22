@@ -22,6 +22,7 @@ using GameSettingsClass = GClass1053;
 
 namespace FOVFix
 {
+    //don't remember its purpose...
     public class CloneItemPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -117,7 +118,9 @@ namespace FOVFix
                 Plugin.MinBaseFOV.Value = 50;
                 Plugin.MaxBaseFOV.Value = 75;
             }
+#pragma warning disable CS0618 // Type or member is obsolete
             SettingsTab.BindNumberSliderToSetting(____fov, gameSettings.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
+#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 
@@ -257,7 +260,6 @@ namespace FOVFix
         private static FieldInfo _playerField;
         private static FieldInfo _fcField;
 
-        private const float CAM_OFFSET = 0.04f;
         private static float _yPos = 0f;
         private static float _xStanceCameraSpeedFactor = 1f;
         private static float _yStanceCameraSpeedFactor = 1f;
@@ -272,12 +274,12 @@ namespace FOVFix
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("LerpCamera", BindingFlags.Instance | BindingFlags.Public);
         }
 
-        //this is pretty much redundant for pistols on the Y axis specifically
+        //this is redundant if doing gun to camera ADS, but might be good for left shoulder and things like that
         private static void DoStanceSmoothing(bool isAltPistol)
         {
-            if (Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f)
+            if ((Plugin.RealCompat.StanceBlenderTarget <= 0f && Plugin.RealCompat.StanceBlenderValue > 0f) || Plugin.RealCompat.IsLeftShoulder || Plugin.RealCompat.IsResettingShoulder)
             {
-                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.5f, 1f);
+                _xStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.7f, 1f);
                 _yStanceCameraSpeedFactor = Mathf.MoveTowards(_xStanceCameraSpeedFactor, 0.75f, 1f); 
                 _zStanceCameraSpeedFactor = Mathf.MoveTowards(_zStanceCameraSpeedFactor, 0.85f, 1f);
             }
@@ -297,8 +299,30 @@ namespace FOVFix
             }
         }
 
+        private static float SetBaseCamZOffset(ProceduralWeaponAnimation __instance, float camZ, bool treatAsPistol, bool isOptic) 
+        {
+            return 
+                __instance.IsAiming && !isOptic && treatAsPistol ? camZ - Plugin.PistolOffset.Value :
+                __instance.IsAiming && !isOptic ? camZ - Plugin.NonOpticOffset.Value :
+                __instance.IsAiming && isOptic ? camZ - Plugin.OpticPosOffset.Value :
+                camZ;
+        }
+
+        private static float GetLeftShoulderZoffset(bool shouldMoveGunToCamera, bool isPistol, bool isAltPistol, bool isDoingLeftShoulder) 
+        {
+            float offset = shouldMoveGunToCamera && isDoingLeftShoulder ? (isAltPistol ? Plugin.PistolLeftShoulderOffset.Value : Plugin.RifleLeftShoulderOffset.Value) : 0f;
+            offset += isDoingLeftShoulder ? (isPistol ? Plugin.PistolLeftShoulderOffset.Value : Plugin.RifleLeftShoulderOffset.Value) : 0f;
+            return offset;
+        }
+
         [PatchPrefix]
-        private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier, float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec, Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload, Quaternion ____cameraIdenity, Quaternion ____rotationOffset)
+        private static bool Prefix(EFT.Animations.ProceduralWeaponAnimation __instance, float dt, float ____overweightAimingMultiplier,
+            float ____aimingSpeed, float ____aimSwayStrength, Player.ValueBlender
+            ____aimSwayBlender, Vector3 ____aimSwayDirection, Vector3 ____headRotationVec,
+            Vector3 ____vCameraTarget, Player.ValueBlenderDelay ____tacticalReload,
+            Quaternion ____cameraIdenity, Quaternion ____rotationOffset, Vector2 ____cameraShiftToLineOfSight,
+            float ____lineOfSightDeltaAngle, Vector3 ____shotDirection, bool ____adjustCollimatorsToTrajectory,
+            Transform ____bone0, Transform ____bone1)
         {
             FirearmController firearmController = (FirearmController)_fcField.GetValue(__instance);
             if (firearmController == null) return true;
@@ -311,9 +335,14 @@ namespace FOVFix
                 bool isMachinePistol = (!realismIsNull && Plugin.RealCompat.IsMachinePistol);
                 bool isPistol = isMachinePistol || Plugin.FovController.IsPistol;
                 bool treatAsPistol = isPistol && (realismIsNull || (!realismIsNull && !Plugin.RealCompat.HasShoulderContact));
-                bool isAltPistol = !realismIsNull && treatAsPistol && Plugin.RealCompat.RealismAltPistol;
+                bool isAltPistol = !realismIsNull && treatAsPistol && Plugin.RealCompat.DoAltPistol;
+                bool isAltRifle = !realismIsNull && !treatAsPistol && Plugin.RealCompat.DoAltRifle;
                 bool isOptic = __instance.CurrentScope.IsOptic;
                 float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
+                bool isRealLeftShoulder = !realismIsNull && Plugin.RealCompat.IsLeftShoulder;
+                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.Boolean_0;  //boolean_0 detects if in BSG's left stance
+                bool canMoveGunToCamera = !realismIsNull && (isAltPistol || isAltRifle); 
+                float leftShoulderZOffset = GetLeftShoulderZoffset(canMoveGunToCamera, isPistol, isAltPistol, isDoingLeftShoulder);
 
                 _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing(isAltPistol);
@@ -324,25 +353,34 @@ namespace FOVFix
                 float localY = localPosition.y;
                 float localZ = localPosition.z;
 
-                float camX = ____vCameraTarget.x;
-                float camY = isAltPistol ? Mathf.Max(____vCameraTarget.y, CAM_OFFSET) : ____vCameraTarget.y;
-                float leftShoulderModi = __instance.LeftStance ? Plugin.LeftShoulderOffset.Value : 0f;
-                float camZ = __instance.IsAiming && !isOptic && treatAsPistol ? ____vCameraTarget.z - Plugin.PistolOffset.Value : __instance.IsAiming && !isOptic ? ____vCameraTarget.z - Plugin.NonOpticOffset.Value : __instance.IsAiming && isOptic ? ____vCameraTarget.z - Plugin.OpticPosOffset.Value : ____vCameraTarget.z;
-                camZ = __instance.IsAiming ? camZ + leftShoulderModi : camZ;
+                float camXOffset = Plugin.CameraXOffset.Value; //is this conistent across resolutions and FOV??
+                float camYOffset = Plugin.CameraYOffset.Value;
+                float camZOffset = Plugin.CameraZOffset.Value;
+                
+                float camX = !isDoingLeftShoulder && canMoveGunToCamera ? camXOffset : ____vCameraTarget.x;
+                float camY = canMoveGunToCamera ? camYOffset : ____vCameraTarget.y;
+
+                //should be an option to allow camera to move to Z target
+                float camZ = canMoveGunToCamera ? 
+                    SetBaseCamZOffset(__instance, camZOffset, treatAsPistol, isOptic) :  
+                    SetBaseCamZOffset(__instance, ____vCameraTarget.z, treatAsPistol, isOptic);
+
+                camZ = __instance.IsAiming ? camZ + leftShoulderZOffset : camZ;
                 camZ = __instance.IsAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
                 camZ = __instance.IsAiming ? camZ + Plugin.FovController.ScrollCameraOffset : camZ;
 
                 float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
                 float smoothTime = isOptic ? Plugin.OpticAimSpeed.Value * dt : treatAsPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
 
-                float yAimMulti = treatAsPistol ? Plugin.PistolAimSpeedY.Value : Plugin.RifleAimSpeedY.Value;
-                float zAimMulti = treatAsPistol ? Plugin.PistolAimSpeedZ.Value : Plugin.RifleAimSpeedZ.Value;
+                float xAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedX.Value : Plugin.RifleAimSpeedX.Value;
+                float yAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedY.Value : Plugin.RifleAimSpeedY.Value;
+                float zAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedZ.Value : Plugin.RifleAimSpeedZ.Value;
 
-                float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * Plugin.AimSpeedX.Value : Plugin.UnAimSpeedX.Value;
+                float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * xAimBaseMulti : Plugin.UnAimSpeedX.Value;
                 aimFactorX *= _xStanceCameraSpeedFactor;
-                float aimFactorY = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * yAimMulti : Plugin.UnAimSpeedY.Value;
+                float aimFactorY = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * yAimBaseMulti : Plugin.UnAimSpeedY.Value;
                 aimFactorY *= _yStanceCameraSpeedFactor;
-                float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimMulti : Plugin.UnAimSpeedZ.Value;
+                float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti : Plugin.UnAimSpeedZ.Value;
                 aimFactorZ *= _zStanceCameraSpeedFactor;
 
                 float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX * _collsionCameraSpeed);
@@ -360,13 +398,16 @@ namespace FOVFix
                     }
                 }
 
-                if (!realismIsNull && Plugin.RealCompat.RealismAltRifle && !treatAsPistol)
+                //I think alt rifle was attempting to do what I was did for pistols, but in a way that will never work all that well
+         /*       if (!realismIsNull && Plugin.RealCompat.RealismAltRifle && !treatAsPistol)
                 {
                     float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * 1f : Mathf.Max(newLocalPosition.y, -0.015f); //forgot to insert a value in place of 1...
                     float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 
                     _yPos = target;
                 }
-                else _yPos = newLocalPosition.y;
+                else _yPos = newLocalPosition.y;*/
+
+                _yPos = newLocalPosition.y;
 
                 __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, _yPos, newLocalPosition.z);
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
@@ -375,7 +416,8 @@ namespace FOVFix
                 __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
 
                 //hud fov
-                __instance.HandsContainer.CameraOffset = new Vector3(CAM_OFFSET, CAM_OFFSET, Plugin.HudFOV.Value); //no idea if I made up 0.04 or not.
+                //this won't apply if doing the realism weapon to camera stuff, camera needs to be able to move to adjust to it
+                __instance.HandsContainer.CameraOffset = new Vector3(camXOffset, camYOffset, camZOffset); //no idea if I made up 0.04 or not.
 
                 return false;
             }
