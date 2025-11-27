@@ -12,7 +12,7 @@ namespace FOVFix
         public static string CompactCollimator = "55818acf4bdc2dde698b456b";
         public static string Collimator = "55818ad54bdc2ddc698b4569";
         public static string AssaultScope = "55818add4bdc2d5b648b456f";
-        public static string Scope = "55818ae44bdc2dde698b456c";
+        public static string OpticScope = "55818ae44bdc2dde698b456c";
         public static string IronSight = "55818ac54bdc2d5b648b456e";
         public static string SpecialScope = "55818aeb4bdc2ddc698b456a";
 
