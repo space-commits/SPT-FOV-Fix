@@ -353,10 +353,10 @@ namespace FOVFix
                 float localY = localPosition.y;
                 float localZ = localPosition.z;
 
-                float camXOffset = Plugin.CameraXOffset.Value; //is this conistent across resolutions and FOV??
-                float camYOffset = Plugin.CameraYOffset.Value;
-                float camZOffset = Plugin.CameraZOffset.Value;
-                
+                float camXOffset = treatAsPistol ? Plugin.PistolCameraXOffset.Value : Plugin.RifleCameraXOffset.Value; 
+                float camYOffset = treatAsPistol ? Plugin.PistolCameraYOffset.Value : Plugin.RifleCameraYOffset.Value;
+                float camZOffset = treatAsPistol ? Plugin.PistolCameraZOffset.Value : Plugin.RifleCameraZOffset.Value;
+
                 float camX = !isDoingLeftShoulder && canMoveGunToCamera ? camXOffset : ____vCameraTarget.x;
                 float camY = canMoveGunToCamera ? camYOffset : ____vCameraTarget.y;
 
@@ -397,15 +397,6 @@ namespace FOVFix
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
                 }
-
-                //I think alt rifle was attempting to do what I was did for pistols, but in a way that will never work all that well
-         /*       if (!realismIsNull && Plugin.RealCompat.RealismAltRifle && !treatAsPistol)
-                {
-                    float limit = newLocalPosition.y < 0f && __instance.IsAiming ? camY * 1f : Mathf.Max(newLocalPosition.y, -0.015f); //forgot to insert a value in place of 1...
-                    float target = Mathf.Max(newLocalPosition.y, -0.015f); //!__instance.IsAiming ? Mathf.Max(newLocalPosition.y, -0.015f) : 
-                    _yPos = target;
-                }
-                else _yPos = newLocalPosition.y;*/
 
                 _yPos = newLocalPosition.y;
 

@@ -7,7 +7,7 @@
     <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-	  <OutDir>F:\SP EFT\SPT-311\BepInEx\plugins\</OutDir>
+	  <OutDir>F:\SP EFT\SPT-406\BepInEx\plugins\</OutDir>
 	  <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 	  <CopyProjectReferencesToOutputDirectory>false</CopyProjectReferencesToOutputDirectory>
   </PropertyGroup>

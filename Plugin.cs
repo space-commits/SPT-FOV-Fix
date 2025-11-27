@@ -9,7 +9,7 @@ namespace FOVFix
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, _pluginVersion)]
     public class Plugin : BaseUnityPlugin
     {
-        private const string _pluginVersion = "3.1.1";
+        private const string _pluginVersion = "4.0.0";
         private bool _detectedMods = false;
         public static bool RealismIsPresent = false;
 
@@ -93,9 +93,12 @@ namespace FOVFix
         public static ConfigEntry<float> FovScale { get; set; }
         public static ConfigEntry<bool> EnableFovScaleFix { get; set; }
 
-        public static ConfigEntry<float> CameraXOffset { get; set; }
-        public static ConfigEntry<float> CameraYOffset { get; set; }
-        public static ConfigEntry<float> CameraZOffset { get; set; }
+        public static ConfigEntry<float> RifleCameraXOffset { get; set; }
+        public static ConfigEntry<float> RifleCameraYOffset { get; set; }
+        public static ConfigEntry<float> RifleCameraZOffset { get; set; }
+        public static ConfigEntry<float> PistolCameraXOffset { get; set; }
+        public static ConfigEntry<float> PistolCameraYOffset { get; set; }
+        public static ConfigEntry<float> PistolCameraZOffset { get; set; }
 
         public static FovController FovController { get; set; }
         public static RealismCompat RealCompat { get; set; } 
@@ -161,10 +164,15 @@ namespace FOVFix
             TwelveSensMulti = Config.Bind<float>(sens, "12x Sens Multi", 0.03f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 2 }));
             HighSensMulti = Config.Bind<float>(sens, "High Sens Multi", 0.01f, new ConfigDescription("", new AcceptableValueRange<float>(0.001f, 2f), new ConfigurationManagerAttributes { Order = 1 }));
 
-            CameraXOffset = Config.Bind<float>(cameraSettings, "Camera X Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
-            CameraYOffset = Config.Bind<float>(cameraSettings, "Camera Y Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
-            CameraZOffset = Config.Bind<float>(cameraSettings, "Camera Z Offset (Formerly Hud FOV)", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
-           
+            RifleCameraXOffset = Config.Bind<float>(cameraSettings, "Rifle Camera X Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+            RifleCameraYOffset = Config.Bind<float>(cameraSettings, "Rifle Camera Y Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+            RifleCameraZOffset = Config.Bind<float>(cameraSettings, "Rifle Camera Z Offset (Formerly Hud FOV)", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+
+            PistolCameraXOffset = Config.Bind<float>(cameraSettings, "Pistol Camera X Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+            PistolCameraYOffset = Config.Bind<float>(cameraSettings, "Pistol Camera Y Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+            PistolCameraZOffset = Config.Bind<float>(cameraSettings, "Pistol Camera Z Offset (Formerly Hud FOV)", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
+
+
             EnableFovScaleFix = Config.Bind<bool>(cameraSettings, "Enable FOV Scale Fix", false, new ConfigDescription("Lower Value = More Viewmodel Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
             MaxBaseFOV = Config.Bind<int>(cameraSettings, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
