@@ -299,12 +299,12 @@ namespace FOVFix
             }
         }
 
-        private static float SetBaseCamZOffset(ProceduralWeaponAnimation __instance, float camZ, bool treatAsPistol, bool isOptic) 
+        private static float SetBaseCamZOffset(bool isAiming, float camZ, bool treatAsPistol, bool isOptic) 
         {
-            return 
-                __instance.IsAiming && !isOptic && treatAsPistol ? camZ - Plugin.PistolOffset.Value :
-                __instance.IsAiming && !isOptic ? camZ - Plugin.NonOpticOffset.Value :
-                __instance.IsAiming && isOptic ? camZ - Plugin.OpticPosOffset.Value :
+            return
+                isAiming && !isOptic && treatAsPistol ? camZ - Plugin.PistolOffset.Value :
+                isAiming && !isOptic ? camZ - Plugin.NonOpticOffset.Value :
+                isAiming && isOptic ? camZ - Plugin.OpticPosOffset.Value :
                 camZ;
         }
 
@@ -340,9 +340,11 @@ namespace FOVFix
                 bool isOptic = __instance.CurrentScope.IsOptic;
                 float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
                 bool isRealLeftShoulder = !realismIsNull && Plugin.RealCompat.IsLeftShoulder;
-                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.Boolean_0;  //boolean_0 detects if in BSG's left stance
+                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.Boolean_0;
                 bool canMoveGunToCamera = !realismIsNull && (isAltPistol || isAltRifle); 
                 float leftShoulderZOffset = GetLeftShoulderZoffset(canMoveGunToCamera, isPistol, isAltPistol, isDoingLeftShoulder);
+
+                bool isAiming = __instance.IsAiming; //  
 
                 _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing(isAltPistol);
@@ -365,9 +367,9 @@ namespace FOVFix
                     SetBaseCamZOffset(__instance, camZOffset, treatAsPistol, isOptic) :  
                     SetBaseCamZOffset(__instance, ____vCameraTarget.z, treatAsPistol, isOptic);
 
-                camZ = __instance.IsAiming ? camZ + leftShoulderZOffset : camZ;
-                camZ = __instance.IsAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
-                camZ = __instance.IsAiming ? camZ + Plugin.FovController.ScrollCameraOffset : camZ;
+                camZ = isAiming ? camZ + leftShoulderZOffset : camZ;
+                camZ = isAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
+                camZ = isAiming ? camZ + Plugin.FovController.ScrollCameraOffset : camZ;
 
                 float rifleSpeed = smoothPatrolStanceADS ? 0.5f * Plugin.CameraAimSpeed.Value : Plugin.CameraAimSpeed.Value;
                 float smoothTime = isOptic ? Plugin.OpticAimSpeed.Value * dt : treatAsPistol ? Plugin.PistolAimSpeed.Value * dt : rifleSpeed * dt;
@@ -376,11 +378,11 @@ namespace FOVFix
                 float yAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedY.Value : Plugin.RifleAimSpeedY.Value;
                 float zAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedZ.Value : Plugin.RifleAimSpeedZ.Value;
 
-                float aimFactorX = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * xAimBaseMulti : Plugin.UnAimSpeedX.Value;
+                float aimFactorX = isAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * xAimBaseMulti : Plugin.UnAimSpeedX.Value;
                 aimFactorX *= _xStanceCameraSpeedFactor;
-                float aimFactorY = __instance.IsAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * yAimBaseMulti : Plugin.UnAimSpeedY.Value;
+                float aimFactorY = isAiming ? (____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier) * yAimBaseMulti : Plugin.UnAimSpeedY.Value;
                 aimFactorY *= _yStanceCameraSpeedFactor;
-                float aimFactorZ = __instance.IsAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti : Plugin.UnAimSpeedZ.Value;
+                float aimFactorZ = isAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti * ____aimingSpeed : Plugin.UnAimSpeedZ.Value;
                 aimFactorZ *= _zStanceCameraSpeedFactor;
 
                 float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX * _collsionCameraSpeed);
@@ -392,7 +394,7 @@ namespace FOVFix
                 if (____aimSwayStrength > 0f)
                 {
                     float blendValue = ____aimSwayBlender.Value;
-                    if (__instance.IsAiming && blendValue > 0f)
+                    if (isAiming && blendValue > 0f)
                     {
                         __instance.HandsContainer.SwaySpring.ApplyVelocity(____aimSwayDirection * blendValue);
                     }
@@ -418,22 +420,22 @@ namespace FOVFix
 
     public class PwaWeaponParamsPatch : ModulePatch
     {
-        private static FieldInfo playerField;
-        private static FieldInfo fcField;
+        private static FieldInfo _playerField;
+        private static FieldInfo _fcField;
 
         protected override MethodBase GetTargetMethod()
         {
-            playerField = AccessTools.Field(typeof(FirearmController), "_player");
-            fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
+            _playerField = AccessTools.Field(typeof(FirearmController), "_player");
+            _fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
             return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_23", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPostfix]
         private static void PatchPostfix(ref EFT.Animations.ProceduralWeaponAnimation __instance)
         {
-            FirearmController firearmController = (FirearmController)fcField.GetValue(__instance);
+            FirearmController firearmController = (FirearmController)_fcField.GetValue(__instance);
             if (firearmController == null) return;
-            Player player = (Player)playerField.GetValue(firearmController);
+            Player player = (Player)_playerField.GetValue(firearmController);
             if (player != null && player.IsYourPlayer)
             {
                 //cloned weapon appears here
@@ -446,7 +448,8 @@ namespace FOVFix
         }
     }
 
-    //changes "HUD FOV", or how the player model is rendered
+    //TODO: this doesn't set FOV scale on new raid
+    //changes FOV Scale of the player model, how the player model is rendered
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
         protected override MethodBase GetTargetMethod()
@@ -495,16 +498,17 @@ namespace FOVFix
     //BSG changed the 3rd person ADS animation. It's enabled for 1st person too for some reason, making ADS camera movement janky.
     public class SetPlayerAimingPatch : ModulePatch
     {
+        private static FieldInfo _playerField;
+
         protected override MethodBase GetTargetMethod()
         {
+            _playerField = AccessTools.Field(typeof(FirearmController), "_player");
             return AccessTools.Method(typeof(Player.FirearmController), "SetAim", new[] { typeof(bool) });
         }
 
         [PatchPostfix]
         public static void PatchPostfix(Player.FirearmController __instance, bool value)
         {
-            if (__instance == null) return; // nre fix
-
             Player player = __instance.GetComponent<Player>();
             bool isYourPlayer = player.IsYourPlayer;
             ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
