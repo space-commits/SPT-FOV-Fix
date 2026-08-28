@@ -364,8 +364,8 @@ namespace FOVFix
 
                 //should be an option to allow camera to move to Z target
                 float camZ = canMoveGunToCamera ? 
-                    SetBaseCamZOffset(__instance, camZOffset, treatAsPistol, isOptic) :  
-                    SetBaseCamZOffset(__instance, ____vCameraTarget.z, treatAsPistol, isOptic);
+                    SetBaseCamZOffset(isAiming, camZOffset, treatAsPistol, isOptic) :  
+                    SetBaseCamZOffset(isAiming, ____vCameraTarget.z, treatAsPistol, isOptic);
 
                 camZ = isAiming ? camZ + leftShoulderZOffset : camZ;
                 camZ = isAiming && isMachinePistol ? camZ + (-0.1f) : camZ;
