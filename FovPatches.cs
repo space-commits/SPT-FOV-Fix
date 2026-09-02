@@ -10,15 +10,15 @@ using RealismMod;
 using SPT.Reflection.Patching;
 using System;
 using System.Reflection;
+using EFT.Settings;
 using UnityEngine;
 using static EFT.Player;
-using static GClass1085;
 //using FCSubClass = EFT.Player.FirearmController.GClass1780;
 // System.String EFT.Player/FirearmController/GClass????::SHELLPORT_TRANSFORM_NAME
 //using InputClass1 = Class1604;
 // EFT.IFirearmHandsController Class????::ifirearmHandsController_0
 //using InputClass2 = Class1579;
-using GameSettingsClass = GClass1085;
+using GameSettingsClass = EFT.Settings.Game.GameSettingsGroup;
 
 namespace FOVFix
 {
@@ -27,7 +27,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass3380).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+            return typeof(ItemExtensions).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
             // IEnumerable<EFT.InventoryLogic.Item> GClass????::GetAllItemsFromGridItemCollectionNonAlloc(GClass2924, List<EFT.InventoryLogic.Item>)
             // very good distinct name to search for
         }
@@ -129,7 +129,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Class1841).GetMethod("method_0");
+            return typeof(GameSettingsClass.CG_Ctor).GetMethod("method_0");
             // subclass of this class: Bsg.GameSettings.GameSetting<Boolean> GClass????::StreamerModeEnabled
         }
 
@@ -340,14 +340,14 @@ namespace FOVFix
                 bool isOptic = __instance.CurrentScope.IsOptic;
                 float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
                 bool isRealLeftShoulder = !realismIsNull && Plugin.RealCompat.IsLeftShoulder;
-                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.Boolean_0;  //boolean_0 detects if in BSG's left stance
+                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.LeftStance;  //boolean_0 detects if in BSG's left stance
                 bool canMoveGunToCamera = !realismIsNull && (isAltPistol || isAltRifle); 
                 float leftShoulderZOffset = GetLeftShoulderZoffset(canMoveGunToCamera, isPistol, isAltPistol, isDoingLeftShoulder);
 
                 _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing(isAltPistol);
 
-                float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
+                float headBob = Singleton<SettingsManager>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 float localX = localPosition.x;
                 float localY = localPosition.y;
@@ -403,7 +403,7 @@ namespace FOVFix
                 __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, _yPos, newLocalPosition.z);
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
                 __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, headBob * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
-                __instance.method_19(dt);
+                __instance.AddHandRecoilRotateToCamera(dt);
                 __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
 
                 //hud fov
@@ -425,7 +425,7 @@ namespace FOVFix
         {
             playerField = AccessTools.Field(typeof(FirearmController), "_player");
             fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
-            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_23", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("OnAimOrPoseChanged", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPostfix]
@@ -470,7 +470,7 @@ namespace FOVFix
             
             if (player != null)
             {
-                player.CalculateScaleValueByFov(CameraClass.Instance.Fov);
+                player.CalculateScaleValueByFov(CameraManager.Instance.Fov);
                 player.SetCompensationScale(true);
             }
         }

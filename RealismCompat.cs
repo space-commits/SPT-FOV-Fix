@@ -35,7 +35,7 @@ namespace FOVFix
             IsColliding = RealismMod.StanceController.IsColliding;
             CameraMovmentForCollisionSpeed = RealismMod.StanceController.CameraMovmentForCollisionSpeed;
             IsLeftShoulder = RealismMod.StanceController.IsLeftShoulder;
-            IsResettingShoulder = RealismMod.StanceController.IsLeftStanceResetState;
+            IsResettingShoulder = RealismMod.StanceController.ShouldResetStances;
             DoAltRifle = RealismMod.PluginConfig.EnableAltRifle.Value;
         }
     }

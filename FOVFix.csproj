@@ -7,7 +7,6 @@
     <Version>4.0.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-	  <OutDir>F:\SP EFT\SPT-406\BepInEx\plugins\</OutDir>
 	  <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 	  <CopyProjectReferencesToOutputDirectory>false</CopyProjectReferencesToOutputDirectory>
   </PropertyGroup>
@@ -19,36 +18,48 @@
 
 	<ItemGroup>
     <Reference Include="spt-reflection">
+        <HintPath>D:\ref41\spt-reflection.dll</HintPath>
       <Private>false</Private>
     </Reference>
 	<Reference Include="ItemComponent.Types">
+        <HintPath>D:\ref41\ItemComponent.Types.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
     <Reference Include="Comfort">
+        <HintPath>D:\ref41\Comfort.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="Assembly-CSharp">
+        <HintPath>D:\ref41\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
 	<Reference Include="UnityEngine">
+        <HintPath>D:\ref41\UnityEngine.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
     <Reference Include="UnityEngine.InputLegacyModule">
+        <HintPath>D:\ref41\UnityEngine.InputLegacyModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
+        <HintPath>D:\ref41\UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
 	<Reference Include="UnityEngine.UIModule">
+        <HintPath>D:\ref41\UnityEngine.UIModule.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
 	<Reference Include="Sirenix.Serialization">
+        <HintPath>D:\ref41\Sirenix.Serialization.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
+        
 	<Reference Include="RealismMod">
+        <HintPath>D:\ref41\RealismMod.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
 	<Reference Include="Unity.Postprocessing.Runtime">
+        <HintPath>D:\ref41\Unity.Postprocessing.Runtime.dll</HintPath>
 	  <Private>false</Private>
 	</Reference>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />

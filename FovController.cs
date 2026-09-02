@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using EFT.CameraControl;
 using UnityEngine;
 using static EFT.Player;
 
@@ -125,7 +126,7 @@ namespace FOVFix
             var pwa = _player.ProceduralWeaponAnimation;
             var fc = _player.HandsController as FirearmController;
 
-            float baseFOV = _player.ProceduralWeaponAnimation.Single_2;
+            float baseFOV = _player.ProceduralWeaponAnimation.FieldOfView;
             int aimIndex = _player.ProceduralWeaponAnimation.AimIndex;
             float toggleZoomMulti = 1f;
             float magnificationModifier = 1f;
@@ -145,7 +146,7 @@ namespace FOVFix
             }
 
             float zoom = baseFOV * magnificationModifier * toggleZoomMulti;
-            CameraClass.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
+            CameraManager.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
             _wasAiming = pwa.IsAiming;
         }
 
@@ -218,7 +219,7 @@ namespace FOVFix
 
         public void UpateScopeFOV()
         {
-            if (CameraClass.Instance?.OpticCameraManager?.Camera != null) CurrentScopeFOV = CameraClass.Instance.OpticCameraManager.Camera.fieldOfView;
+            if (CameraManager.Instance?.OpticCameraManager?.Camera != null) CurrentScopeFOV = CameraManager.Instance.OpticCameraManager.Camera.fieldOfView;
         }
 
 
