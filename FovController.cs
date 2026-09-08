@@ -250,6 +250,11 @@ namespace FOVFix
                 CheckScopeFOV();
                 CheckToggleZoom();
                 CheckScope();
+
+                if (Plugin.EnableFovScaleFix.Value)
+                {
+                    CalculateScaleValueByFovPatch.UpdateRibcageScale(Plugin.FovScale.Value);
+                }
             }
         }
     }

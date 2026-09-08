@@ -448,7 +448,6 @@ namespace FOVFix
         }
     }
 
-    //TODO: this doesn't set FOV scale on new raid
     //changes FOV Scale of the player model, how the player model is rendered
     public class CalculateScaleValueByFovPatch : ModulePatch
     {
@@ -464,6 +463,7 @@ namespace FOVFix
             if (player != null)
             {
                 player.RibcageScaleCurrentTarget = newScale;
+                player.RibcageScaleCurrent = newScale;
             }
         }
 
