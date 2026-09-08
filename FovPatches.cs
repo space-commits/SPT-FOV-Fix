@@ -186,7 +186,7 @@ namespace FOVFix
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 horizontalLimit = new Vector2(-50f, 50f);
+            Vector2 horizontalLimit = new Vector2(-Plugin.FreeLookAngle.Value, Plugin.FreeLookAngle.Value);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
             if (isAiming)
             {

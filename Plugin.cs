@@ -91,6 +91,7 @@ namespace FOVFix
 
         public static ConfigEntry<float> FovScale { get; set; }
         public static ConfigEntry<bool> EnableFovScaleFix { get; set; }
+        public static ConfigEntry<float> FreeLookAngle { get; set; }
 
         public static ConfigEntry<float> RifleCameraXOffset { get; set; }
         public static ConfigEntry<float> RifleCameraYOffset { get; set; }
@@ -175,6 +176,7 @@ namespace FOVFix
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
             MaxBaseFOV = Config.Bind<int>(cameraSettings, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
             MinBaseFOV = Config.Bind<int>(cameraSettings, "Min Base FOV", 30, new ConfigDescription("Min Selectable Main Camera FOVIn Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 1 }));
+            FreeLookAngle = Config.Bind<float>(cameraSettings, "Free Look Angle", 50f, new ConfigDescription("How Far You Can Turn Your Head Left/Right Without Turning Your Body.", new AcceptableValueRange<float>(0f, 180f), new ConfigurationManagerAttributes { Order = 3 }));
 
             CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
