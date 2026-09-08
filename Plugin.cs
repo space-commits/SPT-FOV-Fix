@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FOVFix
 {
-    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.0.1")]
+    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         private bool _detectedMods = false;

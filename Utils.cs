@@ -62,7 +62,7 @@ namespace FOVFix
 
             foreach (string id in scopeTypes) 
             {
-                isScope = mod.GetType() == TemplateIdToObjectMappingsClass.TypeTable[id] ? true : false;
+                isScope = mod.GetType() == JsonTypes.TypeTable[id] ? true : false;
             }
 
             return isScope;

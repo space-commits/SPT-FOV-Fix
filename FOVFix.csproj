@@ -4,10 +4,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>FOVFix</AssemblyName>
     <Description>Fixes EFT FOV (removes FOV decrease when ADS)</Description>
-    <Version>4.0.1</Version>
+    <Version>4.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
-	  <OutDir>F:\SP EFT\SPT-406\BepInEx\plugins\</OutDir>
+	  <OutDir>C:\Games\SPT\SPT 41\SPT 41 Game\BepInEx\plugins\</OutDir>
 	  <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
 	  <CopyProjectReferencesToOutputDirectory>false</CopyProjectReferencesToOutputDirectory>
   </PropertyGroup>
@@ -18,37 +18,37 @@
 	</Target>
 
 	<ItemGroup>
-    <Reference Include="spt-reflection">
+    <Reference Include="..\..\BepInEx\plugins\spt\spt-reflection.dll">
       <Private>false</Private>
     </Reference>
-	<Reference Include="ItemComponent.Types">
+	<Reference Include="..\..\EscapeFromTarkov_Data\Managed\ItemComponent.Types.dll">
 	  <Private>false</Private>
 	</Reference>
-    <Reference Include="Comfort">
+    <Reference Include="..\..\EscapeFromTarkov_Data\Managed\Comfort.dll">
       <Private>false</Private>
     </Reference>
-    <Reference Include="Assembly-CSharp">
+    <Reference Include="..\..\EscapeFromTarkov_Data\Managed\Assembly-CSharp.dll">
       <Private>false</Private>
     </Reference>
-	<Reference Include="UnityEngine">
+	<Reference Include="..\..\EscapeFromTarkov_Data\Managed\UnityEngine.dll">
 	  <Private>false</Private>
 	</Reference>
-    <Reference Include="UnityEngine.InputLegacyModule">
+    <Reference Include="..\..\EscapeFromTarkov_Data\Managed\UnityEngine.InputLegacyModule.dll">
       <Private>false</Private>
     </Reference>
-    <Reference Include="UnityEngine.CoreModule">
+    <Reference Include="..\..\EscapeFromTarkov_Data\Managed\UnityEngine.CoreModule.dll">
       <Private>false</Private>
     </Reference>
-	<Reference Include="UnityEngine.UIModule">
+	<Reference Include="..\..\EscapeFromTarkov_Data\Managed\UnityEngine.UIModule.dll">
 	  <Private>false</Private>
 	</Reference>
-	<Reference Include="Sirenix.Serialization">
+	<Reference Include="..\..\EscapeFromTarkov_Data\Managed\Sirenix.Serialization.dll">
 	  <Private>false</Private>
 	</Reference>
-	<Reference Include="RealismMod">
+	<Reference Include="RealismMod.dll">
 	  <Private>false</Private>
 	</Reference>
-	<Reference Include="Unity.Postprocessing.Runtime">
+	<Reference Include="..\..\EscapeFromTarkov_Data\Managed\Unity.Postprocessing.Runtime.dll">
 	  <Private>false</Private>
 	</Reference>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />
