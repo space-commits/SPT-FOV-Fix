@@ -68,9 +68,6 @@ namespace FOVFix
         public static ConfigEntry<float> NonOpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> UnaimedToggleZoomMulti { get; set; }
 
-        public static ConfigEntry<int> MaxBaseFOV { get; set; }
-        public static ConfigEntry<int> MinBaseFOV { get; set; }
-
         public static ConfigEntry<float> ToggleZoomOpticSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomUnAimSensMulti { get; set; }
@@ -173,8 +170,6 @@ namespace FOVFix
 
             EnableFovScaleFix = Config.Bind<bool>(cameraSettings, "Enable FOV Scale Fix", false, new ConfigDescription("Lower Value = More Viewmodel Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
-            MaxBaseFOV = Config.Bind<int>(cameraSettings, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
-            MinBaseFOV = Config.Bind<int>(cameraSettings, "Min Base FOV", 30, new ConfigDescription("Min Selectable Main Camera FOVIn Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 1 }));
 
             CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -195,11 +190,11 @@ namespace FOVFix
             {
                 if (EnableFovScaleFix.Value)
                 {
-                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                    CalculateScaleValueByFovPatch.SetCompensationScale(FovScale.Value);
                 }
                 else
                 {
-                    CalculateScaleValueByFovPatch.RestoreScale();
+                    CalculateScaleValueByFovPatch.CalculateScaleValueByFov();
                 }
             };
             
@@ -207,7 +202,7 @@ namespace FOVFix
             {
                 if (EnableFovScaleFix.Value)
                 {
-                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                    CalculateScaleValueByFovPatch.SetCompensationScale(FovScale.Value);
                 }
             };
             

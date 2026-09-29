@@ -5,6 +5,7 @@
     <AssemblyName>FOVFix</AssemblyName>
     <Description>Fixes EFT FOV (removes FOV decrease when ADS)</Description>
     <Version>4.0.1</Version>
+	 <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
 	  <OutDir>F:\SP EFT\SPT-406\BepInEx\plugins\</OutDir>

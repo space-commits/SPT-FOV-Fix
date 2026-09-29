@@ -113,13 +113,8 @@ namespace FOVFix
         [PatchPostfix]
         private static void PostFix(NumberSlider ____fov, GameSettingsClass gameSettings)
         {
-            if (Plugin.MinBaseFOV.Value > Plugin.MaxBaseFOV.Value)
-            {
-                Plugin.MinBaseFOV.Value = 50;
-                Plugin.MaxBaseFOV.Value = 75;
-            }
 #pragma warning disable CS0618 // Type or member is obsolete
-            SettingsTab.BindNumberSliderToSetting(____fov, gameSettings.FieldOfView, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
+            SettingsTab.BindNumberSliderToSetting(____fov, gameSettings.FieldOfView, FovController.MinFOV, FovController.MaxFOV);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
     }
@@ -136,12 +131,7 @@ namespace FOVFix
         [PatchPostfix]
         private static void PostFix(ref int __result, int x)
         {
-            if (Plugin.MinBaseFOV.Value > Plugin.MaxBaseFOV.Value)
-            {
-                Plugin.MinBaseFOV.Value = 50;
-                Plugin.MaxBaseFOV.Value = 75;
-            }
-            __result = Mathf.Clamp(x, Plugin.MinBaseFOV.Value, Plugin.MaxBaseFOV.Value);
+            __result = Mathf.Clamp(x, FovController.MinFOV, FovController.MaxFOV);
         }
     }
 
@@ -454,43 +444,41 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Player).GetMethod("CalculateScaleValueByFov");
+            return typeof(Player).GetMethod("SetCompensationScale");
         }
 
-        public static void UpdateRibcageScale(float newScale)
+        // Token: 0x0600815C RID: 33116 RVA: 0x001CE203 File Offset: 0x001CC403
+        public static void SetCompensationScale(float scale)
         {
-            Player player = Singleton<GameWorld>.Instance.MainPlayer;
-            
-            if (player != null)
-            {
-                player.RibcageScaleCurrentTarget = newScale;
-            }
+            Player? player = Singleton<GameWorld>.Instance?.MainPlayer;
+            if (player == null) return;
+
+            player.RibcageScaleCurrentTarget = scale;
+            player.RibcageScaleCurrent = player.RibcageScaleCurrentTarget;
+            player.ProceduralWeaponAnimation.ResetFovAdjustments(player);
+            player.ProceduralWeaponAnimation.SetFovParams(scale);
         }
 
-        public static void RestoreScale()
+        public static void CalculateScaleValueByFov()
         {
-            Player player = Singleton<GameWorld>.Instance.MainPlayer;
-            
-            if (player != null)
-            {
-                player.CalculateScaleValueByFov(CameraClass.Instance.Fov);
-                player.SetCompensationScale(true);
-            }
+            float? fov = Singleton<SharedGameSettingsClass>.Instance?.Game?.Settings?.FieldOfView;
+            if (!fov.HasValue) return;
+
+            float compenstatedValue = Mathf.InverseLerp(50f, 75f, fov.Value);
+            float compensationScale = Mathf.Lerp(1f, 0.65f, compenstatedValue);
+
+            SetCompensationScale(compensationScale);
         }
 
         [PatchPrefix]
-        public static bool Prefix(Player __instance, ref float ____ribcageScaleCompensated)
+        public static bool Prefix(Player __instance)
         {
-            float scale = Plugin.FovScale.Value;
-
-            if (Plugin.EnableFovScaleFix.Value)
+            if (__instance.IsYourPlayer && Plugin.EnableFovScaleFix.Value)
             {
-                ____ribcageScaleCompensated = scale;
-                UpdateRibcageScale(scale);
-            
+                float scale = Plugin.FovScale.Value;
+                SetCompensationScale(scale);
                 return false;
             }
-
             return true;
         }
     }
@@ -509,12 +497,8 @@ namespace FOVFix
         [PatchPostfix]
         public static void PatchPostfix(Player.FirearmController __instance, bool value)
         {
-            Player player = __instance.GetComponent<Player>();
-            bool isYourPlayer = player.IsYourPlayer;
-            ProceduralWeaponAnimation pwa = player.ProceduralWeaponAnimation;
-            EPointOfView pov = pwa.PointOfView;
-
-            if (isYourPlayer && pov == EPointOfView.FirstPerson)
+            var player = (Player)_playerField.GetValue(__instance);
+            if (player.IsYourPlayer && player.ProceduralWeaponAnimation.PointOfView == EPointOfView.FirstPerson)
             {
                 player.MovementContext.PlayerAnimator.SetAiming(false);
             }

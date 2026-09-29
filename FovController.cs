@@ -58,6 +58,9 @@ namespace FOVFix
     //to-do: redo everything and put it in here
     public class FovController
     {
+        public const int MinFOV = 30;
+        public const int MaxFOV = 120;
+
         private Player _player = null;
         public AnimatedTextPanel OpticPanel = null;
 
