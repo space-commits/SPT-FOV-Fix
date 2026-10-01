@@ -4,12 +4,12 @@ using EFT;
 using EFT.Animations;
 using EFT.InventoryLogic;
 using EFT.UI;
-using RealismMod;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using EFT.CameraControl;
 using static EFT.Player;
 
 namespace FOVFix
@@ -58,6 +58,9 @@ namespace FOVFix
     //to-do: redo everything and put it in here
     public class FovController
     {
+        public const int MinFOV = 30;
+        public const int MaxFOV = 120;
+
         private Player _player = null;
         public AnimatedTextPanel OpticPanel = null;
 
@@ -125,7 +128,7 @@ namespace FOVFix
             var pwa = _player.ProceduralWeaponAnimation;
             var fc = _player.HandsController as FirearmController;
 
-            float baseFOV = _player.ProceduralWeaponAnimation.Single_2;
+            float baseFOV = _player.ProceduralWeaponAnimation.HeadBobbing;
             int aimIndex = _player.ProceduralWeaponAnimation.AimIndex;
             float toggleZoomMulti = 1f;
             float magnificationModifier = 1f;
@@ -145,7 +148,7 @@ namespace FOVFix
             }
 
             float zoom = baseFOV * magnificationModifier * toggleZoomMulti;
-            CameraClass.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
+            CameraManager.Instance.SetFov(zoom, 1f, !pwa.IsAiming);
             _wasAiming = pwa.IsAiming;
         }
 
@@ -218,7 +221,7 @@ namespace FOVFix
 
         public void UpateScopeFOV()
         {
-            if (CameraClass.Instance?.OpticCameraManager?.Camera != null) CurrentScopeFOV = CameraClass.Instance.OpticCameraManager.Camera.fieldOfView;
+            if (CameraManager.Instance?.OpticCameraManager?.Camera != null) CurrentScopeFOV = CameraManager.Instance.OpticCameraManager.Camera.fieldOfView;
         }
 
 

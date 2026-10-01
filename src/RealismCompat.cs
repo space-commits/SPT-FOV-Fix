@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using RealismMod;
 
 namespace FOVFix
 {
@@ -24,19 +23,19 @@ namespace FOVFix
 
         public void Update() 
         {
-            HasShoulderContact = RealismMod.WeaponStats.HasShoulderContact;
-            IsMachinePistol = RealismMod.WeaponStats.IsMachinePistol;
-            DoAltPistol = RealismMod.PluginConfig.EnableAltPistol.Value;
-            StanceBlenderTarget = RealismMod.StanceController.StanceBlender.Target;
-            StanceBlenderValue = RealismMod.StanceController.StanceBlender.Value;
-            StancesAreEnabled = RealismMod.Plugin.ServerConfig.enable_stances;
-            DoPatrolStanceAdsSmoothing = !RealismMod.StanceController.FinishedUnPatrolStancing;
-            StopCameraMovmentForCollision = RealismMod.StanceController.StopCameraMovement;
-            IsColliding = RealismMod.StanceController.IsColliding;
-            CameraMovmentForCollisionSpeed = RealismMod.StanceController.CameraMovmentForCollisionSpeed;
-            IsLeftShoulder = RealismMod.StanceController.IsLeftShoulder;
-            IsResettingShoulder = RealismMod.StanceController.IsLeftStanceResetState;
-            DoAltRifle = RealismMod.PluginConfig.EnableAltRifle.Value;
+            // HasShoulderContact = RealismMod.WeaponStats.HasShoulderContact;
+            // IsMachinePistol = RealismMod.WeaponStats.IsMachinePistol;
+            // DoAltPistol = RealismMod.PluginConfig.EnableAltPistol.Value;
+            // StanceBlenderTarget = RealismMod.StanceController.StanceBlender.Target;
+            // StanceBlenderValue = RealismMod.StanceController.StanceBlender.Value;
+            // StancesAreEnabled = RealismMod.Plugin.ServerConfig.enable_stances;
+            // DoPatrolStanceAdsSmoothing = !RealismMod.StanceController.FinishedUnPatrolStancing;
+            // StopCameraMovmentForCollision = RealismMod.StanceController.StopCameraMovement;
+            // IsColliding = RealismMod.StanceController.IsColliding;
+            // CameraMovmentForCollisionSpeed = RealismMod.StanceController.CameraMovmentForCollisionSpeed;
+            // IsLeftShoulder = RealismMod.StanceController.IsLeftShoulder;
+            // IsResettingShoulder = RealismMod.StanceController.IsLeftStanceResetState;
+            // DoAltRifle = RealismMod.PluginConfig.EnableAltRifle.Value;
         }
     }
 }

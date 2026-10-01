@@ -1,6 +1,7 @@
 ﻿using Comfort.Common;
 using EFT;
 using EFT.InventoryLogic;
+using EFT.Settings;
 using SPT.Reflection.Patching;
 using System.Reflection;
 
@@ -28,7 +29,7 @@ namespace FOVFix
                     calledToggleZoom && Plugin.UnaimedToggleZoomMulti.Value != 1f ? Plugin.ToggleZoomUnAimSensMulti.Value : 1f;
 
                 float scopeFOVMulti = isOptic && isAiming ? Utils.GetZoomSensValue(Plugin.FovController.CurrentScopeFOV) : Plugin.NonOpticSensMulti.Value;
-                newSens = Singleton<SharedGameSettingsClass>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * scopeFOVMulti;
+                newSens = Singleton<SettingsManager>.Instance.Control.Settings.MouseAimingSensitivity * toggleZoomMulti * scopeFOVMulti;
                 ____aimingSens = newSens;
             }
         }

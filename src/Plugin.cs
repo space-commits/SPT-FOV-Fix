@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FOVFix
 {
-    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.0.1")]
+    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         private bool _detectedMods = false;
@@ -33,17 +33,17 @@ namespace FOVFix
 
         public static ConfigEntry<float> GlobalADSMulti { get; set; }
         public static ConfigEntry<float> NonOpticFOVMulti { get; set; }
-/*        public static ConfigEntry<float> OneADSMulti { get; set; }
-        public static ConfigEntry<float> TwoADSMulti { get; set; }
-        public static ConfigEntry<float> ThreeADSMulti { get; set; }
-        public static ConfigEntry<float> FourADSMulti { get; set; }
-        public static ConfigEntry<float> FiveADSMulti { get; set; }
-        public static ConfigEntry<float> SixADSMulti { get; set; }
-        public static ConfigEntry<float> EightADSMulti { get; set; }
-        public static ConfigEntry<float> TwelveADSMulti { get; set; }
-        public static ConfigEntry<float> FourteenADSMulti { get; set; }
-        public static ConfigEntry<float> HighADSMulti { get; set; }
-        public static ConfigEntry<float> RangeFinderADSMulti { get; set; }*/
+        /*        public static ConfigEntry<float> OneADSMulti { get; set; }
+                public static ConfigEntry<float> TwoADSMulti { get; set; }
+                public static ConfigEntry<float> ThreeADSMulti { get; set; }
+                public static ConfigEntry<float> FourADSMulti { get; set; }
+                public static ConfigEntry<float> FiveADSMulti { get; set; }
+                public static ConfigEntry<float> SixADSMulti { get; set; }
+                public static ConfigEntry<float> EightADSMulti { get; set; }
+                public static ConfigEntry<float> TwelveADSMulti { get; set; }
+                public static ConfigEntry<float> FourteenADSMulti { get; set; }
+                public static ConfigEntry<float> HighADSMulti { get; set; }
+                public static ConfigEntry<float> RangeFinderADSMulti { get; set; }*/
 
         public static ConfigEntry<float> RifleAimSpeedX { get; set; }
         public static ConfigEntry<float> PistolAimSpeedX { get; set; }
@@ -67,9 +67,6 @@ namespace FOVFix
         public static ConfigEntry<float> OpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> NonOpticToggleZoomMulti { get; set; }
         public static ConfigEntry<float> UnaimedToggleZoomMulti { get; set; }
-
-        public static ConfigEntry<int> MaxBaseFOV { get; set; }
-        public static ConfigEntry<int> MinBaseFOV { get; set; }
 
         public static ConfigEntry<float> ToggleZoomOpticSensMulti { get; set; }
         public static ConfigEntry<float> ToggleZoomAimSensMulti { get; set; }
@@ -99,8 +96,10 @@ namespace FOVFix
         public static ConfigEntry<float> PistolCameraYOffset { get; set; }
         public static ConfigEntry<float> PistolCameraZOffset { get; set; }
 
+        public static ConfigEntry<float> FreeLookAngle { get; set; }
+
         public static FovController FovController { get; set; }
-        public static RealismCompat RealCompat { get; set; } 
+        public static RealismCompat RealCompat { get; set; }
 
         private void Awake()
         {
@@ -133,7 +132,7 @@ namespace FOVFix
          */
             CameraIncreaseOffset = Config.Bind(cameraPostiion, "Increase Camera Offset Key", new KeyboardShortcut(KeyCode.KeypadMultiply), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 60 }));
             CameraDecreaseOffset = Config.Bind(cameraPostiion, "Decrease Camera Offset Key", new KeyboardShortcut(KeyCode.KeypadDivide), new ConfigDescription("", null, new ConfigurationManagerAttributes { Order = 60 }));
-            OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", -0.03f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-0.2f, 0.2f), new ConfigurationManagerAttributes { Order = 1 }));
+            OpticPosOffset = Config.Bind<float>(cameraPostiion, "Optic Camera Distance Offset", -0.015f, new ConfigDescription("Distance Of The Camera To Optics When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-0.2f, 0.2f), new ConfigurationManagerAttributes { Order = 1 }));
             NonOpticOffset = Config.Bind<float>(cameraPostiion, "Non-Optic Camera Distance Offset", -0.01f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-0.2f, 0.2f), new ConfigurationManagerAttributes { Order = 2 }));
             PistolOffset = Config.Bind<float>(cameraPostiion, "Pistol Camera Distance Offset", 0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic.", new AcceptableValueRange<float>(-0.2f, 0.2f), new ConfigurationManagerAttributes { Order = 3 }));
             RifleLeftShoulderOffset = Config.Bind<float>(cameraPostiion, "Rifle Left Shoulder Offset", 0f, new ConfigDescription("Distance Of The Camera To Sights When ADSed. Lower = Closer To Optic. Set Till Left Shoulder Offset Matches Right Shoulder, Will Depend On Your Set Up. Does Not Apply If Realism Stances Are Enabled.", new AcceptableValueRange<float>(-1.0f, 1.0f), new ConfigurationManagerAttributes { Order = 4 }));
@@ -171,11 +170,9 @@ namespace FOVFix
             PistolCameraYOffset = Config.Bind<float>(cameraSettings, "Pistol Camera Y Offset", 0.04f, new ConfigDescription("Moves the player camera relative to the player's hands. Don't recommend changing.", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
             PistolCameraZOffset = Config.Bind<float>(cameraSettings, "Pistol Camera Z Offset (Formerly Hud FOV)", 0.025f, new ConfigDescription("How Far Away The Player Camera Is From The Player's Arms And Weapon, Making Them Appear Closer/Larger Or Further Away/Smaller", new AcceptableValueRange<float>(-0.3f, 0.3f), new ConfigurationManagerAttributes { Order = 20 }));
 
-
             EnableFovScaleFix = Config.Bind<bool>(cameraSettings, "Enable FOV Scale Fix", false, new ConfigDescription("Lower Value = More Viewmodel Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
-            MaxBaseFOV = Config.Bind<int>(cameraSettings, "Max Base FOV", 110, new ConfigDescription("Max Selectable Main Camera FOV In Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 2 }));
-            MinBaseFOV = Config.Bind<int>(cameraSettings, "Min Base FOV", 30, new ConfigDescription("Min Selectable Main Camera FOVIn Game Settings.", new AcceptableValueRange<int>(1, 200), new ConfigurationManagerAttributes { Order = 1 }));
+            FreeLookAngle = Config.Bind<float>(cameraSettings, "Free Look Angle", 50f, new ConfigDescription("How Far You Can Turn Your Head Left/Right Without Turning Your Body.", new AcceptableValueRange<float>(0f, 100f), new ConfigurationManagerAttributes { Order = 3 }));
 
             CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -196,23 +193,23 @@ namespace FOVFix
             {
                 if (EnableFovScaleFix.Value)
                 {
-                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                    CalculateScaleValueByFovPatch.SetCompensationScale(FovScale.Value);
                 }
                 else
                 {
-                    CalculateScaleValueByFovPatch.RestoreScale();
+                    CalculateScaleValueByFovPatch.CalculateScaleValueByFov();
                 }
             };
-            
+
             FovScale.SettingChanged += (obj, args) =>
             {
                 if (EnableFovScaleFix.Value)
                 {
-                    CalculateScaleValueByFovPatch.UpdateRibcageScale(FovScale.Value);
+                    CalculateScaleValueByFovPatch.SetCompensationScale(FovScale.Value);
                 }
             };
-            
-            Utils.Logger = Logger;  
+
+            Utils.Logger = Logger;
             FovController = new FovController();
 
             new PwaWeaponParamsPatch().Enable();
