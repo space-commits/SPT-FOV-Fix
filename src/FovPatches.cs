@@ -5,20 +5,19 @@ using EFT.CameraControl;
 using EFT.InventoryLogic;
 using EFT.UI;
 using EFT.UI.Settings;
+using EFT.Settings;
 using HarmonyLib;
-using RealismMod;
 using SPT.Reflection.Patching;
 using System;
 using System.Reflection;
 using UnityEngine;
 using static EFT.Player;
-using static GClass1085;
 //using FCSubClass = EFT.Player.FirearmController.GClass1780;
 // System.String EFT.Player/FirearmController/GClass????::SHELLPORT_TRANSFORM_NAME
 //using InputClass1 = Class1604;
 // EFT.IFirearmHandsController Class????::ifirearmHandsController_0
 //using InputClass2 = Class1579;
-using GameSettingsClass = GClass1085;
+using GameSettingsClass = EFT.Settings.Game.GameSettingsGroup;
 
 namespace FOVFix
 {
@@ -27,7 +26,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(GClass3380).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
+            return typeof(ItemExtensions).GetMethod("CloneItem", BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(Item));
             // IEnumerable<EFT.InventoryLogic.Item> GClass????::GetAllItemsFromGridItemCollectionNonAlloc(GClass2924, List<EFT.InventoryLogic.Item>)
             // very good distinct name to search for
         }
@@ -124,7 +123,7 @@ namespace FOVFix
     {
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(Class1841).GetMethod("method_0");
+            return typeof(GameSettingsClass.CG_Ctor).GetMethod("method_0");
             // subclass of this class: Bsg.GameSettings.GameSetting<Boolean> GClass????::StreamerModeEnabled
         }
 
@@ -176,7 +175,7 @@ namespace FOVFix
 
             bool isAiming = __instance.HandsController != null && __instance.HandsController.IsAiming && !__instance.IsAI;
             EFTHardSettings instance = EFTHardSettings.Instance;
-            Vector2 horizontalLimit = new Vector2(-50f, 50f);
+            Vector2 horizontalLimit = new Vector2(-Plugin.FreeLookAngle.Value, Plugin.FreeLookAngle.Value);
             Vector2 mouse_LOOK_VERTICAL_LIMIT = instance.MOUSE_LOOK_VERTICAL_LIMIT;
             if (isAiming)
             {
@@ -330,7 +329,7 @@ namespace FOVFix
                 bool isOptic = __instance.CurrentScope.IsOptic;
                 float collsionCameraSpeed = !realismIsNull ? Plugin.RealCompat.CameraMovmentForCollisionSpeed : 1f;
                 bool isRealLeftShoulder = !realismIsNull && Plugin.RealCompat.IsLeftShoulder;
-                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.Boolean_0;
+                bool isDoingLeftShoulder = isRealLeftShoulder || __instance.InLeftStance;
                 bool canMoveGunToCamera = !realismIsNull && (isAltPistol || isAltRifle); 
                 float leftShoulderZOffset = GetLeftShoulderZoffset(canMoveGunToCamera, isPistol, isAltPistol, isDoingLeftShoulder);
 
@@ -339,7 +338,7 @@ namespace FOVFix
                 _collsionCameraSpeed = isColliding ? 0f : Mathf.Lerp(_collsionCameraSpeed, 1f, collsionCameraSpeed);
                 if (!realismIsNull) DoStanceSmoothing(isAltPistol);
 
-                float headBob = Singleton<SharedGameSettingsClass>.Instance.Game.Settings.HeadBobbing;
+                float headBob = Singleton<SettingsManager>.Instance.Game.Settings.HeadBobbing;
                 Vector3 localPosition = __instance.HandsContainer.CameraTransform.localPosition;
                 float localX = localPosition.x;
                 float localY = localPosition.y;
@@ -395,8 +394,8 @@ namespace FOVFix
                 __instance.HandsContainer.CameraTransform.localPosition = new Vector3(newLocalPosition.x, _yPos, newLocalPosition.z);
                 Quaternion animatedRotation = __instance.HandsContainer.CameraAnimatedFP.localRotation * __instance.HandsContainer.CameraAnimatedTP.localRotation;
                 __instance.HandsContainer.CameraTransform.localRotation = Quaternion.Lerp(____cameraIdenity, animatedRotation, headBob * (1f - ____tacticalReload.Value)) * Quaternion.Euler(__instance.HandsContainer.CameraRotation.Get() + ____headRotationVec) * ____rotationOffset;
-                __instance.method_19(dt);
-                __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil();
+                __instance.AddHandRecoilRotateToCamera(dt);
+                __instance.HandsContainer.CameraTransform.localEulerAngles += __instance.Shootingg.CurrentRecoilEffect.GetCameraRotationRecoil()  + __instance.Shootingg.CurrentRecoilEffect.WeaponRecoilEffect.GetCameraRotationRecoil();
 
                 //hud fov
                 //this won't apply if doing the realism weapon to camera stuff, camera needs to be able to move to adjust to it
@@ -417,7 +416,7 @@ namespace FOVFix
         {
             _playerField = AccessTools.Field(typeof(FirearmController), "_player");
             _fcField = AccessTools.Field(typeof(ProceduralWeaponAnimation), "_firearmController");
-            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("method_23", BindingFlags.Instance | BindingFlags.Public);
+            return typeof(EFT.Animations.ProceduralWeaponAnimation).GetMethod("OnAimOrPoseChanged", BindingFlags.Instance | BindingFlags.Public);
         }
 
         [PatchPostfix]
@@ -461,7 +460,7 @@ namespace FOVFix
 
         public static void CalculateScaleValueByFov()
         {
-            float? fov = Singleton<SharedGameSettingsClass>.Instance?.Game?.Settings?.FieldOfView;
+            float? fov = Singleton<SettingsManager>.Instance?.Game?.Settings?.FieldOfView;
             if (!fov.HasValue) return;
 
             float compenstatedValue = Mathf.InverseLerp(50f, 75f, fov.Value);

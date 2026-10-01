@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FOVFix
 {
-    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.0.1")]
+    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.1.0")]
     public class Plugin : BaseUnityPlugin
     {
         private bool _detectedMods = false;
@@ -33,17 +33,17 @@ namespace FOVFix
 
         public static ConfigEntry<float> GlobalADSMulti { get; set; }
         public static ConfigEntry<float> NonOpticFOVMulti { get; set; }
-/*        public static ConfigEntry<float> OneADSMulti { get; set; }
-        public static ConfigEntry<float> TwoADSMulti { get; set; }
-        public static ConfigEntry<float> ThreeADSMulti { get; set; }
-        public static ConfigEntry<float> FourADSMulti { get; set; }
-        public static ConfigEntry<float> FiveADSMulti { get; set; }
-        public static ConfigEntry<float> SixADSMulti { get; set; }
-        public static ConfigEntry<float> EightADSMulti { get; set; }
-        public static ConfigEntry<float> TwelveADSMulti { get; set; }
-        public static ConfigEntry<float> FourteenADSMulti { get; set; }
-        public static ConfigEntry<float> HighADSMulti { get; set; }
-        public static ConfigEntry<float> RangeFinderADSMulti { get; set; }*/
+        /*        public static ConfigEntry<float> OneADSMulti { get; set; }
+                public static ConfigEntry<float> TwoADSMulti { get; set; }
+                public static ConfigEntry<float> ThreeADSMulti { get; set; }
+                public static ConfigEntry<float> FourADSMulti { get; set; }
+                public static ConfigEntry<float> FiveADSMulti { get; set; }
+                public static ConfigEntry<float> SixADSMulti { get; set; }
+                public static ConfigEntry<float> EightADSMulti { get; set; }
+                public static ConfigEntry<float> TwelveADSMulti { get; set; }
+                public static ConfigEntry<float> FourteenADSMulti { get; set; }
+                public static ConfigEntry<float> HighADSMulti { get; set; }
+                public static ConfigEntry<float> RangeFinderADSMulti { get; set; }*/
 
         public static ConfigEntry<float> RifleAimSpeedX { get; set; }
         public static ConfigEntry<float> PistolAimSpeedX { get; set; }
@@ -96,8 +96,10 @@ namespace FOVFix
         public static ConfigEntry<float> PistolCameraYOffset { get; set; }
         public static ConfigEntry<float> PistolCameraZOffset { get; set; }
 
+        public static ConfigEntry<float> FreeLookAngle { get; set; }
+
         public static FovController FovController { get; set; }
-        public static RealismCompat RealCompat { get; set; } 
+        public static RealismCompat RealCompat { get; set; }
 
         private void Awake()
         {
@@ -170,6 +172,7 @@ namespace FOVFix
 
             EnableFovScaleFix = Config.Bind<bool>(cameraSettings, "Enable FOV Scale Fix", false, new ConfigDescription("Lower Value = More Viewmodel Distortion.", null, new ConfigurationManagerAttributes { Order = 10, IsAdvanced = true }));
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
+            FreeLookAngle = Config.Bind<float>(cameraSettings, "Free Look Angle", 50f, new ConfigDescription("How Far You Can Turn Your Head Left/Right Without Turning Your Body.", new AcceptableValueRange<float>(0f, 100f), new ConfigurationManagerAttributes { Order = 3 }));
 
             CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
@@ -197,7 +200,7 @@ namespace FOVFix
                     CalculateScaleValueByFovPatch.CalculateScaleValueByFov();
                 }
             };
-            
+
             FovScale.SettingChanged += (obj, args) =>
             {
                 if (EnableFovScaleFix.Value)
@@ -205,8 +208,8 @@ namespace FOVFix
                     CalculateScaleValueByFovPatch.SetCompensationScale(FovScale.Value);
                 }
             };
-            
-            Utils.Logger = Logger;  
+
+            Utils.Logger = Logger;
             FovController = new FovController();
 
             new PwaWeaponParamsPatch().Enable();
