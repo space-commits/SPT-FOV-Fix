@@ -6,11 +6,10 @@ using UnityEngine;
 
 namespace FOVFix
 {
+    [BepInDependency(RealismCommonLib.Plugin.MOD_GUID)]
     [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.1.0")]
     public class Plugin : BaseUnityPlugin
     {
-        private bool _detectedMods = false;
-        public static bool RealismIsPresent = false;
 
         public static ConfigEntry<float> test1 { get; set; }
         public static ConfigEntry<float> test2 { get; set; }
@@ -99,7 +98,6 @@ namespace FOVFix
         public static ConfigEntry<float> FreeLookAngle { get; set; }
 
         public static FovController FovController { get; set; }
-        public static RealismCompat RealCompat { get; set; }
 
         private void Awake()
         {
@@ -224,24 +222,9 @@ namespace FOVFix
             new CalculateScaleValueByFovPatch().Enable();
         }
 
-        private void CheckForMods()
-        {
-            if (!_detectedMods && (int)Time.time % 5 == 0)
-            {
-                _detectedMods = true;
-                if (Chainloader.PluginInfos.ContainsKey("RealismMod"))
-                {
-                    Logger.LogWarning("=============================== Fov Fix: Realism Mod is loaded ===============================");
-                    RealismIsPresent = true;
-                    Plugin.RealCompat = new RealismCompat();
-                }
-            }
-        }
 
         void Update()
         {
-            if (RealismIsPresent) Plugin.RealCompat.Update();
-            CheckForMods();
             FovController.ControllerUpdate();
         }
     }
