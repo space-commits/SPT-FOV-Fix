@@ -330,12 +330,13 @@ namespace FOVFix
                 float zAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedZ.Value : Plugin.RifleAimSpeedZ.Value;
 
                 float baseXYSpeed = ____aimingSpeed * __instance.CameraSmoothBlender.Value * ____overweightAimingMultiplier;
+                float aimSpeedModifier = Mathf.Pow(____aimingSpeed, 0.5f); //if a mod changes aimspeed this needs adjusment
 
                 float aimFactorX = isAiming ? baseXYSpeed * xAimBaseMulti : Plugin.UnAimSpeedX.Value * ____aimingSpeed;
                 aimFactorX *= _xStanceCameraSpeedFactor;
                 float aimFactorY = isAiming ? baseXYSpeed * yAimBaseMulti : Plugin.UnAimSpeedY.Value * ____aimingSpeed;
                 aimFactorY *= _yStanceCameraSpeedFactor;
-                float aimFactorZ = isAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti * ____aimingSpeed : Plugin.UnAimSpeedZ.Value * ____aimingSpeed;
+                float aimFactorZ = isAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti * aimSpeedModifier : Plugin.UnAimSpeedZ.Value * aimSpeedModifier;
                 aimFactorZ *= _zStanceCameraSpeedFactor;
 
                 float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX * _collsionCameraSpeed);
