@@ -6,12 +6,10 @@ using UnityEngine;
 
 namespace FOVFix
 {
-    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "4.1.0")]
+    [BepInDependency(RealismCommonLib.Plugin.MOD_GUID)]
+    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "5.0.0")]
     public class Plugin : BaseUnityPlugin
     {
-        private bool _detectedMods = false;
-        public static bool RealismIsPresent = false;
-
         public static ConfigEntry<float> test1 { get; set; }
         public static ConfigEntry<float> test2 { get; set; }
         public static ConfigEntry<float> test3 { get; set; }
@@ -47,15 +45,18 @@ namespace FOVFix
 
         public static ConfigEntry<float> RifleAimSpeedX { get; set; }
         public static ConfigEntry<float> PistolAimSpeedX { get; set; }
-        public static ConfigEntry<float> UnAimSpeedX { get; set; }
+        public static ConfigEntry<float> RifleUnAimSpeedX { get; set; }
+        public static ConfigEntry<float> PistolUnAimSpeedX { get; set; }
         public static ConfigEntry<float> RifleAimSpeedY { get; set; }
         public static ConfigEntry<float> PistolAimSpeedY { get; set; }
-        public static ConfigEntry<float> UnAimSpeedY { get; set; }
+        public static ConfigEntry<float> RifleUnAimSpeedY { get; set; }
+        public static ConfigEntry<float> PistolUnAimSpeedY { get; set; }
         public static ConfigEntry<float> RifleAimSpeedZ { get; set; }
         public static ConfigEntry<float> PistolAimSpeedZ { get; set; }
-        public static ConfigEntry<float> UnAimSpeedZ { get; set; }
+        public static ConfigEntry<float> RifleUnAimSpeedZ { get; set; }
+        public static ConfigEntry<float> PistolUnAimSpeedZ { get; set; }
 
-        public static ConfigEntry<float> CameraAimSpeed { get; set; }
+        public static ConfigEntry<float> RifleAimSpeed { get; set; }
         public static ConfigEntry<float> PistolAimSpeed { get; set; }
         public static ConfigEntry<float> OpticAimSpeed { get; set; }
         public static ConfigEntry<float> CameraSmoothOut { get; set; }
@@ -99,7 +100,6 @@ namespace FOVFix
         public static ConfigEntry<float> FreeLookAngle { get; set; }
 
         public static FovController FovController { get; set; }
-        public static RealismCompat RealCompat { get; set; }
 
         private void Awake()
         {
@@ -174,20 +174,24 @@ namespace FOVFix
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
             FreeLookAngle = Config.Bind<float>(cameraSettings, "Free Look Angle", 50f, new ConfigDescription("How Far You Can Turn Your Head Left/Right Without Turning Your Body.", new AcceptableValueRange<float>(0f, 100f), new ConfigurationManagerAttributes { Order = 3 }));
 
-            CameraAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            RifleAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
             OpticAimSpeed = Config.Bind<float>(cameraSpeed, "Optic Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifels With Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
 
             RifleAimSpeedX = Config.Bind<float>(cameraSpeed, "Rfile Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            PistolAimSpeedX = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-
-            UnAimSpeedX = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed X-Axis", 5.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            PistolAimSpeedX = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));     
+            RifleUnAimSpeedX = Config.Bind<float>(cameraSpeed, "Rifle Camera Un-Aim Speed X-Axis", 5.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            PistolUnAimSpeedX = Config.Bind<float>(cameraSpeed, "Pistol Camera Un-Aim Speed X-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+           
             RifleAimSpeedY = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             PistolAimSpeedY = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed Y-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            UnAimSpeedY = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Y-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
-            RifleAimSpeedZ = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed Z-Axis", 3f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            PistolAimSpeedZ = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed Z-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
-            UnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Camera Un-Aim Speed Z-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            RifleUnAimSpeedY = Config.Bind<float>(cameraSpeed, "Rifle Camera Un-Aim Speed Y-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            PistolUnAimSpeedY = Config.Bind<float>(cameraSpeed, "Pistol Camera Un-Aim Speed Y-Axis", 4f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Y-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+           
+            RifleAimSpeedZ = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed Z-Axis", 5f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            PistolAimSpeedZ = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed Z-Axis", 3.5f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            RifleUnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Rifle Camera Un-Aim Speed Z-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
+            PistolUnAimSpeedZ = Config.Bind<float>(cameraSpeed, "Pistol Camera Un-Aim Speed Z-Axis", 2.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The Z-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
 
             EnableFovScaleFix.SettingChanged += (obj, args) =>
             {
@@ -224,24 +228,9 @@ namespace FOVFix
             new CalculateScaleValueByFovPatch().Enable();
         }
 
-        private void CheckForMods()
-        {
-            if (!_detectedMods && (int)Time.time % 5 == 0)
-            {
-                _detectedMods = true;
-                if (Chainloader.PluginInfos.ContainsKey("RealismMod"))
-                {
-                    Logger.LogWarning("=============================== Fov Fix: Realism Mod is loaded ===============================");
-                    RealismIsPresent = true;
-                    Plugin.RealCompat = new RealismCompat();
-                }
-            }
-        }
 
         void Update()
         {
-            if (RealismIsPresent) Plugin.RealCompat.Update();
-            CheckForMods();
             FovController.ControllerUpdate();
         }
     }
