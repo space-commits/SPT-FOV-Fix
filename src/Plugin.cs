@@ -7,7 +7,7 @@ using UnityEngine;
 namespace FOVFix
 {
     [BepInDependency(RealismCommonLib.Plugin.MOD_GUID)]
-    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "5.0.0")]
+    [BepInPlugin("com.fontaine.fovfix", "Fontaine-FOVFix", "5.0.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ConfigEntry<float> test1 { get; set; }
@@ -174,11 +174,11 @@ namespace FOVFix
             FovScale = Config.Bind<float>(cameraSettings, "FOV Scale", 1f, new ConfigDescription("Viewmodel FOV. A Value Of One Reduces The Distortion Caused By Higher FOV Settings, Significantly Reducing Issues With Laser Misallignment And Optics Recoil. Does Make Weapon Postion And Scale Look Different.", new AcceptableValueRange<float>(0f, 2f), new ConfigurationManagerAttributes { Order = 4, IsAdvanced = true }));
             FreeLookAngle = Config.Bind<float>(cameraSettings, "Free Look Angle", 50f, new ConfigDescription("How Far You Can Turn Your Head Left/Right Without Turning Your Body.", new AcceptableValueRange<float>(0f, 100f), new ConfigurationManagerAttributes { Order = 3 }));
 
-            RifleAimSpeed = Config.Bind<float>(cameraSpeed, "Rfile Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles Without Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
+            RifleAimSpeed = Config.Bind<float>(cameraSpeed, "Rifle Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifles. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 40 }));
             PistolAimSpeed = Config.Bind<float>(cameraSpeed, "Pistol Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Pistols. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Weapons Can Have At High FOV.", new AcceptableValueRange<float>(0, 10f), new ConfigurationManagerAttributes { Order = 30 }));
-            OpticAimSpeed = Config.Bind<float>(cameraSpeed, "Optic Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions For Rifels With Optics. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
+            OpticAimSpeed = Config.Bind<float>(cameraSpeed, "Optic Camera Speed", 1f, new ConfigDescription("Global Multi For The Speed Of ADS Camera Transitions With Optics, Stacks With Rifle And Pistol Speeds. A Low Value Can Be Used To Smoothen Out The Overly Snappy Transitions Some Scope And Weapon Combinations Can Have At High FOV.", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 20 }));
 
-            RifleAimSpeedX = Config.Bind<float>(cameraSpeed, "Rfile Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
+            RifleAimSpeedX = Config.Bind<float>(cameraSpeed, "Rifle Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));
             PistolAimSpeedX = Config.Bind<float>(cameraSpeed, "Pistol Camera Aim Speed X-Axis", 1f, new ConfigDescription("The Speed Of The Player Camera When Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 11 }));     
             RifleUnAimSpeedX = Config.Bind<float>(cameraSpeed, "Rifle Camera Un-Aim Speed X-Axis", 5.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
             PistolUnAimSpeedX = Config.Bind<float>(cameraSpeed, "Pistol Camera Un-Aim Speed X-Axis", 4.5f, new ConfigDescription("The Speed Of The Player Camera When Un-Aiming For The X-Axis Specifically", new AcceptableValueRange<float>(0f, 10f), new ConfigurationManagerAttributes { Order = 2 }));
