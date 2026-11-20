@@ -250,10 +250,6 @@ namespace FOVFix
         private static FieldInfo _fcField;
 
         private static float _yPos = 0f;
-        private static float _xStanceCameraSpeedFactor = 1f;
-        private static float _yStanceCameraSpeedFactor = 1f;
-        private static float _zStanceCameraSpeedFactor = 1f;
-        private static float _stanceTimer = 0f;
         private static float _collsionCameraSpeed = 1f;
 
         protected override MethodBase GetTargetMethod()
@@ -325,7 +321,8 @@ namespace FOVFix
 
                 float rifleSpeed = Plugin.RifleAimSpeed.Value * (stanceOverhaulInstalled ? 0.85f : 1f);
                 float pistolSpeed = Plugin.PistolAimSpeed.Value * (stanceOverhaulInstalled ? 0.85f : 1f);
-                float finalSpeed = isOptic ? Plugin.OpticAimSpeed.Value * (treatAsPistol ? pistolSpeed : rifleSpeed) : 1f;
+                float opticSpeed = isOptic ? Plugin.OpticAimSpeed.Value : 1f;
+                float finalSpeed = opticSpeed * (treatAsPistol ? pistolSpeed : rifleSpeed);
                 float smoothTime = finalSpeed * dt;
 
                 float xAimBaseMulti = treatAsPistol ? Plugin.PistolAimSpeedX.Value : Plugin.RifleAimSpeedX.Value;
@@ -340,11 +337,8 @@ namespace FOVFix
                 float aimSpeedModifier = Mathf.Pow(____aimingSpeed, 0.6f);
 
                 float aimFactorX = isAiming ? baseXYSpeed * xAimBaseMulti : xUnAimBaseMulti * ____aimingSpeed;
-                aimFactorX *= _xStanceCameraSpeedFactor;
                 float aimFactorY = isAiming ? baseXYSpeed * yAimBaseMulti : yUnAimBaseMulti * ____aimingSpeed;
-                aimFactorY *= _yStanceCameraSpeedFactor;
                 float aimFactorZ = isAiming ? (1f + __instance.HandsContainer.HandsPosition.GetRelative().y * 100f + __instance.TurnAway.Position.y * 10f) * zAimBaseMulti * aimSpeedModifier : zUnAimBaseMulti * aimSpeedModifier;
-                aimFactorZ *= _zStanceCameraSpeedFactor;
 
                 float targetX = Mathf.Lerp(localX, camX, smoothTime * aimFactorX * _collsionCameraSpeed);
                 float targetY = Mathf.Lerp(localY, camY, smoothTime * aimFactorY * _collsionCameraSpeed);
